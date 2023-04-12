@@ -8,11 +8,10 @@ import (
 	"encoding/json"
 
 	"cosmossdk.io/simapp"
-
-	ibctesting "github.com/cosmos/ibc-go/v7/testing"
-
 	tmdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
+	simstestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	appConsumer "github.com/cosmos/interchain-security/app/consumer"
 	appConsumerDemocracy "github.com/cosmos/interchain-security/app/consumer-democracy"
@@ -23,7 +22,7 @@ import (
 func ProviderAppIniter() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	encoding := appProvider.MakeTestEncodingConfig()
 	testApp := appProvider.New(log.NewNopLogger(), tmdb.NewMemDB(), nil, true, map[int64]bool{},
-		simapp.DefaultNodeHome, 5, encoding, simapp.EmptyAppOptions{})
+		simapp.DefaultNodeHome, 5, encoding, simstestutil.EmptyAppOptions{})
 	return testApp, appProvider.NewDefaultGenesisState(encoding.Marshaler)
 }
 
@@ -31,7 +30,7 @@ func ProviderAppIniter() (ibctesting.TestingApp, map[string]json.RawMessage) {
 func ConsumerAppIniter() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	encoding := appConsumer.MakeTestEncodingConfig()
 	testApp := appConsumer.New(log.NewNopLogger(), tmdb.NewMemDB(), nil, true, map[int64]bool{},
-		simapp.DefaultNodeHome, 5, encoding, simapp.EmptyAppOptions{})
+		simapp.DefaultNodeHome, 5, encoding, simstestutil.EmptyAppOptions{})
 	return testApp, appConsumer.NewDefaultGenesisState(encoding.Marshaler)
 }
 
@@ -39,6 +38,6 @@ func ConsumerAppIniter() (ibctesting.TestingApp, map[string]json.RawMessage) {
 func DemocracyConsumerAppIniter() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	encoding := appConsumerDemocracy.MakeTestEncodingConfig()
 	testApp := appConsumerDemocracy.New(log.NewNopLogger(), tmdb.NewMemDB(), nil, true, map[int64]bool{},
-		simapp.DefaultNodeHome, 5, encoding, simapp.EmptyAppOptions{})
+		simapp.DefaultNodeHome, 5, encoding, simstestutil.EmptyAppOptions{})
 	return testApp, appConsumerDemocracy.NewDefaultGenesisState(encoding.Marshaler)
 }
