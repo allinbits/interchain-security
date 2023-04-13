@@ -82,6 +82,7 @@ func SendIBCPacket(
 			"source port: %s, source channel: %s", portID, channelID,
 		)
 	}
+	// TODO update from https://github.com/cosmos/ibc-go/blob/v7.0.0/docs/migrations/v5-to-v6.md#ics04---sendpacket-api-change
 	packet := channeltypes.NewPacket(
 		packetData, sequence,
 		portID, channelID,
