@@ -3,19 +3,19 @@ package integration
 import (
 	"testing"
 
+	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
-	"github.com/cosmos/ibc-go/v4/testing/mock"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	"github.com/cosmos/ibc-go/v7/testing/mock"
 	testutil "github.com/cosmos/interchain-security/testutil/integration"
-	tmencoding "github.com/tendermint/tendermint/crypto/encoding"
 
 	icstestingutils "github.com/cosmos/interchain-security/testutil/ibc_testing"
 	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 	ccv "github.com/cosmos/interchain-security/x/ccv/types"
 
-	transfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/interchain-security/legacy_ibc_testing/testing"
+	transfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -300,7 +300,7 @@ func (s CCVTestSuite) validateEndpointsClientConfig(consumerBundle icstestinguti
 	s.Require().True(ok)
 	s.Require().Equal(
 		consumerUnbondingPeriod,
-		cs.(*ibctmtypes.ClientState).UnbondingPeriod,
+		cs.(*ibctm.ClientState).UnbondingPeriod,
 		"unexpected unbonding period in consumer client state",
 	)
 
@@ -310,7 +310,7 @@ func (s CCVTestSuite) validateEndpointsClientConfig(consumerBundle icstestinguti
 	s.Require().True(ok)
 	s.Require().Equal(
 		providerUnbondingPeriod,
-		cs.(*ibctmtypes.ClientState).UnbondingPeriod,
+		cs.(*ibctm.ClientState).UnbondingPeriod,
 		"unexpected unbonding period in provider client state",
 	)
 }

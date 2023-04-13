@@ -3,12 +3,12 @@ package simibc
 import (
 	"time"
 
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
-	ibctestingcore "github.com/cosmos/interchain-security/legacy_ibc_testing/core"
-	ibctesting "github.com/cosmos/interchain-security/legacy_ibc_testing/testing"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
+	icstestingutils "github.com/cosmos/interchain-security/testutil/ibc_testing"
 )
 
 // BeginBlock updates the current header and calls the app.BeginBlock method.
@@ -37,7 +37,7 @@ func BeginBlock(c *ibctesting.TestChain, dt time.Duration) {
 // so you can query the state inside the callback.
 //
 // NOTE: this method may be used independently of the rest of simibc.
-func EndBlock(c *ibctesting.TestChain, preCommitCallback func()) (*ibctmtypes.Header, []channeltypes.Packet) {
+func EndBlock(c *ibctesting.TestChain, preCommitCallback func()) (*ibctm.Header, []channeltypes.Packet) {
 	ebRes := c.App.EndBlock(abci.RequestEndBlock{Height: c.CurrentHeader.Height})
 
 	/*
@@ -58,7 +58,7 @@ func EndBlock(c *ibctesting.TestChain, preCommitCallback func()) (*ibctmtypes.He
 
 	for _, e := range ebRes.Events {
 		if e.Type == channeltypes.EventTypeSendPacket {
-			packet, _ := ibctestingcore.ReconstructPacketFromEvent(e)
+			packet, _ := icstestingutils.ReconstructPacketFromEvent(e)
 			packets = append(packets, packet)
 		}
 	}

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
-	ibctesting "github.com/cosmos/interchain-security/legacy_ibc_testing/testing"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 )
 
 // RelayedPath is a wrapper around ibctesting.Path gives fine-grained
@@ -20,7 +20,7 @@ type RelayedPath struct {
 	// clientHeaders is a map from chainID to an ordered list of headers that
 	// have been committed to that chain. The headers are used to update the
 	// client of the counterparty chain.
-	clientHeaders map[string][]*ibctmtypes.Header
+	clientHeaders map[string][]*ibctm.Header
 	// TODO: Make this private and expose methods to add packets and acks.
 	//       Currently, packets and acks are added directly to the outboxes,
 	//       but we should hide this implementation detail.
@@ -34,7 +34,7 @@ func MakeRelayedPath(t *testing.T, path *ibctesting.Path) RelayedPath {
 	t.Helper()
 	return RelayedPath{
 		t:             t,
-		clientHeaders: map[string][]*ibctmtypes.Header{},
+		clientHeaders: map[string][]*ibctm.Header{},
 		path:          path,
 		Outboxes:      MakeOrderedOutbox(),
 	}
@@ -62,7 +62,7 @@ func (f *RelayedPath) UpdateClient(chainID string) {
 			f.t.Fatal("in relayed path could not update client of chain: ", chainID, " with header: ", header, " err: ", err)
 		}
 	}
-	f.clientHeaders[f.counterparty(chainID)] = []*ibctmtypes.Header{}
+	f.clientHeaders[f.counterparty(chainID)] = []*ibctm.Header{}
 }
 
 // DeliverPackets delivers UP TO <num> packets to the chain which have been

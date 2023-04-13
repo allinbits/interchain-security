@@ -5,15 +5,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
 	"github.com/cosmos/interchain-security/x/ccv/provider/types"
 	ccvtypes "github.com/cosmos/interchain-security/x/ccv/types"
 )
 
 // GetTemplateClient returns the template client for provider proposals
-func (k Keeper) GetTemplateClient(ctx sdk.Context) *ibctmtypes.ClientState {
-	var cs ibctmtypes.ClientState
+func (k Keeper) GetTemplateClient(ctx sdk.Context) *ibctm.ClientState {
+	var cs ibctm.ClientState
 	k.paramSpace.Get(ctx, types.KeyTemplateClient, &cs)
 	return &cs
 }

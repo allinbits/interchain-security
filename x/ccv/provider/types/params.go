@@ -5,9 +5,9 @@ import (
 	"time"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v4/modules/core/23-commitment/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 	ccvtypes "github.com/cosmos/interchain-security/x/ccv/types"
 )
@@ -58,7 +58,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // NewParams creates new provider parameters with provided arguments
 func NewParams(
-	cs *ibctmtypes.ClientState,
+	cs *ibctm.ClientState,
 	trustingPeriodFraction string,
 	ccvTimeoutPeriod time.Duration,
 	initTimeoutPeriod time.Duration,
@@ -84,9 +84,9 @@ func DefaultParams() Params {
 	// create default client state with chainID, trusting period, unbonding period, and initial height zeroed out.
 	// these fields will be populated during proposal handler.
 	return NewParams(
-		ibctmtypes.NewClientState(
+		ibctm.NewClientState(
 			"", // chainID
-			ibctmtypes.DefaultTrustLevel,
+			ibctm.DefaultTrustLevel,
 			0, // trusting period
 			0, // unbonding period
 			DefaultMaxClockDrift,
@@ -153,9 +153,9 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 }
 
 func validateTemplateClient(i interface{}) error {
-	cs, ok := i.(ibctmtypes.ClientState)
+	cs, ok := i.(ibctm.ClientState)
 	if !ok {
-		return fmt.Errorf("invalid parameter type: %T, expected: %T", i, ibctmtypes.ClientState{})
+		return fmt.Errorf("invalid parameter type: %T, expected: %T", i, ibctm.ClientState{})
 	}
 
 	// copy clientstate to prevent changing original pointer

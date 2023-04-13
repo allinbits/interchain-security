@@ -4,16 +4,16 @@ import (
 	"testing"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v4/modules/core/23-commitment/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/cosmos/interchain-security/testutil/crypto"
 	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 	"github.com/cosmos/interchain-security/x/ccv/provider/types"
 	ccv "github.com/cosmos/interchain-security/x/ccv/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // Tests validation of consumer states and params within a provider genesis state
@@ -72,7 +72,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction, time.Hour, time.Hour, 30*time.Minute, time.Hour, "0.1", 400),
 				nil,
@@ -91,7 +91,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction, time.Hour, time.Hour, 30*time.Minute, time.Hour, "0.1", 400),
 				nil,
@@ -110,7 +110,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction, time.Hour, time.Hour, 30*time.Minute, time.Hour, "0.1", 400),
 				nil,
@@ -129,7 +129,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction, time.Hour, time.Hour, 30*time.Minute, time.Hour, "0.1", 400),
 				nil,
@@ -148,7 +148,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					0, clienttypes.Height{}, nil, []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction,
 					ccv.DefaultCCVTimeoutPeriod,
@@ -173,7 +173,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					"0.0", // 0 trusting period fraction here
 					ccv.DefaultCCVTimeoutPeriod,
@@ -198,7 +198,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction,
 					0, // 0 ccv timeout here
@@ -223,7 +223,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction,
 					ccv.DefaultCCVTimeoutPeriod,
@@ -248,7 +248,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction,
 					ccv.DefaultCCVTimeoutPeriod,
@@ -273,7 +273,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction,
 					ccv.DefaultCCVTimeoutPeriod,
@@ -298,7 +298,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction,
 					ccv.DefaultCCVTimeoutPeriod,
@@ -323,7 +323,7 @@ func TestValidateGenesisState(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				types.NewParams(ibctmtypes.NewClientState("", ibctmtypes.DefaultTrustLevel, 0, 0,
+				types.NewParams(ibctm.NewClientState("", ibctm.DefaultTrustLevel, 0, 0,
 					time.Second*40, clienttypes.Height{}, commitmenttypes.GetSDKSpecs(), []string{"ibc", "upgradedIBCState"}, true, false),
 					types.DefaultTrustingPeriodFraction,
 					ccv.DefaultCCVTimeoutPeriod,
@@ -670,9 +670,9 @@ func getInitialConsumerGenesis(t *testing.T, chainID string) consumertypes.Genes
 	valHash := valSet.Hash()
 	valUpdates := tmtypes.TM2PB.ValidatorUpdates(valSet)
 
-	cs := ibctmtypes.NewClientState(
+	cs := ibctm.NewClientState(
 		chainID,
-		ibctmtypes.DefaultTrustLevel,
+		ibctm.DefaultTrustLevel,
 		time.Duration(1),
 		time.Duration(2),
 		time.Duration(1),
@@ -682,7 +682,7 @@ func getInitialConsumerGenesis(t *testing.T, chainID string) consumertypes.Genes
 		true,
 		true,
 	)
-	consensusState := ibctmtypes.NewConsensusState(time.Now(), commitmenttypes.NewMerkleRoot([]byte("apphash")), valHash)
+	consensusState := ibctm.NewConsensusState(time.Now(), commitmenttypes.NewMerkleRoot([]byte("apphash")), valHash)
 
 	params := consumertypes.DefaultParams()
 	params.Enabled = true

@@ -12,18 +12,18 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	conntypes "github.com/cosmos/ibc-go/v4/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v4/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v4/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v4/modules/core/exported"
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	conntypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 
 	consumertypes "github.com/cosmos/interchain-security/x/ccv/consumer/types"
 	"github.com/cosmos/interchain-security/x/ccv/provider/types"
 	ccv "github.com/cosmos/interchain-security/x/ccv/types"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
 )
 
 // Keeper defines the Cross-Chain Validation Provider Keeper
@@ -599,7 +599,7 @@ func (k Keeper) ConsumeMaturedUnbondingOps(ctx sdk.Context) []uint64 {
 
 // Retrieves the underlying client state corresponding to a connection ID.
 func (k Keeper) getUnderlyingClient(ctx sdk.Context, connectionID string) (
-	clientID string, tmClient *ibctmtypes.ClientState, err error,
+	clientID string, tmClient *ibctm.ClientState, err error,
 ) {
 	conn, ok := k.connectionKeeper.GetConnection(ctx, connectionID)
 	if !ok {
@@ -612,7 +612,7 @@ func (k Keeper) getUnderlyingClient(ctx sdk.Context, connectionID string) (
 		return "", nil, sdkerrors.Wrapf(clienttypes.ErrClientNotFound,
 			"client not found for client ID: %s", conn.ClientId)
 	}
-	tmClient, ok = clientState.(*ibctmtypes.ClientState)
+	tmClient, ok = clientState.(*ibctm.ClientState)
 	if !ok {
 		return "", nil, sdkerrors.Wrapf(clienttypes.ErrInvalidClientType,
 			"invalid client type. expected %s, got %s", ibcexported.Tendermint, clientState.ClientType())

@@ -14,8 +14,8 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	clienttypes "github.com/cosmos/ibc-go/v4/modules/core/02-client/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v4/modules/light-clients/07-tendermint/types"
+	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/cosmos/interchain-security/x/ccv/provider/types"
 )
 
@@ -220,7 +220,7 @@ func TestMarshalConsumerAdditionProposal(t *testing.T) {
 	types.RegisterInterfaces(ir)
 	govtypes.RegisterInterfaces(ir)
 	clienttypes.RegisterInterfaces(ir)
-	ibctmtypes.RegisterInterfaces(ir)
+	ibctm.RegisterInterfaces(ir)
 	cdc := codec.NewProtoCodec(ir)
 
 	// marshal proposal
