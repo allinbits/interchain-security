@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/cosmos/interchain-security/x/ccv/provider/types"
 	"github.com/spf13/cobra"
@@ -224,8 +224,8 @@ type ConsumerAdditionProposalJSON struct {
 	Deposit string `json:"deposit"`
 }
 
+// TODO remove ?
 type ConsumerAdditionProposalReq struct {
-	BaseReq  rest.BaseReq   `json:"base_req"`
 	Proposer sdk.AccAddress `json:"proposer"`
 
 	Title         string             `json:"title"`
@@ -270,7 +270,6 @@ type ConsumerRemovalProposalJSON struct {
 }
 
 type ConsumerRemovalProposalReq struct {
-	BaseReq  rest.BaseReq   `json:"base_req"`
 	Proposer sdk.AccAddress `json:"proposer"`
 
 	Title       string `json:"title"`
@@ -289,7 +288,6 @@ type EquivocationProposalJSON struct {
 }
 
 type EquivocationProposalReq struct {
-	BaseReq  rest.BaseReq   `json:"base_req"`
 	Proposer sdk.AccAddress `json:"proposer"`
 
 	// evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
@@ -311,14 +309,6 @@ func ParseEquivocationProposalJSON(proposalFile string) (EquivocationProposalJSO
 	}
 
 	return proposal, nil
-}
-
-// EquivocationProposalRESTHandler returns a ProposalRESTHandler that exposes the equivocation rest handler.
-func EquivocationProposalRESTHandler(clientCtx client.Context) govrest.ProposalRESTHandler {
-	return govrest.ProposalRESTHandler{
-		SubRoute: "equivocation",
-		Handler:  postEquivocationProposalHandlerFn(clientCtx),
-	}
 }
 
 func ParseConsumerRemovalProposalJSON(proposalFile string) (ConsumerRemovalProposalJSON, error) {
