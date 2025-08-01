@@ -337,7 +337,7 @@ func (k Keeper) AssignConsumerKey(
 	// a ConsumerAdditionProposal was submitted.
 	if !k.IsConsumerProposedOrRegistered(ctx, chainID) {
 		return errorsmod.Wrapf(
-			types.ErrUnknownConsumerChainId, chainID,
+			types.ErrUnknownConsumerChainId, "%s", chainID,
 		)
 	}
 
