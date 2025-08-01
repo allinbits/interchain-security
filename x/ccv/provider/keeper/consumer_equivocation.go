@@ -405,7 +405,7 @@ func (k Keeper) JailAndTombstoneValidator(ctx sdk.Context, providerAddr types.Pr
 	}
 
 	if k.slashingKeeper.IsTombstoned(ctx, providerAddr.ToSdkConsAddr()) {
-		return errorsmod.Wrapf(slashingtypes.ErrValidatorTombstoned, providerAddr.String())
+		return errorsmod.Wrapf(slashingtypes.ErrValidatorTombstoned, "%s", providerAddr.String())
 	}
 
 	// jail validator if not already
