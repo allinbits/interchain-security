@@ -203,12 +203,6 @@ func (td *DefaultDriver) runAction(action interface{}) error {
 		target.startConsumerEvidenceDetector(action, td.verbose)
 	case SubmitChangeRewardDenomsProposalAction:
 		target.submitChangeRewardDenomsProposal(action, td.verbose)
-	case OptInAction:
-		target.optIn(action, td.target, td.verbose)
-	case OptOutAction:
-		target.optOut(action, td.target, td.verbose)
-	case SetConsumerCommissionRateAction:
-		target.setConsumerCommissionRate(action, td.target, td.verbose)
 	default:
 		log.Fatalf("unknown action in testRun %s: %#v", td.testCfg.name, action)
 	}

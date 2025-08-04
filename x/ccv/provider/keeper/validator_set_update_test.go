@@ -367,7 +367,7 @@ func TestFilterValidatorsConsiderAll(t *testing.T) {
 	require.Equal(t, expectedValidators, actualValidators)
 }
 
-func TestFilterValidatorsConsiderOnlyOptIn(t *testing.T) {
+func TestFilterValidatorsWithConsumerKeys(t *testing.T) {
 	providerKeeper, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(t, testkeeper.NewInMemKeeperParams(t))
 	defer ctrl.Finish()
 

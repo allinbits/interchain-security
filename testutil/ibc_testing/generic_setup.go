@@ -40,7 +40,6 @@ var (
 	FirstConsumerChainID string
 	provChainID          string
 	democConsumerChainID string
-	consumerTopNParams   [NumConsumers]uint32
 )
 
 func init() {
@@ -49,9 +48,6 @@ func init() {
 	FirstConsumerChainID = ibctesting.GetChainID(2)
 	provChainID = ibctesting.GetChainID(1)
 	democConsumerChainID = ibctesting.GetChainID(5000)
-	// TopN parameter values per consumer chain initiated
-	// sorted in ascending order i.e. testchain2, testchain3, ..., testchain6
-	consumerTopNParams = [NumConsumers]uint32{100, 100, 100, 100, 100}
 }
 
 // ConsumerBundle serves as a way to store useful in-mem consumer app chain state
@@ -61,7 +57,6 @@ type ConsumerBundle struct {
 	App          testutil.ConsumerApp
 	Path         *ibctesting.Path
 	TransferPath *ibctesting.Path
-	TopN         uint32
 }
 
 // GetCtx returns the context for the ConsumerBundle
@@ -140,7 +135,7 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 
 	prop := testkeeper.GetTestConsumerAdditionProp()
 	prop.ChainId = chainID
-	prop.Top_N = consumerTopNParams[index] // isn't used in CreateConsumerClient
+	// For Replicated Security, all validators participate (no TopN parameter)
 
 	// NOTE: we cannot use the time.Now() because the coordinator chooses a hardcoded start time
 	// using time.Now() could set the spawn time to be too far in the past or too far in the future
@@ -153,14 +148,8 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	props := providerKeeper.GetAllPendingConsumerAdditionProps(providerChain.GetContext())
 	s.Require().Len(props, 1, "unexpected len consumer addition proposals in AddConsumer")
 
-	// opt-in all validators
-	lastVals, err := providerApp.GetProviderKeeper().GetLastBondedValidators(providerChain.GetContext())
-	s.Require().NoError(err)
-
-	for _, v := range lastVals {
-		consAddr, _ := v.GetConsAddr()
-		providerKeeper.SetOptedIn(providerChain.GetContext(), chainID, providertypes.NewProviderConsAddress(consAddr))
-	}
+	// For Replicated Security, all validators automatically participate
+	// No opt-in needed
 
 	// commit the state on the provider chain
 	// and create the client and genesis of consumer
@@ -203,6 +192,5 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	return &ConsumerBundle{
 		Chain: testChain,
 		App:   consumerToReturn,
-		TopN:  prop.Top_N,
 	}
 }

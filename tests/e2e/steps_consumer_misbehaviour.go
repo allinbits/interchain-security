@@ -37,7 +37,6 @@ func stepsStartChainsForConsumerMisbehaviour(consumerName string) []Step {
 				ConsumerChain: ChainID(consumerName),
 				SpawnTime:     0,
 				InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 1},
-				TopN:          0,
 			},
 			State: State{
 				ChainID("provi"): ChainState{
@@ -79,13 +78,6 @@ func stepsStartChainsForConsumerMisbehaviour(consumerName string) []Step {
 					},
 				},
 			},
-		},
-		{
-			Action: OptInAction{
-				Chain:     ChainID(consumerName),
-				Validator: ValidatorID("alice"),
-			},
-			State: State{},
 		},
 		{
 			Action: VoteGovProposalAction{

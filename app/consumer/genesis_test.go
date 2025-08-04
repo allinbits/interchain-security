@@ -42,7 +42,6 @@ var consumerGenesisStates map[string]string = map[string]string{
 		  "consumer_redistribution_fraction": "0.75",
 		  "historical_entries": "10000",
 		  "unbonding_period": "1728000s",
-		  "soft_opt_out_threshold": "",
 		  "reward_denoms": [],
 		  "provider_reward_denoms": []
 		},
@@ -165,7 +164,6 @@ var consumerGenesisStates map[string]string = map[string]string{
 		  "consumer_redistribution_fraction": "0.75",
 		  "historical_entries": "10000",
 		  "unbonding_period": "1209600s",
-		  "soft_opt_out_threshold": "0.05",
 		  "reward_denoms": [],
 		  "provider_reward_denoms": []
 		},
@@ -285,7 +283,6 @@ var consumerGenesisStates map[string]string = map[string]string{
 		  "consumer_redistribution_fraction": "0.75",
 		  "historical_entries": "10000",
 		  "unbonding_period": "1209600s",
-		  "soft_opt_out_threshold": "0.05",
 		  "reward_denoms": [],
 		  "provider_reward_denoms": [],
 		  "retry_delay_period": "3600s"
@@ -495,8 +492,6 @@ func TestConsumerGenesisTransformationFromV2ToCurrent(t *testing.T) {
 	require.EqualValues(t, srcGenesis.Params.HistoricalEntries, resultGenesis.Params.HistoricalEntries)
 	require.EqualValues(t, srcGenesis.Params.UnbondingPeriod, resultGenesis.Params.UnbondingPeriod)
 
-	// `SoftOptOutThreshold` is deprecated, so it should be set to zero the current version
-	require.EqualValues(t, "0", resultGenesis.Params.SoftOptOutThreshold)
 	require.EqualValues(t, srcGenesis.Params.RewardDenoms, resultGenesis.Params.RewardDenoms)
 	require.EqualValues(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
 
@@ -568,8 +563,6 @@ func TestConsumerGenesisTransformationV330ToCurrent(t *testing.T) {
 	require.Equal(t, srcGenesis.Params.HistoricalEntries, resultGenesis.Params.HistoricalEntries)
 	require.Equal(t, srcGenesis.Params.UnbondingPeriod, resultGenesis.Params.UnbondingPeriod)
 
-	// `SoftOptOutThreshold` is deprecated, so it should be set to zero the current version
-	require.Equal(t, "0", resultGenesis.Params.SoftOptOutThreshold)
 
 	require.Equal(t, srcGenesis.Params.RewardDenoms, resultGenesis.Params.RewardDenoms)
 	require.Equal(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
@@ -615,7 +608,6 @@ func TestConsumerGenesisTransformationV4ToV2(t *testing.T) {
 	require.EqualValues(t, srcGenesis.Params.ConsumerRedistributionFraction, resultGenesis.Params.ConsumerRedistributionFraction)
 	require.EqualValues(t, srcGenesis.Params.HistoricalEntries, resultGenesis.Params.HistoricalEntries)
 	require.EqualValues(t, srcGenesis.Params.UnbondingPeriod, resultGenesis.Params.UnbondingPeriod)
-	require.EqualValues(t, srcGenesis.Params.SoftOptOutThreshold, resultGenesis.Params.SoftOptOutThreshold)
 	require.EqualValues(t, srcGenesis.Params.RewardDenoms, resultGenesis.Params.RewardDenoms)
 	require.EqualValues(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
 	require.Equal(t, resultGenesis.Params.RetryDelayPeriod, time.Duration(0))
@@ -662,7 +654,6 @@ func TestConsumerGenesisTransformationV4ToV33(t *testing.T) {
 	require.EqualValues(t, srcGenesis.Params.ConsumerRedistributionFraction, resultGenesis.Params.ConsumerRedistributionFraction)
 	require.EqualValues(t, srcGenesis.Params.HistoricalEntries, resultGenesis.Params.HistoricalEntries)
 	require.EqualValues(t, srcGenesis.Params.UnbondingPeriod, resultGenesis.Params.UnbondingPeriod)
-	require.EqualValues(t, srcGenesis.Params.SoftOptOutThreshold, resultGenesis.Params.SoftOptOutThreshold)
 	require.EqualValues(t, srcGenesis.Params.RewardDenoms, resultGenesis.Params.RewardDenoms)
 	require.EqualValues(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
 
