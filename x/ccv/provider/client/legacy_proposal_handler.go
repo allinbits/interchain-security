@@ -83,8 +83,7 @@ Where proposal.json contains:
 				proposal.GenesisHash, proposal.BinaryHash, proposal.SpawnTime,
 				proposal.ConsumerRedistributionFraction, proposal.BlocksPerDistributionTransmission,
 				proposal.DistributionTransmissionChannel, proposal.HistoricalEntries,
-				proposal.CcvTimeoutPeriod, proposal.TransferTimeoutPeriod, proposal.UnbondingPeriod, proposal.TopN,
-				proposal.ValidatorsPowerCap, proposal.ValidatorSetCap, proposal.Allowlist, proposal.Denylist)
+				proposal.CcvTimeoutPeriod, proposal.TransferTimeoutPeriod, proposal.UnbondingPeriod)
 
 			from := clientCtx.GetFromAddress()
 
@@ -260,8 +259,7 @@ Where proposal.json contains:
 			}
 
 			content := types.NewConsumerModificationProposal(
-				proposal.Title, proposal.Summary, proposal.ChainId, proposal.TopN,
-				proposal.ValidatorsPowerCap, proposal.ValidatorSetCap, proposal.Allowlist, proposal.Denylist)
+				proposal.Title, proposal.Summary, proposal.ChainId)
 
 			from := clientCtx.GetFromAddress()
 

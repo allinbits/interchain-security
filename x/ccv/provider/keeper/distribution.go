@@ -10,7 +10,6 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
 )
@@ -217,11 +216,8 @@ func (k Keeper) AllocateTokensToConsumerValidators(
 			continue
 		}
 
-		// check if the validator set a custom commission rate for the consumer chain
-		if cr, found := k.GetConsumerCommissionRate(ctx, chainID, types.NewProviderConsAddress(consAddr)); found {
-			// set the validator commission rate
-			val.Commission.CommissionRates.Rate = cr
-		}
+		// For Replicated Security, validators use their standard commission rate
+		// No per-consumer chain commission rates are supported
 
 		// allocate the consumer reward tokens to the validator
 		err = k.distributionKeeper.AllocateTokensToValidator(
@@ -307,34 +303,4 @@ func (k Keeper) IdentifyConsumerChainIDFromIBCPacket(ctx sdk.Context, packet cha
 	}
 
 	return chainID, nil
-}
-
-// HandleSetConsumerCommissionRate sets a per-consumer chain commission rate for the given provider address
-// on the condition that the given consumer chain exists.
-func (k Keeper) HandleSetConsumerCommissionRate(ctx sdk.Context, chainID string, providerAddr types.ProviderConsAddress, commissionRate math.LegacyDec) error {
-	// check that the consumer chain exists
-	if !k.IsConsumerProposedOrRegistered(ctx, chainID) {
-		return errorsmod.Wrapf(
-			types.ErrUnknownConsumerChainId,
-			"unknown consumer chain, with id: %s", chainID)
-	}
-
-	// validate against the minimum commission rate
-	minRate, err := k.stakingKeeper.MinCommissionRate(ctx)
-	if err != nil {
-		return err
-	}
-	if commissionRate.LT(minRate) {
-		return errorsmod.Wrapf(
-			stakingtypes.ErrCommissionLTMinRate,
-			"commission rate cannot be less than %s", minRate,
-		)
-	}
-	// set per-consumer chain commission rate for the validator address
-	return k.SetConsumerCommissionRate(
-		ctx,
-		chainID,
-		providerAddr,
-		commissionRate,
-	)
 }

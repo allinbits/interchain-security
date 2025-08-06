@@ -10,10 +10,9 @@ import (
 // If a chain is in voting while the upgrade happens, this is not sufficient,
 // and a migration to rewrite the proposal is needed.
 func MigrateTopNForRegisteredChains(ctx sdk.Context, providerKeeper providerkeeper.Keeper) {
-	// Set the topN of each chain to 95
-	for _, chainID := range providerKeeper.GetAllRegisteredConsumerChainIDs(ctx) {
-		providerKeeper.SetTopN(ctx, chainID, 95)
-	}
+	// This migration is no longer needed for Replicated Security
+	// All bonded validators participate, so there's no TopN concept
+	providerKeeper.Logger(ctx).Info("MigrateTopNForRegisteredChains: Skipped - Replicated Security doesn't use Top N")
 }
 
 // // If there are consumer addition proposals in the voting period at the upgrade time, they may need the topN value updated.

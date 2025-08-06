@@ -373,10 +373,10 @@ func TestFilterValidatorsConsiderOnlyOptIn(t *testing.T) {
 
 	chainID := "chainID"
 
-	// no consumer validators returned if we have no opted-in validators
+	// For Replicated Security, all bonded validators are included
 	require.Empty(t, providerKeeper.FilterValidators(ctx, chainID, []stakingtypes.Validator{},
 		func(providerAddr types.ProviderConsAddress) bool {
-			return providerKeeper.IsOptedIn(ctx, chainID, providerAddr)
+			return true // All validators participate in Replicated Security
 		}))
 
 	var expectedValidators []types.ConsumerValidator
@@ -406,15 +406,14 @@ func TestFilterValidatorsConsiderOnlyOptIn(t *testing.T) {
 	}
 	expectedValidators = append(expectedValidators, expectedValBConsumerValidator)
 
-	// opt in validators A and B with 0 power and no consumer public keys
-	providerKeeper.SetOptedIn(ctx, chainID, types.NewProviderConsAddress(valAConsAddr))
-	providerKeeper.SetOptedIn(ctx, chainID, types.NewProviderConsAddress(valBConsAddr))
+	// For Replicated Security, all bonded validators participate
+	// No opt-in needed
 
-	// the expected actual validators are the opted-in validators but with the correct power and consumer public keys set
+	// the expected actual validators are all bonded validators with the correct power and consumer public keys set
 	bondedValidators := []stakingtypes.Validator{valA, valB}
 	actualValidators := providerKeeper.FilterValidators(ctx, "chainID", bondedValidators,
 		func(providerAddr types.ProviderConsAddress) bool {
-			return providerKeeper.IsOptedIn(ctx, chainID, providerAddr)
+			return true // All validators participate in Replicated Security
 		})
 
 	// sort validators first to be able to compare
@@ -428,12 +427,21 @@ func TestFilterValidatorsConsiderOnlyOptIn(t *testing.T) {
 	sortValidators(expectedValidators)
 	require.Equal(t, expectedValidators, actualValidators)
 
-	// create a staking validator C that is not opted in, hence `expectedValidators` remains the same
+	// create a staking validator C - in Replicated Security all validators participate
 	valC := createStakingValidator(ctx, mocks, 3, 3, 3)
+	valCConsAddr, _ := valC.GetConsAddr()
+	valCPublicKey, _ := valC.TmConsPublicKey()
+	expectedValCConsumerValidator := types.ConsumerValidator{
+		ProviderConsAddr:  valCConsAddr,
+		Power:             3,
+		ConsumerPublicKey: &valCPublicKey,
+	}
+	expectedValidators = append(expectedValidators, expectedValCConsumerValidator)
+
 	bondedValidators = []stakingtypes.Validator{valA, valB, valC}
 	actualValidators = providerKeeper.FilterValidators(ctx, "chainID", bondedValidators,
 		func(providerAddr types.ProviderConsAddress) bool {
-			return providerKeeper.IsOptedIn(ctx, chainID, providerAddr)
+			return true // All validators participate in Replicated Security
 		})
 
 	sortValidators(actualValidators)

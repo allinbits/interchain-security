@@ -404,15 +404,10 @@ func (tr Chain) submitConsumerRemovalProposal(
 }
 
 type SubmitConsumerModificationProposalAction struct {
-	Chain              ChainID
-	From               ValidatorID
-	Deposit            uint
-	ConsumerChain      ChainID
-	TopN               uint32
-	ValidatorsPowerCap uint32
-	ValidatorSetCap    uint32
-	Allowlist          []string
-	Denylist           []string
+	Chain         ChainID
+	From          ValidatorID
+	Deposit       uint
+	ConsumerChain ChainID
 }
 
 func (tr Chain) submitConsumerModificationProposal(
@@ -420,15 +415,10 @@ func (tr Chain) submitConsumerModificationProposal(
 	verbose bool,
 ) {
 	prop := client.ConsumerModificationProposalJSON{
-		Title:              "Propose the modification of the PSS parameters of a chain",
-		Summary:            "summary of a modification proposal",
-		ChainId:            string(tr.testConfig.chainConfigs[action.ConsumerChain].ChainId),
-		Deposit:            fmt.Sprint(action.Deposit) + `stake`,
-		TopN:               action.TopN,
-		ValidatorsPowerCap: action.ValidatorsPowerCap,
-		ValidatorSetCap:    action.ValidatorSetCap,
-		Allowlist:          action.Allowlist,
-		Denylist:           action.Denylist,
+		Title:   "Propose the modification of consumer chain parameters",
+		Summary: "summary of a modification proposal",
+		ChainId: string(tr.testConfig.chainConfigs[action.ConsumerChain].ChainId),
+		Deposit: fmt.Sprint(action.Deposit) + `stake`,
 	}
 
 	bz, err := json.Marshal(prop)

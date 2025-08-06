@@ -264,15 +264,10 @@ func TestProviderStateIsCleanedAfterConsumerChainIsStopped(t *testing.T, ctx sdk
 
 	require.Empty(t, providerKeeper.GetAllVscSendTimestamps(ctx, expectedChainID))
 
-	// in case the chain was successfully stopped, it should not contain a Top N associated to it
-	_, found = providerKeeper.GetTopN(ctx, expectedChainID)
-	require.False(t, found)
-
 	// test key assignment state is cleaned
 	require.Empty(t, providerKeeper.GetAllValidatorConsumerPubKeys(ctx, &expectedChainID))
 	require.Empty(t, providerKeeper.GetAllValidatorsByConsumerAddr(ctx, &expectedChainID))
 	require.Empty(t, providerKeeper.GetAllConsumerAddrsToPrune(ctx, expectedChainID))
-	require.Empty(t, providerKeeper.GetAllCommissionRateValidators(ctx, expectedChainID))
 	require.Zero(t, providerKeeper.GetEquivocationEvidenceMinHeight(ctx, expectedChainID))
 }
 
@@ -292,11 +287,6 @@ func GetTestConsumerAdditionProp() *providertypes.ConsumerAdditionProposal {
 		types.DefaultCCVTimeoutPeriod,
 		types.DefaultTransferTimeoutPeriod,
 		types.DefaultConsumerUnbondingPeriod,
-		0,
-		0,
-		0,
-		nil,
-		nil,
 	).(*providertypes.ConsumerAdditionProposal)
 
 	return prop

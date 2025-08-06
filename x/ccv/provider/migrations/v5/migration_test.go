@@ -3,8 +3,6 @@ package v5
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	testutil "github.com/cosmos/interchain-security/v5/testutil/keeper"
 )
 
@@ -15,16 +13,12 @@ func TestMigrateParams(t *testing.T) {
 
 	provKeeper.SetConsumerClientId(ctx, "chainID", "clientID")
 
-	// initially top N should not exist
-	topN, found := provKeeper.GetTopN(ctx, "chainID")
-	require.False(t, found)
-	require.Zero(t, topN)
+	// For Replicated Security, TopN is not used
+	// The migration is now a no-op that just logs a message
 
-	// migrate
+	// Run the migration
 	MigrateTopNForRegisteredChains(ctx, provKeeper)
 
-	// after migration, top N should be 95
-	topN, found = provKeeper.GetTopN(ctx, "chainID")
-	require.True(t, found)
-	require.Equal(t, uint32(95), topN)
+	// Migration should complete without errors
+	// No state changes are expected for Replicated Security
 }

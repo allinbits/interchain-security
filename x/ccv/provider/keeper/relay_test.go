@@ -109,8 +109,8 @@ func TestQueueVSCPacketsDoesNotResetConsumerValidatorsHeights(t *testing.T) {
 	// set a consumer client, so we have a consumer chain (i.e., `k.GetAllConsumerChains(ctx)` is non empty)
 	providerKeeper.SetConsumerClientId(ctx, "chainID", "clientID")
 
-	// opt in validator A and set as a consumer validator
-	providerKeeper.SetOptedIn(ctx, "chainID", providertypes.NewProviderConsAddress(valAConsAddr))
+	// For Replicated Security, all bonded validators participate
+	// Set validator A as a consumer validator
 	consumerValidatorA := types.ConsumerValidator{
 		ProviderConsAddr:  valAConsAddr,
 		Power:             1,
@@ -119,9 +119,8 @@ func TestQueueVSCPacketsDoesNotResetConsumerValidatorsHeights(t *testing.T) {
 	}
 	providerKeeper.SetConsumerValidator(ctx, "chainID", consumerValidatorA)
 
-	// Opt in validator B. Note that validator B is not a consumer validator and hence would become a consumer
-	// validator for the first time after the `QueueVSCPackets` call.
-	providerKeeper.SetOptedIn(ctx, "chainID", providertypes.NewProviderConsAddress(valBConsAddr))
+	// Note: In Replicated Security, validator B will automatically be included
+	// since all bonded validators participate
 
 	providerKeeper.QueueVSCPackets(ctx)
 
@@ -802,7 +801,7 @@ func TestEndBlockVSU(t *testing.T) {
 
 	chainID := "chainID"
 
-	providerKeeper.SetTopN(ctx, chainID, 100)
+	// For replicated security, all validators participate (no TopN needed)
 
 	// 10 blocks constitute an epoch
 	params := providertypes.DefaultParams()
@@ -849,8 +848,8 @@ func TestEndBlockVSU(t *testing.T) {
 	require.Equal(t, 1, len(providerKeeper.GetPendingVSCPackets(ctx, chainID)))
 }
 
-// TestQueueVSCPacketsWithPowerCapping tests queueing validator set updates with power capping
-func TestQueueVSCPacketsWithPowerCapping(t *testing.T) {
+// TestQueueVSCPacketsForReplicatedSecurity tests queueing validator set updates for replicated security
+func TestQueueVSCPacketsForReplicatedSecurity(t *testing.T) {
 	providerKeeper, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(t, testkeeper.NewInMemKeeperParams(t))
 	defer ctrl.Finish()
 
@@ -870,6 +869,7 @@ func TestQueueVSCPacketsWithPowerCapping(t *testing.T) {
 	mocks.MockStakingKeeper.EXPECT().GetValidatorByConsAddr(ctx, valCConsAddr).Return(valC, nil).AnyTimes()
 	valD := createStakingValidator(ctx, mocks, 4, 8, 4) // 25% of the total voting power
 	valDConsAddr, _ := valD.GetConsAddr()
+	valDPubKey, _ := valD.TmConsPublicKey()
 	mocks.MockStakingKeeper.EXPECT().GetValidatorByConsAddr(ctx, valDConsAddr).Return(valD, nil).AnyTimes()
 	valE := createStakingValidator(ctx, mocks, 5, 16, 5) // 50% of the total voting power
 	valEConsAddr, _ := valE.GetConsAddr()
@@ -881,19 +881,8 @@ func TestQueueVSCPacketsWithPowerCapping(t *testing.T) {
 	// add a consumer chain
 	providerKeeper.SetConsumerClientId(ctx, "chainID", "clientID")
 
-	providerKeeper.SetTopN(ctx, "chainID", 50) // would opt in E
-
-	// opt in all validators
-	providerKeeper.SetOptedIn(ctx, "chainID", providertypes.NewProviderConsAddress(valAConsAddr))
-	providerKeeper.SetOptedIn(ctx, "chainID", providertypes.NewProviderConsAddress(valBConsAddr))
-	providerKeeper.SetOptedIn(ctx, "chainID", providertypes.NewProviderConsAddress(valCConsAddr))
-	providerKeeper.SetOptedIn(ctx, "chainID", providertypes.NewProviderConsAddress(valDConsAddr))
-
-	// denylist validator D
-	providerKeeper.SetDenylist(ctx, "chainID", providertypes.NewProviderConsAddress(valDConsAddr))
-
-	// set a power-capping of 40%
-	providerKeeper.SetValidatorsPowerCap(ctx, "chainID", 40)
+	// For replicated security, all validators participate
+	// No opt-in, denylist, or power capping needed
 
 	providerKeeper.QueueVSCPackets(ctx)
 
@@ -901,23 +890,27 @@ func TestQueueVSCPacketsWithPowerCapping(t *testing.T) {
 	expectedQueuedVSCPackets := []ccv.ValidatorSetChangePacketData{
 		ccv.NewValidatorSetChangePacketData(
 			[]abci.ValidatorUpdate{
-				// validator D is not here because it was denylisted
-				// powers have changed because of power capping
+				// All validators participate in replicated security
+				// Order is ascending by power
 				{
-					PubKey: valEPubKey,
-					Power:  9,
-				},
-				{
-					PubKey: valCPubKey,
-					Power:  6,
+					PubKey: valAPubKey,
+					Power:  1,
 				},
 				{
 					PubKey: valBPubKey,
-					Power:  5,
+					Power:  3,
 				},
 				{
-					PubKey: valAPubKey,
+					PubKey: valCPubKey,
 					Power:  4,
+				},
+				{
+					PubKey: valDPubKey,
+					Power:  8,
+				},
+				{
+					PubKey: valEPubKey,
+					Power:  16,
 				},
 			},
 			1,

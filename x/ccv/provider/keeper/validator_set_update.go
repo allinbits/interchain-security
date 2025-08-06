@@ -226,3 +226,17 @@ func (k Keeper) FilterValidators(
 func (k Keeper) GetLastBondedValidators(ctx sdk.Context) ([]stakingtypes.Validator, error) {
 	return ccv.GetLastBondedValidatorsUtil(ctx, k.stakingKeeper, k.Logger(ctx))
 }
+
+// ComputeNextValidators computes the next validator set for a consumer chain.
+// For Replicated Security, all bonded validators are included in the consumer validator set.
+func (k Keeper) ComputeNextValidators(
+	ctx sdk.Context,
+	chainID string,
+	bondedValidators []stakingtypes.Validator,
+) []types.ConsumerValidator {
+	// For Replicated Security, we include all bonded validators
+	// The predicate always returns true to include every validator
+	return k.FilterValidators(ctx, chainID, bondedValidators, func(providerAddr types.ProviderConsAddress) bool {
+		return true
+	})
+}

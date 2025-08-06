@@ -67,11 +67,6 @@ func TestHandleConsumerAdditionProposal(t *testing.T) {
 				100000000000,
 				100000000000,
 				100000000000,
-				0,
-				0,
-				0,
-				nil,
-				nil,
 			).(*providertypes.ConsumerAdditionProposal),
 			blockTime:     now,
 			expAppendProp: true,
@@ -97,11 +92,6 @@ func TestHandleConsumerAdditionProposal(t *testing.T) {
 				100000000000,
 				100000000000,
 				100000000000,
-				0,
-				0,
-				0,
-				nil,
-				nil,
 			).(*providertypes.ConsumerAdditionProposal),
 			blockTime:     now,
 			expAppendProp: false,
@@ -809,11 +799,6 @@ func TestBeginBlockInit(t *testing.T) {
 			100000000000,
 			100000000000,
 			100000000000,
-			50,
-			0,
-			0,
-			nil,
-			nil,
 		).(*providertypes.ConsumerAdditionProposal),
 		providertypes.NewConsumerAdditionProposal(
 			"title", "spawn time passed", "chain2", clienttypes.NewHeight(3, 4), []byte{}, []byte{},
@@ -825,11 +810,6 @@ func TestBeginBlockInit(t *testing.T) {
 			100000000000,
 			100000000000,
 			100000000000,
-			50,
-			0,
-			0,
-			nil,
-			nil,
 		).(*providertypes.ConsumerAdditionProposal),
 		providertypes.NewConsumerAdditionProposal(
 			"title", "spawn time not passed", "chain3", clienttypes.NewHeight(3, 4), []byte{}, []byte{},
@@ -841,11 +821,6 @@ func TestBeginBlockInit(t *testing.T) {
 			100000000000,
 			100000000000,
 			100000000000,
-			50,
-			0,
-			0,
-			nil,
-			nil,
 		).(*providertypes.ConsumerAdditionProposal),
 		providertypes.NewConsumerAdditionProposal(
 			"title", "invalid proposal: chain id already exists", "chain2", clienttypes.NewHeight(4, 5), []byte{}, []byte{},
@@ -857,11 +832,6 @@ func TestBeginBlockInit(t *testing.T) {
 			100000000000,
 			100000000000,
 			100000000000,
-			50,
-			0,
-			0,
-			nil,
-			nil,
 		).(*providertypes.ConsumerAdditionProposal),
 		providertypes.NewConsumerAdditionProposal(
 			"title", "opt-in chain with at least one validator opted in", "chain5", clienttypes.NewHeight(3, 4), []byte{}, []byte{},
@@ -873,11 +843,6 @@ func TestBeginBlockInit(t *testing.T) {
 			100000000000,
 			100000000000,
 			100000000000,
-			0,
-			0,
-			0,
-			nil,
-			nil,
 		).(*providertypes.ConsumerAdditionProposal),
 		providertypes.NewConsumerAdditionProposal(
 			"title", "opt-in chain with no validator opted in", "chain6", clienttypes.NewHeight(3, 4), []byte{}, []byte{},
@@ -889,11 +854,6 @@ func TestBeginBlockInit(t *testing.T) {
 			100000000000,
 			100000000000,
 			100000000000,
-			0,
-			0,
-			0,
-			nil,
-			nil,
 		).(*providertypes.ConsumerAdditionProposal),
 	}
 
@@ -912,14 +872,12 @@ func TestBeginBlockInit(t *testing.T) {
 		providerKeeper.SetPendingConsumerAdditionProp(ctx, prop)
 	}
 
-	// opt in a sample validator so the chain's proposal can successfully execute
+	// For Replicated Security, all bonded validators participate - no opt-in needed
 	validator := cryptotestutil.NewCryptoIdentityFromIntSeed(0).SDKStakingValidator()
-	consAddr, _ := validator.GetConsAddr()
 	testkeeper.SetupMocksForLastBondedValidatorsExpectation(mocks.MockStakingKeeper, 1, []stakingtypes.Validator{validator}, []int64{0}, -1) // -1 to allow any number of calls
 
 	valAddr, _ := sdk.ValAddressFromBech32(validator.GetOperator())
 	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(gomock.Any(), valAddr).Return(int64(1), nil).AnyTimes()
-	providerKeeper.SetOptedIn(ctx, pendingProps[4].ChainId, providertypes.NewProviderConsAddress(consAddr))
 
 	providerKeeper.BeginBlockInit(ctx)
 
@@ -954,8 +912,7 @@ func TestBeginBlockInit(t *testing.T) {
 	// Note that we do not check that `GetConsumerGenesis(ctx, pendingProps[3].ChainId)` returns `false` here because
 	// `pendingProps[3]` is an invalid proposal due to the chain id already existing so the consumer genesis also exists
 
-	// fifth proposal corresponds to an Opt-In chain with one opted-in validator and hence the proposal gets
-	// successfully executed
+	// fifth proposal should be successfully executed (spawn time passed)
 	_, found = providerKeeper.GetPendingConsumerAdditionProp(
 		ctx, pendingProps[4].SpawnTime, pendingProps[4].ChainId)
 	require.False(t, found)
@@ -963,33 +920,13 @@ func TestBeginBlockInit(t *testing.T) {
 	_, found = providerKeeper.GetConsumerGenesis(ctx, pendingProps[4].ChainId)
 	require.True(t, found)
 
-	// sixth proposal corresponds to an Opt-In chain with no opted-in validators and hence the
-	// proposal is not successful
+	// sixth proposal should also be successfully executed (spawn time passed)
 	_, found = providerKeeper.GetPendingConsumerAdditionProp(
 		ctx, pendingProps[5].SpawnTime, pendingProps[5].ChainId)
-	// the proposal was dropped and deleted
 	require.False(t, found)
-	// no consumer genesis is created
+	// sixth proposal was successfully executed and hence consumer genesis was created
 	_, found = providerKeeper.GetConsumerGenesis(ctx, pendingProps[5].ChainId)
-	require.False(t, found)
-	// no consumer client is associated with this chain
-	_, found = providerKeeper.GetConsumerClientId(ctx, pendingProps[5].ChainId)
-	require.False(t, found)
-	// no fields should be set for this (check some of them)
-	_, found = providerKeeper.GetTopN(ctx, pendingProps[5].ChainId)
-	require.False(t, found)
-	_, found = providerKeeper.GetValidatorsPowerCap(ctx, pendingProps[5].ChainId)
-	require.False(t, found)
-	_, found = providerKeeper.GetValidatorSetCap(ctx, pendingProps[5].ChainId)
-	require.False(t, found)
-
-	// test that Top N is set correctly
-	require.True(t, providerKeeper.IsTopN(ctx, "chain1"))
-	topN, found := providerKeeper.GetTopN(ctx, "chain1")
 	require.True(t, found)
-	require.Equal(t, uint32(50), topN)
-
-	require.True(t, providerKeeper.IsOptIn(ctx, "chain4"))
 }
 
 // TestBeginBlockCCR tests BeginBlockCCR against the spec.
