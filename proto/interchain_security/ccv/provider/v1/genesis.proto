@@ -22,7 +22,8 @@ message GenesisState {
   repeated interchain_security.ccv.provider.v1.UnbondingOp unbonding_ops = 3
       [ (gogoproto.nullable) = false ];
   // empty for a new chain
-  interchain_security.ccv.provider.v1.MaturedUnbondingOps mature_unbonding_ops = 4;
+  interchain_security.ccv.provider.v1.MaturedUnbondingOps mature_unbonding_ops =
+      4;
   // empty for a new chain
   repeated ValsetUpdateIdToHeight valset_update_id_to_height = 5
       [ (gogoproto.nullable) = false ];
@@ -43,14 +44,14 @@ message GenesisState {
   repeated ConsumerAddrsToPrune consumer_addrs_to_prune = 11
       [ (gogoproto.nullable) = false ];
 
-  repeated interchain_security.ccv.provider.v1.InitTimeoutTimestamp init_timeout_timestamps = 12
-      [ (gogoproto.nullable) = false ];
+  repeated interchain_security.ccv.provider.v1.InitTimeoutTimestamp
+      init_timeout_timestamps = 12 [ (gogoproto.nullable) = false ];
 
-  repeated interchain_security.ccv.provider.v1.ExportedVscSendTimestamp exported_vsc_send_timestamps = 13
-      [ (gogoproto.nullable) = false ];
+  repeated interchain_security.ccv.provider.v1.ExportedVscSendTimestamp
+      exported_vsc_send_timestamps = 13 [ (gogoproto.nullable) = false ];
 }
 
-// The provider CCV module's knowledge of consumer state. 
+// The provider CCV module's knowledge of consumer state.
 //
 // Note this type is only used internally to the provider CCV module.
 message ConsumerState {

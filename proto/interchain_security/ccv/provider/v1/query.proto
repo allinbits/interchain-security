@@ -76,72 +76,73 @@ service Query {
         "/interchain_security/ccv/provider/registered_consumer_reward_denoms";
   }
 
-  // QueryProposedConsumerChainIDs returns the chain IDs of the proposed consumer chain addition proposals
-  // that are still in the voting period
-  rpc QueryProposedConsumerChainIDs(
-      QueryProposedChainIDsRequest)
+  // QueryProposedConsumerChainIDs returns the chain IDs of the proposed
+  // consumer chain addition proposals that are still in the voting period
+  rpc QueryProposedConsumerChainIDs(QueryProposedChainIDsRequest)
       returns (QueryProposedChainIDsResponse) {
-  option (google.api.http).get =
-      "/interchain_security/ccv/provider/proposed_consumer_chains";
-      }
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/proposed_consumer_chains";
+  }
 
-  // QueryAllPairsValConAddrByConsumerChainID returns a list of pair valconsensus address
-  // between provider and consumer chain
-  rpc QueryAllPairsValConAddrByConsumerChainID (
-    QueryAllPairsValConAddrByConsumerChainIDRequest)
-    returns (QueryAllPairsValConAddrByConsumerChainIDResponse) {
-      option (google.api.http).get =
-    "/interchain_security/ccv/provider/consumer_chain_id";
-    }
+  // QueryAllPairsValConAddrByConsumerChainID returns a list of pair
+  // valconsensus address between provider and consumer chain
+  rpc QueryAllPairsValConAddrByConsumerChainID(
+      QueryAllPairsValConAddrByConsumerChainIDRequest)
+      returns (QueryAllPairsValConAddrByConsumerChainIDResponse) {
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/consumer_chain_id";
+  }
 
   // QueryParams returns all current values of provider parameters
-  rpc QueryParams(QueryParamsRequest)
-    returns (QueryParamsResponse) {
-      option (google.api.http).get =
-    "/interchain_security/ccv/provider/params";
-    }
+  rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/interchain_security/ccv/provider/params";
+  }
 
-  // QueryConsumerChainOptedInValidators returns a list of validators consensus addresses
-  // that opted-in to the given consumer chain
+  // QueryConsumerChainOptedInValidators returns a list of validators consensus
+  // addresses that opted-in to the given consumer chain
   rpc QueryConsumerChainOptedInValidators(
-    QueryConsumerChainOptedInValidatorsRequest)
-    returns (QueryConsumerChainOptedInValidatorsResponse) {
-      option (google.api.http).get =
-    "/interchain_security/ccv/provider/opted_in_validators/{chain_id}";
-    }
+      QueryConsumerChainOptedInValidatorsRequest)
+      returns (QueryConsumerChainOptedInValidatorsResponse) {
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/opted_in_validators/{chain_id}";
+  }
 
   // QueryConsumerChainsValidatorHasToValidate returns a list of consumer chains
   // that a given validator must validate
   rpc QueryConsumerChainsValidatorHasToValidate(
-    QueryConsumerChainsValidatorHasToValidateRequest)
-    returns (QueryConsumerChainsValidatorHasToValidateResponse) {
-      option (google.api.http).get =
-    "/interchain_security/ccv/provider/consumer_chains_per_validator/{provider_address}";
-    }
+      QueryConsumerChainsValidatorHasToValidateRequest)
+      returns (QueryConsumerChainsValidatorHasToValidateResponse) {
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/consumer_chains_per_validator/"
+        "{provider_address}";
+  }
 
-   // QueryValidatorConsumerCommissionRate returns the commission rate a given
-   // validator charges on a given consumer chain
+  // QueryValidatorConsumerCommissionRate returns the commission rate a given
+  // validator charges on a given consumer chain
   rpc QueryValidatorConsumerCommissionRate(
-    QueryValidatorConsumerCommissionRateRequest)
-    returns (QueryValidatorConsumerCommissionRateResponse) {
-      option (google.api.http).get =
-    "/interchain_security/ccv/provider/consumer_commission_rate/{chain_id}/{provider_address}";
-    }
+      QueryValidatorConsumerCommissionRateRequest)
+      returns (QueryValidatorConsumerCommissionRateResponse) {
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/consumer_commission_rate/{chain_id}/"
+        "{provider_address}";
+  }
 
-  // QueryOldestUnconfirmedVsc returns the send timestamp of the oldest unconfirmed VSCPacket for a given chainID
+  // QueryOldestUnconfirmedVsc returns the send timestamp of the oldest
+  // unconfirmed VSCPacket for a given chainID
   rpc QueryOldestUnconfirmedVsc(QueryOldestUnconfirmedVscRequest)
-    returns (QueryOldestUnconfirmedVscResponse) {
-      option (google.api.http).get =
-      "/interchain_security/ccv/provider/oldest_unconfirmed_vsc/{chain_id}";
-    }
+      returns (QueryOldestUnconfirmedVscResponse) {
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/oldest_unconfirmed_vsc/{chain_id}";
+  }
 
-  // QueryConsumerValidators returns the latest set consumer-validator set for a given chainID
-  // Note that this does not necessarily mean that the consumer chain is using this validator set at this exact moment
-  // because a VSCPacket could be delayed to be delivered on the consumer chain.
+  // QueryConsumerValidators returns the latest set consumer-validator set for a
+  // given chainID Note that this does not necessarily mean that the consumer
+  // chain is using this validator set at this exact moment because a VSCPacket
+  // could be delayed to be delivered on the consumer chain.
   rpc QueryConsumerValidators(QueryConsumerValidatorsRequest)
       returns (QueryConsumerValidatorsResponse) {
-        option (google.api.http).get =
-            "/interchain_security/ccv/provider/consumer_validators/{chain_id}";
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/consumer_validators/{chain_id}";
   }
 }
 
@@ -171,20 +172,24 @@ message QueryConsumerChainStopProposalsResponse {
 message Chain {
   string chain_id = 1;
   string client_id = 2;
-  // If chain with `chainID` is a Top-N chain, i.e., enforces at least one validator to validate chain `chainID`
+  // If chain with `chainID` is a Top-N chain, i.e., enforces at least one
+  // validator to validate chain `chainID`
   uint32 top_N = 3;
-  // If the chain is a Top-N chain, this is the minimum power required to be in the top N.
-  // Otherwise, this is -1.
+  // If the chain is a Top-N chain, this is the minimum power required to be in
+  // the top N. Otherwise, this is -1.
   int64 min_power_in_top_N = 4;
-  // Corresponds to the maximum power (percentage-wise) a validator can have on the consumer chain.
-  uint32 validators_power_cap = 5;
-  // Corresponds to the maximum number of validators that can validate a consumer chain.
-  // Only applicable to Opt In chains. Setting `validator_set_cap` on a Top N chain is a no-op.
-  uint32 validator_set_cap = 6;
-  // Corresponds to a list of provider consensus addresses of validators that are the ONLY ones that can validate
+  // Corresponds to the maximum power (percentage-wise) a validator can have on
   // the consumer chain.
+  uint32 validators_power_cap = 5;
+  // Corresponds to the maximum number of validators that can validate a
+  // consumer chain. Only applicable to Opt In chains. Setting
+  // `validator_set_cap` on a Top N chain is a no-op.
+  uint32 validator_set_cap = 6;
+  // Corresponds to a list of provider consensus addresses of validators that
+  // are the ONLY ones that can validate the consumer chain.
   repeated string allowlist = 7;
-  // Corresponds to a list of provider consensus addresses of validators that CANNOT validate the consumer chain.
+  // Corresponds to a list of provider consensus addresses of validators that
+  // CANNOT validate the consumer chain.
   repeated string denylist = 8;
 }
 
@@ -239,8 +244,7 @@ message QueryRegisteredConsumerRewardDenomsResponse {
 message QueryProposedChainIDsRequest {}
 
 message QueryProposedChainIDsResponse {
-  repeated ProposedChain proposedChains = 1
-  [ (gogoproto.nullable) = false ];
+  repeated ProposedChain proposedChains = 1 [ (gogoproto.nullable) = false ];
 }
 
 message ProposedChain {
@@ -259,30 +263,28 @@ message QueryAllPairsValConAddrByConsumerChainIDResponse {
 
 message PairValConAddrProviderAndConsumer {
   // The consensus address of the validator on the provider chain
-  string provider_address = 1 [ (gogoproto.moretags) = "yaml:\"provider_address\"" ];
+  string provider_address = 1
+      [ (gogoproto.moretags) = "yaml:\"provider_address\"" ];
   // The consensus address of the validator on the consumer chain
-  string consumer_address = 2 [ (gogoproto.moretags) = "yaml:\"consumer_address\"" ];
+  string consumer_address = 2
+      [ (gogoproto.moretags) = "yaml:\"consumer_address\"" ];
   tendermint.crypto.PublicKey consumer_key = 3;
 }
 
 message QueryParamsRequest {}
 
 message QueryParamsResponse {
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryConsumerChainOptedInValidatorsRequest {
-  string chain_id = 1;
-}
+message QueryConsumerChainOptedInValidatorsRequest { string chain_id = 1; }
 
 message QueryConsumerChainOptedInValidatorsResponse {
   // The consensus addresses of the validators on the provider chain
   repeated string validators_provider_addresses = 1;
 }
 
-message QueryConsumerValidatorsRequest {
-  string chain_id = 1;
-}
+message QueryConsumerValidatorsRequest { string chain_id = 1; }
 
 message QueryConsumerValidatorsValidator {
   // The consensus address of the validator on the provider chain
@@ -308,7 +310,7 @@ message QueryConsumerChainsValidatorHasToValidateResponse {
 
 message QueryValidatorConsumerCommissionRateRequest {
   string chain_id = 1;
-    // The consensus address of the validator on the provider chain
+  // The consensus address of the validator on the provider chain
   string provider_address = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
 }
 
@@ -316,8 +318,8 @@ message QueryValidatorConsumerCommissionRateResponse {
   // The rate to charge delegators on the consumer chain, as a fraction
   string rate = 1 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable)   = false
-    ];
+    (gogoproto.nullable) = false
+  ];
 }
 
 message QueryOldestUnconfirmedVscRequest { string chain_id = 1; }
