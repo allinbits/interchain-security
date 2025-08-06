@@ -1176,7 +1176,7 @@ func (m *MaturedUnbondingOps) GetIds() []uint64 {
 	return nil
 }
 
-// ExportedVscSendTimestamps is VscSendTimestamp with chainID info for exporting
+// ExportedVscSendTimestamp is VscSendTimestamp with chainID info for exporting
 // to genesis
 type ExportedVscSendTimestamp struct {
 	ChainId           string             `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
