@@ -316,7 +316,6 @@ func (s *ConsumerDemocracyTestSuite) TestDemocracyMsgUpdateParams() {
 
 	// deposit is refunded
 	s.Assert().Equal(votersOldBalances, getAccountsBalances(s.consumerCtx(), bankKeeper, bondDenom, votingAccounts))
-
 }
 
 func submitProposalWithDepositAndVote(govKeeper govkeeper.Keeper, ctx sdk.Context, msgs []sdk.Msg,

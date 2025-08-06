@@ -370,7 +370,6 @@ func (tr Commands) GetReward(chain ChainID, validator ValidatorID, blockHeight u
 	)
 
 	bz, err := cmd.CombinedOutput()
-
 	if err != nil {
 		log.Fatal("failed getting rewards: ", err, "\n", string(bz))
 	}
@@ -385,7 +384,7 @@ func (tr Commands) GetReward(chain ChainID, validator ValidatorID, blockHeight u
 
 // interchain-securityd query gov proposals
 func (tr Commands) GetProposal(chain ChainID, proposal uint) Proposal {
-	var noProposalRegex = regexp.MustCompile(`doesn't exist: key not found`)
+	noProposalRegex := regexp.MustCompile(`doesn't exist: key not found`)
 
 	binaryName := tr.chainConfigs[chain].BinaryName
 	bz, err := tr.target.ExecCommand(binaryName,
