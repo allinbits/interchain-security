@@ -32,8 +32,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the CCV consumer genesis state
 //
-// Note: this type is only used on consumer side and references shared types with
-// provider
+// Note: this type is only used on consumer side and references shared types
+// with provider
 type GenesisState struct {
 	// ConsumerParams is a shared type with provider module
 	Params types.ConsumerParams `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
@@ -43,13 +43,16 @@ type GenesisState struct {
 	ProviderChannelId string `protobuf:"bytes,3,opt,name=provider_channel_id,json=providerChannelId,proto3" json:"provider_channel_id,omitempty"`
 	// true for new chain, false for chain restart.
 	NewChain bool `protobuf:"varint,4,opt,name=new_chain,json=newChain,proto3" json:"new_chain,omitempty"`
-	// !!! DEPRECATED !!! ProviderClientState is deprecated. Use provider.client_state instead
+	// !!! DEPRECATED !!! ProviderClientState is deprecated. Use
+	// provider.client_state instead
 	ProviderClientState *_07_tendermint.ClientState `protobuf:"bytes,5,opt,name=provider_client_state,json=providerClientState,proto3" json:"provider_client_state,omitempty"` // Deprecated: Do not use.
-	// !!! DEPRECATED !!! ProviderConsensusState is deprecated. Use provider.consensus_state instead
+	// !!! DEPRECATED !!! ProviderConsensusState is deprecated. Use
+	// provider.consensus_state instead
 	ProviderConsensusState *_07_tendermint.ConsensusState `protobuf:"bytes,6,opt,name=provider_consensus_state,json=providerConsensusState,proto3" json:"provider_consensus_state,omitempty"` // Deprecated: Do not use.
 	// MaturingPackets nil on new chain, filled in on restart.
 	MaturingPackets []MaturingVSCPacket `protobuf:"bytes,7,rep,name=maturing_packets,json=maturingPackets,proto3" json:"maturing_packets"`
-	// !!! DEPRECATED !!!! InitialValset is deprecated. Use provider.initial_val_set instead
+	// !!! DEPRECATED !!!! InitialValset is deprecated. Use
+	// provider.initial_val_set instead
 	InitialValSet []types1.ValidatorUpdate `protobuf:"bytes,8,rep,name=initial_val_set,json=initialValSet,proto3" json:"initial_val_set"` // Deprecated: Do not use.
 	// HeightToValsetUpdateId nil on new chain, filled in on restart.
 	HeightToValsetUpdateId []HeightToValsetUpdateID `protobuf:"bytes,9,rep,name=height_to_valset_update_id,json=heightToValsetUpdateId,proto3" json:"height_to_valset_update_id"`

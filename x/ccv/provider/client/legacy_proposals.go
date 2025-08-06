@@ -35,12 +35,6 @@ type ConsumerAdditionProposalJSON struct {
 	UnbondingPeriod                   time.Duration `json:"unbonding_period"`
 
 	Deposit string `json:"deposit"`
-
-	TopN               uint32   `json:"top_N"`
-	ValidatorsPowerCap uint32   `json:"validators_power_cap"`
-	ValidatorSetCap    uint32   `json:"validator_set_cap"`
-	Allowlist          []string `json:"allowlist"`
-	Denylist           []string `json:"denylist"`
 }
 
 type ConsumerAdditionProposalReq struct {
@@ -166,12 +160,6 @@ type ConsumerModificationProposalJSON struct {
 	Title   string `json:"title"`
 	Summary string `json:"summary"`
 	ChainId string `json:"chain_id"`
-
-	TopN               uint32   `json:"top_N"`
-	ValidatorsPowerCap uint32   `json:"validators_power_cap"`
-	ValidatorSetCap    uint32   `json:"validator_set_cap"`
-	Allowlist          []string `json:"allowlist"`
-	Denylist           []string `json:"denylist"`
 
 	Deposit string `json:"deposit"`
 }

@@ -166,10 +166,7 @@ func (suite *CCVTestSuite) SetupTest() {
 		suite.consumerBundles[bundle.Chain.ChainID] = bundle
 		suite.registerPacketSniffer(bundle.Chain)
 
-		// check that TopN is correctly set for the consumer
-		topN, found := providerKeeper.GetTopN(suite.providerCtx(), bundle.Chain.ChainID)
-		suite.Require().True(found)
-		suite.Require().Equal(bundle.TopN, topN)
+		// For Replicated Security, all validators participate (no TopN check needed)
 	}
 
 	// initialize each consumer chain with it's corresponding genesis state

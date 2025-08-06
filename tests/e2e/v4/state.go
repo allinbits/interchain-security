@@ -654,10 +654,6 @@ func (tr Commands) GetHasToValidate(validator ValidatorID) []ChainID {
 	panic("'GetHasToValidate' is not implemented in this version")
 }
 
-func (tr Commands) GetConsumerCommissionRate(chain ChainID, validator ValidatorID) float64 {
-	panic("'GetConsumerCommissionRate' is not implemented in this version")
-}
-
 func uintPtr(i uint) *uint {
 	return &i
 }

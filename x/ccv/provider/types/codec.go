@@ -32,6 +32,7 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgAssignConsumerKey{},
 		&MsgConsumerAddition{},
 		&MsgConsumerRemoval{},
+		&MsgConsumerModification{},
 		&MsgChangeRewardDenoms{},
 		&MsgUpdateParams{},
 	)
@@ -53,20 +54,8 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&MsgSubmitConsumerDoubleVoting{},
 	)
 	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
-		&MsgOptIn{},
-	)
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
-		&MsgOptOut{},
-	)
-	registry.RegisterImplementations(
 		(*exported.ClientMessage)(nil),
 		&tendermint.Misbehaviour{},
-	)
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
-		&MsgSetConsumerCommissionRate{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

@@ -23,9 +23,6 @@ const (
 	TypeMsgAssignConsumerKey          = "assign_consumer_key"
 	TypeMsgSubmitConsumerMisbehaviour = "submit_consumer_misbehaviour"
 	TypeMsgSubmitConsumerDoubleVoting = "submit_consumer_double_vote"
-	TypeMsgOptIn                      = "opt_in"
-	TypeMsgOptOut                     = "opt_out"
-	TypeMsgSetConsumerCommissionRate  = "set_consumer_commission_rate"
 )
 
 var (
@@ -36,9 +33,6 @@ var (
 	_ sdk.Msg = (*MsgChangeRewardDenoms)(nil)
 	_ sdk.Msg = (*MsgSubmitConsumerMisbehaviour)(nil)
 	_ sdk.Msg = (*MsgSubmitConsumerDoubleVoting)(nil)
-	_ sdk.Msg = (*MsgOptIn)(nil)
-	_ sdk.Msg = (*MsgOptOut)(nil)
-	_ sdk.Msg = (*MsgSetConsumerCommissionRate)(nil)
 
 	_ sdk.HasValidateBasic = (*MsgAssignConsumerKey)(nil)
 	_ sdk.HasValidateBasic = (*MsgConsumerAddition)(nil)
@@ -47,9 +41,6 @@ var (
 	_ sdk.HasValidateBasic = (*MsgChangeRewardDenoms)(nil)
 	_ sdk.HasValidateBasic = (*MsgSubmitConsumerMisbehaviour)(nil)
 	_ sdk.HasValidateBasic = (*MsgSubmitConsumerDoubleVoting)(nil)
-	_ sdk.HasValidateBasic = (*MsgOptIn)(nil)
-	_ sdk.HasValidateBasic = (*MsgOptOut)(nil)
-	_ sdk.HasValidateBasic = (*MsgSetConsumerCommissionRate)(nil)
 )
 
 // NewMsgAssignConsumerKey creates a new MsgAssignConsumerKey instance.
@@ -313,164 +304,6 @@ func (msg *MsgConsumerModification) ValidateBasic() error {
 		return ErrBlankConsumerChainID
 	}
 
-	err := ValidatePSSFeatures(msg.Top_N, msg.ValidatorsPowerCap)
-	if err != nil {
-		return errorsmod.Wrapf(ErrInvalidConsumerModificationProposal, "invalid PSS features: %s", err.Error())
-	}
-
-	return nil
-}
-
-// NewMsgOptIn creates a new NewMsgOptIn instance.
-func NewMsgOptIn(chainID string, providerValidatorAddress sdk.ValAddress, consumerConsensusPubKey, signer string) (*MsgOptIn, error) {
-	return &MsgOptIn{
-		ChainId:      chainID,
-		ProviderAddr: providerValidatorAddress.String(),
-		ConsumerKey:  consumerConsensusPubKey,
-		Signer:       signer,
-	}, nil
-}
-
-// Type implements the sdk.Msg interface.
-func (msg MsgOptIn) Type() string {
-	return TypeMsgOptIn
-}
-
-// Route implements the sdk.Msg interface.
-func (msg MsgOptIn) Route() string { return RouterKey }
-
-// GetSigners implements the sdk.Msg interface. It returns the address(es) that
-// must sign over msg.GetSignBytes().
-func (msg MsgOptIn) GetSigners() []sdk.AccAddress {
-	valAddr, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
-	if err != nil {
-		// same behavior as in cosmos-sdk
-		panic(err)
-	}
-	return []sdk.AccAddress{valAddr.Bytes()}
-}
-
-// ValidateBasic implements the sdk.Msg interface.
-func (msg MsgOptIn) ValidateBasic() error {
-	if strings.TrimSpace(msg.ChainId) == "" {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot be blank")
-	}
-	// It is possible to opt in to validate on consumer chains that are not yet approved.
-	// This can only be done by a signing validator, but it is still sensible
-	// to limit the chainID size to prevent abuse.
-	if 128 < len(msg.ChainId) {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot exceed 128 length")
-	}
-	valAddr, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
-	if err != nil {
-		return ErrInvalidProviderAddress
-	}
-	// Check that the provider validator address and the signer address are the same
-	if sdk.AccAddress(valAddr.Bytes()).String() != msg.Signer {
-		return errorsmod.Wrapf(ErrInvalidProviderAddress, "provider validator address must be the same as the signer address")
-	}
-	if msg.ConsumerKey != "" {
-		if _, _, err := ParseConsumerKeyFromJson(msg.ConsumerKey); err != nil {
-			return ErrInvalidConsumerConsensusPubKey
-		}
-	}
-	return nil
-}
-
-// NewMsgOptOut creates a new NewMsgOptIn instance.
-func NewMsgOptOut(chainID string, providerValidatorAddress sdk.ValAddress, signer string) (*MsgOptOut, error) {
-	return &MsgOptOut{
-		ChainId:      chainID,
-		ProviderAddr: providerValidatorAddress.String(),
-		Signer:       signer,
-	}, nil
-}
-
-// Type implements the sdk.Msg interface.
-func (msg MsgOptOut) Type() string {
-	return TypeMsgOptOut
-}
-
-// Route implements the sdk.Msg interface.
-func (msg MsgOptOut) Route() string { return RouterKey }
-
-// GetSigners implements the sdk.Msg interface. It returns the address(es) that
-// must sign over msg.GetSignBytes().
-func (msg MsgOptOut) GetSigners() []sdk.AccAddress {
-	valAddr, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
-	if err != nil {
-		// same behavior as in cosmos-sdk
-		panic(err)
-	}
-	return []sdk.AccAddress{valAddr.Bytes()}
-}
-
-// GetSignBytes returns the message bytes to sign over.
-func (msg MsgOptOut) GetSignBytes() []byte {
-	bz := ccvtypes.ModuleCdc.MustMarshalJSON(&msg)
-	return sdk.MustSortJSON(bz)
-}
-
-// ValidateBasic implements the sdk.Msg interface.
-func (msg MsgOptOut) ValidateBasic() error {
-	if strings.TrimSpace(msg.ChainId) == "" {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot be blank")
-	}
-	// It is possible to assign keys for consumer chains that are not yet approved.
-	// This can only be done by a signing validator, but it is still sensible
-	// to limit the chainID size to prevent abuse.
-	if 128 < len(msg.ChainId) {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot exceed 128 length")
-	}
-	valAddr, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
-	if err != nil {
-		return ErrInvalidProviderAddress
-	}
-	// Check that the provider validator address and the signer address are the same
-	if sdk.AccAddress(valAddr.Bytes()).String() != msg.Signer {
-		return errorsmod.Wrapf(ErrInvalidProviderAddress, "provider validator address must be the same as the signer address")
-	}
-
-	return nil
-}
-
-// NewMsgSetConsumerCommissionRate creates a new MsgSetConsumerCommissionRate msg instance.
-func NewMsgSetConsumerCommissionRate(chainID string, commission math.LegacyDec, providerValidatorAddress sdk.ValAddress, signer string) *MsgSetConsumerCommissionRate {
-	return &MsgSetConsumerCommissionRate{
-		ChainId:      chainID,
-		Rate:         commission,
-		ProviderAddr: providerValidatorAddress.String(),
-		Signer:       signer,
-	}
-}
-
-func (msg MsgSetConsumerCommissionRate) Route() string {
-	return RouterKey
-}
-
-func (msg MsgSetConsumerCommissionRate) Type() string {
-	return TypeMsgSetConsumerCommissionRate
-}
-
-func (msg MsgSetConsumerCommissionRate) ValidateBasic() error {
-	if strings.TrimSpace(msg.ChainId) == "" {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot be blank")
-	}
-	if 128 < len(msg.ChainId) {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot exceed 128 length")
-	}
-	valAddr, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
-	if err != nil {
-		return ErrInvalidProviderAddress
-	}
-	// Check that the provider validator address and the signer address are the same
-	if sdk.AccAddress(valAddr.Bytes()).String() != msg.Signer {
-		return errorsmod.Wrapf(ErrInvalidProviderAddress, "provider validator address must be the same as the signer address")
-	}
-	if msg.Rate.IsNegative() || msg.Rate.GT(math.LegacyOneDec()) {
-		return errorsmod.Wrapf(ErrInvalidConsumerCommissionRate, "consumer commission rate should be in the range [0, 1]")
-	}
-
 	return nil
 }
 
@@ -506,18 +339,4 @@ func (msg *MsgChangeRewardDenoms) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func (msg MsgSetConsumerCommissionRate) GetSigners() []sdk.AccAddress {
-	valAddr, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
-	if err != nil {
-		// same behavior as in cosmos-sdk
-		panic(err)
-	}
-	return []sdk.AccAddress{valAddr.Bytes()}
-}
-
-func (msg MsgSetConsumerCommissionRate) GetSignBytes() []byte {
-	bz := ccvtypes.ModuleCdc.MustMarshalJSON(&msg)
-	return sdk.MustSortJSON(bz)
 }
