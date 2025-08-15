@@ -1,11 +1,11 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	"github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
 	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
@@ -38,25 +38,18 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state *types.GenesisState) []abci.V
 		return nil
 	}
 
+	// IBC v10: Port binding and capabilities removed, just set the port
+	// Evidence: ICS v7 genesis.go only calls SetPort without binding
 	k.SetPort(ctx, ccv.ConsumerPortID)
-
-	// Only try to bind to port if it is not already bound, since we may already own
-	// port capability from capability InitGenesis
-	if !k.IsBound(ctx, ccv.ConsumerPortID) {
-		// transfer module binds to the transfer port on InitChain
-		// and claims the returned capability
-		err := k.BindPort(ctx, ccv.ConsumerPortID)
-		if err != nil {
-			// If the binding fails, the chain MUST NOT start
-			panic(fmt.Sprintf("could not claim port capability: %v", err))
-		}
-	}
 
 	// initialValSet is checked in NewChain case by ValidateGenesis
 	// start a new chain
 	if state.NewChain {
 		// create the provider client in InitGenesis for new consumer chain. CCV Handshake must be established with this client id.
-		clientID, err := k.clientKeeper.CreateClient(ctx, state.Provider.ClientState, state.Provider.ConsensusState)
+		// IBC v10: CreateClient now requires clientType string and marshaled states
+		clientStateBz := k.cdc.MustMarshal(state.Provider.ClientState)
+		consensusStateBz := k.cdc.MustMarshal(state.Provider.ConsensusState)
+		clientID, err := k.clientKeeper.CreateClient(ctx, ibcexported.Tendermint, clientStateBz, consensusStateBz)
 		if err != nil {
 			// If the client creation fails, the chain MUST NOT start
 			panic(err)

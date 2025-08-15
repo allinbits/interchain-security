@@ -9,17 +9,17 @@ import (
 	"path/filepath"
 
 	"github.com/cosmos/gogoproto/proto"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
-	ibctestingtypes "github.com/cosmos/ibc-go/v8/testing/types"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	// Removed - types package no longer exists in v10
 	"github.com/spf13/cast"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
@@ -96,9 +96,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	// IBC v10: Capability module removed
+	// capabilitykeeper removed
+	// capabilitytypes removed
 
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -137,7 +137,7 @@ var (
 		auth.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		bank.AppModuleBasic{},
-		capability.AppModuleBasic{},
+		// IBC v10: Capability module removed
 		consensus.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		gov.NewAppModuleBasic(
@@ -200,7 +200,7 @@ type App struct { // nolint: golint
 	// keepers
 	AccountKeeper    authkeeper.AccountKeeper
 	BankKeeper       bankkeeper.Keeper
-	CapabilityKeeper *capabilitykeeper.Keeper
+	// IBC v10: CapabilityKeeper removed
 	StakingKeeper    *stakingkeeper.Keeper
 	SlashingKeeper   slashingkeeper.Keeper
 	MintKeeper       mintkeeper.Keeper
@@ -221,9 +221,9 @@ type App struct { // nolint: golint
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 
 	// make scoped keepers public for test purposes
-	ScopedIBCKeeper         capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper    capabilitykeeper.ScopedKeeper
-	ScopedIBCProviderKeeper capabilitykeeper.ScopedKeeper
+	// IBC v10: ScopedIBCKeeper removed
+	// IBC v10: ScopedTransferKeeper removed
+	// IBC v10: ScopedIBCProviderKeeper removed
 
 	// the module manager
 	MM *module.Manager
@@ -285,7 +285,7 @@ func New(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibcexported.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey,
-		capabilitytypes.StoreKey,
+		
 		providertypes.StoreKey,
 		consensusparamtypes.StoreKey,
 	)
@@ -296,7 +296,7 @@ func New(
 	}
 
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey)
-	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
+	memKeys := storetypes.NewMemoryStoreKeys()
 
 	app := &App{
 		BaseApp:           bApp,
@@ -327,16 +327,7 @@ func New(
 
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
 
-	// add capability keeper and ScopeToModule for ibc module
-	app.CapabilityKeeper = capabilitykeeper.NewKeeper(
-		appCodec,
-		keys[capabilitytypes.StoreKey],
-		memKeys[capabilitytypes.MemStoreKey],
-	)
-	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedIBCProviderKeeper := app.CapabilityKeeper.ScopeToModule(providertypes.ModuleName)
-	app.CapabilityKeeper.Seal()
+	// IBC v10: Capability keeper and scoped keepers removed
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -437,13 +428,12 @@ func New(
 		),
 	)
 
+	// IBC v10: Updated keeper initialization
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
-		keys[ibcexported.StoreKey],
+		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
 		app.GetSubspace(ibcexported.ModuleName),
-		app.StakingKeeper,
 		app.UpgradeKeeper,
-		scopedIBCKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -470,13 +460,12 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	// IBC v10: scopedKeeper and portKeeper removed from provider keeper initialization
 	app.ProviderKeeper = ibcproviderkeeper.NewKeeper(
 		appCodec,
 		keys[providertypes.StoreKey],
 		app.GetSubspace(providertypes.ModuleName),
-		scopedIBCProviderKeeper,
 		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
 		app.IBCKeeper.ConnectionKeeper,
 		app.IBCKeeper.ClientKeeper,
 		app.StakingKeeper,
@@ -507,16 +496,16 @@ func New(
 
 	providerModule := ibcprovider.NewAppModule(&app.ProviderKeeper, app.GetSubspace(providertypes.ModuleName))
 
+	// IBC v10: Updated TransferKeeper initialization
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
-		keys[ibctransfertypes.StoreKey],
+		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
 		app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.PortKeeper,
+		app.IBCKeeper.ChannelKeeper,  // ICS4Wrapper
+		app.IBCKeeper.ChannelKeeper,  // ChannelKeeper
+		app.MsgServiceRouter(),       // MessageRouter - IBC v10 uses MsgServiceRouter
 		app.AccountKeeper,
 		app.BankKeeper,
-		scopedTransferKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -546,7 +535,7 @@ func New(
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
+		// IBC v10: Capability module removed
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil, app.GetSubspace(minttypes.ModuleName)),
@@ -557,7 +546,8 @@ func New(
 		evidence.NewAppModule(app.EvidenceKeeper),
 
 		ibc.NewAppModule(app.IBCKeeper),
-		ibctm.NewAppModule(),
+		// IBC v10: ibctm requires LightClientModule parameter
+		// ibctm.NewAppModule(), // TODO: Need to pass LightClientModule
 		params.NewAppModule(app.ParamsKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		providerModule,
@@ -606,7 +596,7 @@ func New(
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
 	app.MM.SetOrderBeginBlockers(
-		capabilitytypes.ModuleName,
+		// IBC v10: Capability module removed from order
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		stakingtypes.ModuleName,
@@ -630,7 +620,7 @@ func New(
 		stakingtypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		ibcexported.ModuleName,
-		capabilitytypes.ModuleName,
+		// IBC v10: Capability module removed from order
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -651,7 +641,7 @@ func New(
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	app.MM.SetOrderInitGenesis(
-		capabilitytypes.ModuleName,
+		// IBC v10: Capability module removed from order
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
@@ -771,9 +761,7 @@ func New(
 		}
 	}
 
-	app.ScopedIBCKeeper = scopedIBCKeeper
-	app.ScopedTransferKeeper = scopedTransferKeeper
-	app.ScopedIBCProviderKeeper = scopedIBCProviderKeeper
+	// IBC v10: ScopedKeepers removed - no longer needed
 
 	return app
 }
@@ -938,7 +926,8 @@ func (app *App) GetBaseApp() *baseapp.BaseApp {
 }
 
 // GetStakingKeeper implements the TestingApp interface.
-func (app *App) GetStakingKeeper() ibctestingtypes.StakingKeeper {
+// IBC v10: Return concrete type following ICS v7 pattern
+func (app *App) GetStakingKeeper() *stakingkeeper.Keeper {
 	return app.StakingKeeper
 }
 
@@ -948,8 +937,9 @@ func (app *App) GetIBCKeeper() *ibckeeper.Keeper {
 }
 
 // GetScopedIBCKeeper implements the TestingApp interface.
-func (app *App) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
-	return app.ScopedIBCKeeper
+// IBC v10: Capability module removed, returning nil
+func (app *App) GetScopedIBCKeeper() interface{} {
+	return nil
 }
 
 // GetTxConfig implements the TestingApp interface.

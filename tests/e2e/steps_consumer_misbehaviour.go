@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 )
 
 // starts a provider chain and an Opt-In consumer chain with one validator
@@ -37,7 +37,6 @@ func stepsStartChainsForConsumerMisbehaviour(consumerName string) []Step {
 				ConsumerChain: ChainID(consumerName),
 				SpawnTime:     0,
 				InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 1},
-				TopN:          0,
 			},
 			State: State{
 				ChainID("provi"): ChainState{
@@ -79,13 +78,6 @@ func stepsStartChainsForConsumerMisbehaviour(consumerName string) []Step {
 					},
 				},
 			},
-		},
-		{
-			Action: OptInAction{
-				Chain:     ChainID(consumerName),
-				Validator: ValidatorID("alice"),
-			},
-			State: State{},
 		},
 		{
 			Action: VoteGovProposalAction{

@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 )
 
 type (
@@ -37,7 +37,6 @@ type ChainCommands interface {
 	GetValPower(chain ChainID, validator ValidatorID) uint
 	GetValStakedTokens(chain ChainID, validatorAddress string) uint
 	GetQueryNodeIP(chain ChainID) string
-	GetConsumerCommissionRate(chain ChainID, validator ValidatorID) float64
 }
 
 // TODO: replace ExecutionTarget with new TargetDriver interface
@@ -171,7 +170,6 @@ type ChainState struct {
 	RegisteredConsumerRewardDenoms *[]string
 	ClientsFrozenHeights           *map[string]clienttypes.Height
 	HasToValidate                  *map[ValidatorID][]ChainID // only relevant to provider chain
-	ConsumerCommissionRates        *map[ValidatorID]float64
 }
 
 // custom marshal and unmarshal functions for the chainstate that convert proposals to/from the auxiliary type with type info

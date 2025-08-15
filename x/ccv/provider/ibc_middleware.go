@@ -1,16 +1,15 @@
 package provider
 
 import (
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
@@ -40,12 +39,11 @@ func (im IBCMiddleware) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// call underlying app's OnChanOpenInit callback with the appVersion
-	return im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID, chanCap, counterparty, version)
+	// IBC v10: Capabilities removed from channel handshake
+	return im.app.OnChanOpenInit(ctx, order, connectionHops, portID, channelID, counterparty, version)
 }
 
 // OnChanOpenTry implements the IBCMiddleware interface
@@ -55,12 +53,11 @@ func (im IBCMiddleware) OnChanOpenTry(
 	connectionHops []string,
 	portID,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
-	// call underlying app's OnChanOpenTry callback with the appVersion
-	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, chanCap, counterparty, counterpartyVersion)
+	// IBC v10: Capabilities removed from channel handshake
+	return im.app.OnChanOpenTry(ctx, order, connectionHops, portID, channelID, counterparty, counterpartyVersion)
 }
 
 // OnChanOpenAck implements the IBCMiddleware interface
@@ -110,11 +107,12 @@ func (im IBCMiddleware) OnChanCloseConfirm(
 // it appends the coin to the consumer's chain allocation record
 func (im IBCMiddleware) OnRecvPacket(
 	ctx sdk.Context,
+	channelID string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) exported.Acknowledgement {
-	// executes the IBC transfer OnRecv logic
-	ack := im.app.OnRecvPacket(ctx, packet, relayer)
+	// IBC v10: Added channelID parameter
+	ack := im.app.OnRecvPacket(ctx, channelID, packet, relayer)
 
 	// Note that inside the below if condition statement,
 	// we know that the IBC transfer succeeded. That entails
@@ -161,29 +159,31 @@ func (im IBCMiddleware) OnRecvPacket(
 // If fees are not enabled, this callback will default to the ibc-core packet callback
 func (im IBCMiddleware) OnAcknowledgementPacket(
 	ctx sdk.Context,
+	channelID string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	// call underlying app's OnAcknowledgementPacket callback.
-	return im.app.OnAcknowledgementPacket(ctx, packet, acknowledgement, relayer)
+	// IBC v10: Added channelID parameter
+	return im.app.OnAcknowledgementPacket(ctx, channelID, packet, acknowledgement, relayer)
 }
 
 // OnTimeoutPacket implements the IBCMiddleware interface
 // If fees are not enabled, this callback will default to the ibc-core packet callback
 func (im IBCMiddleware) OnTimeoutPacket(
 	ctx sdk.Context,
+	channelID string,
 	packet channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) error {
-	// call underlying app's OnTimeoutPacket callback.
-	return im.app.OnTimeoutPacket(ctx, packet, relayer)
+	// IBC v10: Added channelID parameter
+	return im.app.OnTimeoutPacket(ctx, channelID, packet, relayer)
 }
 
 // SendPacket implements the ICS4 Wrapper interface
+// IBC v10: Capabilities removed
 func (im IBCMiddleware) SendPacket(
 	sdk.Context,
-	*capabilitytypes.Capability,
 	string,
 	string,
 	clienttypes.Height,
@@ -194,9 +194,9 @@ func (im IBCMiddleware) SendPacket(
 }
 
 // WriteAcknowledgement implements the ICS4 Wrapper interface
+// IBC v10: Capabilities removed
 func (im IBCMiddleware) WriteAcknowledgement(
 	ctx sdk.Context,
-	chanCap *capabilitytypes.Capability,
 	packet exported.PacketI,
 	ack exported.Acknowledgement,
 ) error {
@@ -223,8 +223,10 @@ func GetProviderDenom(denom string, packet channeltypes.Packet) (providerDenom s
 
 		// The denomination used to send the coins is either the native denom or the hash of the path
 		// if the denomination is not native.
+		// IBC v10: ParseDenomTrace deprecated, use ExtractDenomFromPath
 		denomTrace := ibctransfertypes.ParseDenomTrace(unprefixedDenom)
-		if denomTrace.Path != "" {
+		// IBC v10: Path is now a method, not a field
+		if denomTrace.Path() != "" {
 			providerDenom = denomTrace.IBCDenom()
 		}
 		// update the prefix denom according to the packet info

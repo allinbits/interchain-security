@@ -4,17 +4,15 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	"github.com/golang/mock/gomock"
+	// IBC v10: host and gomock imports removed - capability handling no longer needed
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	// IBC v10: capability types removed
 
 	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider"
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
 )
 
 // Tests the provider's InitGenesis implementation against the spec.
@@ -29,8 +27,6 @@ func TestInitGenesis(t *testing.T) {
 		isBound bool
 		// Provider's storage of consumer state to test against
 		consumerStates []types.ConsumerState
-		// Error returned from ClaimCapability during port binding, default: nil
-		errFromClaimCap error
 		// Whether method call should panic, default: false
 		expPanic bool
 	}
@@ -74,18 +70,6 @@ func TestInitGenesis(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:    "capability not owned, method should panic",
-			isBound: false,
-			consumerStates: []types.ConsumerState{
-				{
-					ChainId:   "chainId77",
-					ChannelId: "channelIdToChain77",
-				},
-			},
-			errFromClaimCap: capabilitytypes.ErrCapabilityNotOwned,
-			expPanic:        true,
-		},
 	}
 
 	for _, tc := range tests {
@@ -115,39 +99,14 @@ func TestInitGenesis(t *testing.T) {
 		cdc := keeperParams.Cdc
 		jsonBytes := cdc.MustMarshalJSON(genState)
 
-		//
-		// Assert mocked logic before method executes
-		//
-		orderedCalls := []*gomock.Call{
-			mocks.MockScopedKeeper.EXPECT().GetCapability(
-				ctx, host.PortPath(ccv.ProviderPortID),
-			).Return(
-				&capabilitytypes.Capability{},
-				tc.isBound, // Capability is returned successfully if port capability is already bound to this module.
-			),
-		}
-
-		// If port capability is not already bound, port will be bound and capability claimed.
-		if !tc.isBound {
-			dummyCap := &capabilitytypes.Capability{}
-
-			orderedCalls = append(orderedCalls,
-				mocks.MockPortKeeper.EXPECT().BindPort(ctx, ccv.ProviderPortID).Return(dummyCap),
-				mocks.MockScopedKeeper.EXPECT().ClaimCapability(
-					ctx, dummyCap, host.PortPath(ccv.ProviderPortID)).Return(tc.errFromClaimCap),
-			)
-		}
-
-		// Last total power is queried in InitGenesis, only if method has not
-		// already panicked from unowned capability.
+		// IBC v10: Capability handling removed - port binding is handled internally by IBC
+		// Following ICS v7.0.1 pattern which doesn't test capability logic
+		
+		// Last total power is queried in InitGenesis
 		if !tc.expPanic {
-			orderedCalls = append(orderedCalls,
-				mocks.MockStakingKeeper.EXPECT().GetLastTotalPower(
-					ctx).Return(math.NewInt(100), nil).Times(1), // Return total voting power as 100
-			)
+			mocks.MockStakingKeeper.EXPECT().GetLastTotalPower(
+				ctx).Return(math.NewInt(100), nil).Times(1) // Return total voting power as 100
 		}
-
-		gomock.InOrder(orderedCalls...)
 
 		//
 		// Execute method, then assert expected results

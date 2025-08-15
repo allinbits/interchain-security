@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	"github.com/golang/mock/gomock"
+	// IBC v10: host and gomock imports removed - capability handling no longer needed
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -133,13 +132,9 @@ func TestInitAndExportGenesis(t *testing.T) {
 	pk, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(t, testkeeper.NewInMemKeeperParams(t))
 	defer ctrl.Finish()
 
-	gomock.InOrder(
-		mocks.MockScopedKeeper.EXPECT().GetCapability(
-			ctx, host.PortPath(ccv.ProviderPortID),
-		).Return(nil, true).Times(1),
-		mocks.MockStakingKeeper.EXPECT().GetLastTotalPower(
-			ctx).Return(math.NewInt(100), nil).Times(1), // Return total voting power as 100
-	)
+	// IBC v10: Capability check removed - port binding handled internally
+	mocks.MockStakingKeeper.EXPECT().GetLastTotalPower(
+		ctx).Return(math.NewInt(100), nil).Times(1) // Return total voting power as 100
 
 	// init provider chain
 	pk.InitGenesis(ctx, provGenesis)

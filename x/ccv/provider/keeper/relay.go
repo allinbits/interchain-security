@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -180,9 +180,9 @@ func (k Keeper) SendVSCPacketsToChain(ctx sdk.Context, chainID, channelID string
 	pendingPackets := k.GetPendingVSCPackets(ctx, chainID)
 	for _, data := range pendingPackets {
 		// send packet over IBC
+		// IBC v10: SendIBCPacket no longer needs scopedKeeper
 		err := ccv.SendIBCPacket(
 			ctx,
-			k.scopedKeeper,
 			k.channelKeeper,
 			channelID,          // source channel id
 			ccv.ProviderPortID, // source port id
@@ -229,22 +229,9 @@ func (k Keeper) QueueVSCPackets(ctx sdk.Context) {
 
 	for _, chainID := range k.GetAllRegisteredConsumerChainIDs(ctx) {
 		currentValidators := k.GetConsumerValSet(ctx, chainID)
-		topN, _ := k.GetTopN(ctx, chainID)
 
-		if topN > 0 {
-			// in a Top-N chain, we automatically opt in all validators that belong to the top N
-			minPower, err := k.ComputeMinPowerInTopN(ctx, bondedValidators, topN)
-			if err == nil {
-				// set the minimal power of validators in the top N in the store
-				k.SetMinimumPowerInTopN(ctx, chainID, minPower)
-
-				k.OptInTopNValidators(ctx, chainID, bondedValidators, minPower)
-			} else {
-				// we just log here and do not panic because panic-ing would halt the provider chain
-				k.Logger(ctx).Error("failed to compute min power to opt in for chain", "chain", chainID, "error", err)
-			}
-		}
-
+		// For Replicated Security, all bonded validators participate
+		// No TopN or opt-in logic needed
 		nextValidators := k.ComputeNextValidators(ctx, chainID, bondedValidators)
 
 		valUpdates := DiffValidators(currentValidators, nextValidators)

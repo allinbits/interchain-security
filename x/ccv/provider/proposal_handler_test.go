@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -46,11 +46,6 @@ func TestProviderProposalHandler(t *testing.T) {
 				100000000000,
 				100000000000,
 				100000000000,
-				0,
-				0,
-				0,
-				nil,
-				nil,
 			),
 			blockTime:                hourFromNow, // ctx blocktime is after proposal's spawn time
 			expValidConsumerAddition: true,

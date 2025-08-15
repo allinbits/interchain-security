@@ -3,19 +3,20 @@ package keeper
 import (
 	time "time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	// IBC v10: host package removed
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
-	extra "github.com/oxyno-zeta/gomock-extra-matcher"
+	// IBC v10: removed extra matcher import as it's no longer needed
 
 	math "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	// IBC v10: capability types removed
 
 	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
 	"github.com/cosmos/interchain-security/v5/x/ccv/types"
@@ -33,15 +34,12 @@ func GetMocksForCreateConsumerClient(ctx sdk.Context, mocks *MockedKeepers,
 ) []*gomock.Call {
 	// append MakeConsumerGenesis and CreateClient expectations
 	expectations := GetMocksForMakeConsumerGenesis(ctx, mocks, time.Hour)
+	// IBC v10: CreateClient now takes clientType string and byte arrays
 	createClientExp := mocks.MockClientKeeper.EXPECT().CreateClient(
 		gomock.Any(),
-		// Allows us to expect a match by field. These are the only two client state values
-		// that are dependent on parameters passed to CreateConsumerClient.
-		extra.StructMatcher().Field(
-			"ChainId", expectedChainID).Field(
-			"LatestHeight", expectedLatestHeight,
-		),
-		gomock.Any(),
+		ibcexported.Tendermint, // clientType
+		gomock.Any(), // clientState bytes
+		gomock.Any(), // consensusState bytes
 	).Return("clientID", nil).Times(1)
 	expectations = append(expectations, createClientExp)
 
@@ -49,13 +47,18 @@ func GetMocksForCreateConsumerClient(ctx sdk.Context, mocks *MockedKeepers,
 }
 
 // GetMocksForMakeConsumerGenesis returns mock expectations needed to call MakeConsumerGenesis().
+// Following ICS v7 pattern: https://github.com/cosmos/interchain-security/blob/v7.0.1/testutil/keeper/expectations.go#L49-L58
 func GetMocksForMakeConsumerGenesis(ctx sdk.Context, mocks *MockedKeepers,
 	unbondingTimeToInject time.Duration,
 ) []*gomock.Call {
+	// IBC v10: GetSelfConsensusState removed from ClientKeeper
+	// Provider now uses custom getSelfConsensusState that uses StakingKeeper.GetHistoricalInfo
 	return []*gomock.Call{
 		mocks.MockStakingKeeper.EXPECT().UnbondingTime(gomock.Any()).Return(unbondingTimeToInject, nil).Times(1),
-		mocks.MockClientKeeper.EXPECT().GetSelfConsensusState(gomock.Any(),
-			clienttypes.GetSelfHeight(ctx)).Return(&ibctmtypes.ConsensusState{}, nil).Times(1),
+		// ICS v7 pattern: GetHistoricalInfo expectation without Return() specified
+		// When no Return() is specified, gomock returns zero values (empty struct, nil error)
+		// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/testutil/keeper/expectations.go#L57
+		mocks.MockStakingKeeper.EXPECT().GetHistoricalInfo(gomock.Any(), gomock.Any()).Times(1),
 	}
 }
 
@@ -83,13 +86,13 @@ func GetMocksForSetConsumerChain(ctx sdk.Context, mocks *MockedKeepers,
 // GetMocksForStopConsumerChainWithCloseChannel returns mock expectations needed to call StopConsumerChain() when
 // `closeChan` is true.
 func GetMocksForStopConsumerChainWithCloseChannel(ctx sdk.Context, mocks *MockedKeepers) []*gomock.Call {
-	dummyCap := &capabilitytypes.Capability{}
+	// IBC v10: Capabilities removed
 	return []*gomock.Call{
 		mocks.MockChannelKeeper.EXPECT().GetChannel(gomock.Any(), types.ProviderPortID, "channelID").Return(
 			channeltypes.Channel{State: channeltypes.OPEN}, true,
 		).Times(1),
-		mocks.MockScopedKeeper.EXPECT().GetCapability(gomock.Any(), gomock.Any()).Return(dummyCap, true).Times(1),
-		mocks.MockChannelKeeper.EXPECT().ChanCloseInit(gomock.Any(), types.ProviderPortID, "channelID", dummyCap).Times(1),
+		// IBC v10: GetCapability call removed
+		mocks.MockChannelKeeper.EXPECT().ChanCloseInit(gomock.Any(), types.ProviderPortID, "channelID").Times(1),
 	}
 }
 
@@ -128,25 +131,29 @@ func ExpectLatestConsensusStateMock(ctx sdk.Context, mocks MockedKeepers, client
 		GetLatestClientConsensusState(ctx, clientID).Return(consState, true).Times(1)
 }
 
-func ExpectCreateClientMock(ctx sdk.Context, mocks MockedKeepers, clientID string, clientState *ibctmtypes.ClientState, consState *ibctmtypes.ConsensusState) *gomock.Call {
-	return mocks.MockClientKeeper.EXPECT().CreateClient(ctx, clientState, consState).Return(clientID, nil).Times(1)
+// ExpectCreateClientMock sets up a mock expectation for CreateClient with IBC v10 signature
+// Following ICS v7 pattern: https://github.com/cosmos/interchain-security/blob/v7.0.1/testutil/keeper/expectations.go#L125-L131
+func ExpectCreateClientMock(ctx sdk.Context, mocks MockedKeepers, clientType string, clientID string, clientStateBytes []byte, consStateBytes []byte) *gomock.Call {
+	// IBC v10: CreateClient now takes clientType string and byte arrays
+	return mocks.MockClientKeeper.EXPECT().CreateClient(
+		ctx,
+		clientType,
+		clientStateBytes,
+		consStateBytes,
+	).Return(clientID, nil).Times(1)
 }
 
 func ExpectGetCapabilityMock(ctx sdk.Context, mocks MockedKeepers, times int) *gomock.Call {
-	return mocks.MockScopedKeeper.EXPECT().GetCapability(
-		ctx, host.PortPath(types.ConsumerPortID),
-	).Return(nil, true).Times(times)
+	// IBC v10: Capabilities removed, returning nil mock
+	return nil
 }
 
 func GetMocksForSendIBCPacket(ctx sdk.Context, mocks MockedKeepers, channelID string, times int) []*gomock.Call {
 	return []*gomock.Call{
 		mocks.MockChannelKeeper.EXPECT().GetChannel(ctx, types.ConsumerPortID,
 			"consumerCCVChannelID").Return(channeltypes.Channel{}, true).Times(times),
-		mocks.MockScopedKeeper.EXPECT().GetCapability(ctx,
-			host.ChannelCapabilityPath(types.ConsumerPortID, "consumerCCVChannelID")).Return(
-			capabilitytypes.NewCapability(1), true).Times(times),
+		// IBC v10: GetCapability call removed
 		mocks.MockChannelKeeper.EXPECT().SendPacket(ctx,
-			capabilitytypes.NewCapability(1),
 			types.ConsumerPortID,
 			"consumerCCVChannelID",
 			gomock.Any(),

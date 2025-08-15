@@ -3,15 +3,15 @@ package consumer_test
 import (
 	"testing"
 
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	// IBC v10: host import removed - capability paths no longer needed
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	// IBC v10: capability types removed
 
 	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
 	"github.com/cosmos/interchain-security/v5/x/ccv/consumer"
@@ -32,7 +32,7 @@ func TestOnChanOpenInit(t *testing.T) {
 		connectionHops []string
 		portID         string
 		channelID      string
-		chanCap        *capabilitytypes.Capability
+		// IBC v10: Capability removed
 		counterparty   channeltypes.Counterparty
 		version        string
 	}
@@ -45,10 +45,8 @@ func TestOnChanOpenInit(t *testing.T) {
 	}{
 		{
 			"success", func(keeper *consumerkeeper.Keeper, params *params, mocks testkeeper.MockedKeepers) {
+				// IBC v10: Capability claiming removed
 				gomock.InOrder(
-					mocks.MockScopedKeeper.EXPECT().ClaimCapability(
-						params.ctx, params.chanCap, host.ChannelCapabilityPath(
-							params.portID, params.channelID)).Return(nil).Times(1),
 					mocks.MockConnectionKeeper.EXPECT().GetConnection(
 						params.ctx, "connectionIDToProvider").Return(
 						conntypes.ConnectionEnd{ClientId: "clientIDToProvider"}, true).Times(1),
@@ -58,10 +56,8 @@ func TestOnChanOpenInit(t *testing.T) {
 		{
 			"should succeed when IBC module version isn't provided", func(keeper *consumerkeeper.Keeper, params *params, mocks testkeeper.MockedKeepers) {
 				params.version = ""
+				// IBC v10: Capability claiming removed
 				gomock.InOrder(
-					mocks.MockScopedKeeper.EXPECT().ClaimCapability(
-						params.ctx, params.chanCap, host.ChannelCapabilityPath(
-							params.portID, params.channelID)).Return(nil).Times(1),
 					mocks.MockConnectionKeeper.EXPECT().GetConnection(
 						params.ctx, "connectionIDToProvider").Return(
 						conntypes.ConnectionEnd{ClientId: "clientIDToProvider"}, true).Times(1),
@@ -107,10 +103,8 @@ func TestOnChanOpenInit(t *testing.T) {
 		{
 			"invalid clientID to provider",
 			func(keeper *consumerkeeper.Keeper, params *params, mocks testkeeper.MockedKeepers) {
+				// IBC v10: Capability claiming removed
 				gomock.InOrder(
-					mocks.MockScopedKeeper.EXPECT().ClaimCapability(
-						params.ctx, params.chanCap, host.ChannelCapabilityPath(
-							params.portID, params.channelID)).Return(nil).Times(1),
 					mocks.MockConnectionKeeper.EXPECT().GetConnection(
 						params.ctx, "connectionIDToProvider").Return(
 						conntypes.ConnectionEnd{ClientId: "unexpectedClientID"}, true).Times(1), // unexpected clientID
@@ -137,20 +131,20 @@ func TestOnChanOpenInit(t *testing.T) {
 			connectionHops: []string{"connectionIDToProvider"},
 			portID:         ccv.ConsumerPortID,
 			channelID:      "consumerChannelID",
-			chanCap:        &capabilitytypes.Capability{},
+			// IBC v10: Capability removed
 			counterparty:   channeltypes.NewCounterparty(ccv.ProviderPortID, "providerChannelID"),
 			version:        ccv.Version,
 		}
 
 		tc.setup(&consumerKeeper, &params, mocks)
 
+		// IBC v10: Capability parameter removed from OnChanOpenInit
 		version, err := consumerModule.OnChanOpenInit(
 			params.ctx,
 			params.order,
 			params.connectionHops,
 			params.portID,
 			params.channelID,
-			params.chanCap,
 			params.counterparty,
 			params.version,
 		)
@@ -180,6 +174,7 @@ func TestOnChanOpenTry(t *testing.T) {
 	defer ctrl.Finish()
 	consumerModule := consumer.NewAppModule(consumerKeeper, *keeperParams.ParamsSubspace)
 
+	// IBC v10: Capability parameter removed from OnChanOpenTry
 	// OnOpenTry must error even with correct arguments
 	_, err := consumerModule.OnChanOpenTry(
 		ctx,
@@ -187,7 +182,6 @@ func TestOnChanOpenTry(t *testing.T) {
 		[]string{"connection-1"},
 		ccv.ConsumerPortID,
 		"channel-1",
-		nil,
 		channeltypes.NewCounterparty(ccv.ProviderPortID, "channel-1"),
 		ccv.Version,
 	)
@@ -220,7 +214,7 @@ func TestOnChanOpenAck(t *testing.T) {
 				// Expected msg
 				distrTransferMsg := channeltypes.NewMsgChannelOpenInit(
 					transfertypes.PortID,
-					transfertypes.Version,
+					transfertypes.V1, // IBC v10: Version -> V1
 					channeltypes.UNORDERED,
 					[]string{"connectionID"},
 					transfertypes.PortID,
@@ -239,7 +233,7 @@ func TestOnChanOpenAck(t *testing.T) {
 						ConnectionHops: []string{"connectionID"},
 					}, true).Times(1),
 					mocks.MockIBCCoreKeeper.EXPECT().ChannelOpenInit(
-						sdk.WrapSDKContext(params.ctx), distrTransferMsg).Return(
+						params.ctx, distrTransferMsg).Return( // IBC v10: WrapSDKContext deprecated - context.Context supported directly
 						&channeltypes.MsgChannelOpenInitResponse{}, nil,
 					).Times(1),
 				)

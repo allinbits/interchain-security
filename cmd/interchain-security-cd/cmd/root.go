@@ -18,7 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	// IBC v10: keyring import removed as Keyring field removed from autocli.AppOptions
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -113,10 +113,8 @@ func enrichAutoCliOpts(autoCliOpts autocli.AppOptions, clientCtx client.Context)
 	}
 
 	autoCliOpts.ClientCtx = clientCtx
-	autoCliOpts.Keyring, err = keyring.NewAutoCLIKeyring(clientCtx.Keyring)
-	if err != nil {
-		return autocli.AppOptions{}, err
-	}
+	// IBC v10: Keyring field removed from autocli.AppOptions
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/cmd/interchain-security-cd/cmd/root.go#L115
 
 	return autoCliOpts, nil
 }

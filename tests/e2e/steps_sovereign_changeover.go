@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 )
 
 // this creates new clients on both chains and a connection (connection-0) between them
@@ -53,7 +53,6 @@ func stepsChangeoverToConsumer(consumerName string) []Step {
 				DistributionChannel: "channel-0",
 				SpawnTime:           0,
 				InitialHeight:       clienttypes.Height{RevisionNumber: 0, RevisionHeight: 111}, // 1 block after upgrade !important
-				TopN:                100,
 			},
 			State: State{
 				ChainID("provi"): ChainState{

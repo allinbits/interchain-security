@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint" //nolint:golint
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint" //nolint:golint
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -25,10 +25,11 @@ func (k Keeper) GetProviderInfo(ctx sdk.Context) (*types.QueryProviderInfoRespon
 		return nil, err
 	}
 
-	providerChannelID := consumerChannel.GetCounterparty().GetChannelID()
-	providerConnection := consumerConnection.GetCounterparty()
+	// IBC v10: Use field access instead of getter methods
+	providerChannelID := consumerChannel.Counterparty.ChannelId
+	providerConnection := consumerConnection.Counterparty
 
-	consumerClientState, found := k.clientKeeper.GetClientState(ctx, consumerConnection.GetClientID())
+	consumerClientState, found := k.clientKeeper.GetClientState(ctx, consumerConnection.ClientId)
 	if !found {
 		return nil, ccvtypes.ErrClientNotFound
 	}
@@ -37,15 +38,15 @@ func (k Keeper) GetProviderInfo(ctx sdk.Context) (*types.QueryProviderInfoRespon
 	resp := types.QueryProviderInfoResponse{
 		Consumer: types.ChainInfo{
 			ChainID:      ctx.ChainID(),
-			ClientID:     consumerConnection.GetClientID(),
+			ClientID:     consumerConnection.ClientId,
 			ConnectionID: consumerConnectionID,
 			ChannelID:    consumerChannelID,
 		},
 
 		Provider: types.ChainInfo{
 			ChainID:      providerChainID,
-			ClientID:     providerConnection.GetClientID(),
-			ConnectionID: providerConnection.GetConnectionID(),
+			ClientID:     providerConnection.ClientId,
+			ConnectionID: providerConnection.ConnectionId,
 			ChannelID:    providerChannelID,
 		},
 	}

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -27,7 +27,7 @@ func (s *CCVTestSuite) TestHandleConsumerMisbehaviour() {
 
 	altTime := s.providerCtx().BlockTime().Add(time.Minute)
 
-	clientHeight := s.consumerChain.LastHeader.TrustedHeight
+	clientHeight := s.consumerChain.LatestCommittedHeader.TrustedHeight
 	clientTMValset := tmtypes.NewValidatorSet(s.consumerChain.Vals.Validators)
 	clientSigners := s.consumerChain.Signers
 
@@ -89,7 +89,7 @@ func (s *CCVTestSuite) TestGetByzantineValidators() {
 	altTime := s.providerCtx().BlockTime().Add(time.Minute)
 
 	// Get the consumer client validator set
-	clientHeight := s.consumerChain.LastHeader.TrustedHeight
+	clientHeight := s.consumerChain.LatestCommittedHeader.TrustedHeight
 	clientTMValset := tmtypes.NewValidatorSet(s.consumerChain.Vals.Validators)
 	clientSigners := s.consumerChain.Signers
 
@@ -377,7 +377,7 @@ func (s *CCVTestSuite) TestCheckMisbehaviour() {
 	headerTs := s.providerCtx().BlockTime().Add(time.Minute)
 
 	// get trusted validators and height
-	clientHeight := s.consumerChain.LastHeader.TrustedHeight
+	clientHeight := s.consumerChain.LatestCommittedHeader.TrustedHeight
 	clientTMValset := tmtypes.NewValidatorSet(s.consumerChain.Vals.Validators)
 	clientSigners := s.consumerChain.Signers
 

@@ -12,3 +12,6 @@ build/
 # docusaurus versioned docs created during build
 docs/versioned_docs
 docs/versioned_sidebars
+
+# Go test binaries
+*.test
