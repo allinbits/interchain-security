@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	e2e "github.com/cosmos/interchain-security/v5/tests/e2e/testlib"
 	"github.com/kylelemons/godebug/pretty"
 	"github.com/tidwall/gjson"

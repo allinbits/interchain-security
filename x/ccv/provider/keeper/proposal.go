@@ -7,10 +7,11 @@ import (
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
@@ -125,7 +126,11 @@ func (k Keeper) CreateConsumerClient(ctx sdk.Context, prop *types.ConsumerAdditi
 		validatorSetHash, // use the hash of the updated initial valset
 	)
 
-	clientID, err := k.clientKeeper.CreateClient(ctx, clientState, consensusState)
+	// IBC v10: CreateClient now requires clientType string and marshaled states
+	clientStateBz := k.cdc.MustMarshal(clientState)
+	consensusStateBz := k.cdc.MustMarshal(consensusState)
+
+	clientID, err := k.clientKeeper.CreateClient(ctx, ibcexported.Tendermint, clientStateBz, consensusStateBz)
 	if err != nil {
 		return err
 	}
@@ -257,7 +262,9 @@ func (k Keeper) MakeConsumerGenesis(
 	clientState.TrustingPeriod = trustPeriod
 	clientState.UnbondingPeriod = providerUnbondingPeriod
 
-	consState, err := k.clientKeeper.GetSelfConsensusState(ctx, height)
+	// IBC v10: GetSelfConsensusState removed, using custom implementation
+	// Evidence: ICS v7 consumer_lifecycle.go implements this function
+	consState, err := k.getSelfConsensusState(ctx, height)
 	if err != nil {
 		return gen, nil, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "error %s getting self consensus state for: %s", err, height)
 	}
@@ -300,7 +307,7 @@ func (k Keeper) MakeConsumerGenesis(
 
 	gen = *ccv.NewInitialConsumerGenesisState(
 		clientState,
-		consState.(*ibctmtypes.ConsensusState),
+		consState,
 		initialUpdatesWithConsumerKeys,
 		consumerGenesisParams,
 	)
@@ -603,4 +610,27 @@ func (k Keeper) StopConsumerChainInCachedCtx(ctx sdk.Context, p types.ConsumerRe
 	cc, writeCache = ctx.CacheContext()
 	err = k.StopConsumerChain(cc, p.ChainId, true)
 	return
+}
+
+// getSelfConsensusState returns the consensus state of the provider chain
+// at the given height using historical info from the staking module.
+// This replaces the removed GetSelfConsensusState from IBC v10's ClientKeeper.
+// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/x/ccv/provider/keeper/consumer_lifecycle.go#L508
+func (k Keeper) getSelfConsensusState(ctx sdk.Context, height clienttypes.Height) (*ibctmtypes.ConsensusState, error) {
+	// check that height revision matches chainID revision
+	revision := clienttypes.ParseChainID(ctx.ChainID())
+	if revision != height.GetRevisionNumber() {
+		return nil, errorsmod.Wrapf(clienttypes.ErrInvalidHeight, "chainID revision number does not match height revision number: expected %d, got %d", revision, height.GetRevisionNumber())
+	}
+	histInfo, err := k.stakingKeeper.GetHistoricalInfo(ctx, int64(height.RevisionHeight))
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "height %d", height.RevisionHeight)
+	}
+
+	consensusState := &ibctmtypes.ConsensusState{
+		Timestamp:          histInfo.Header.Time,
+		Root:               commitmenttypes.NewMerkleRoot(histInfo.Header.GetAppHash()),
+		NextValidatorsHash: histInfo.Header.NextValidatorsHash,
+	}
+	return consensusState, nil
 }

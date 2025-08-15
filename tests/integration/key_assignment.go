@@ -2,7 +2,9 @@ package integration
 
 import (
 	"cosmossdk.io/math"
-	"github.com/cosmos/ibc-go/v8/testing/mock"
+	// IBC v10.2: mock.NewPV moved from ibc-go/testing/mock to cosmos-sdk/testutil/mock
+	// Reference: IBC v10.2.0 testing/simapp/test_helpers.go uses cosmos-sdk/testutil/mock
+	"github.com/cosmos/cosmos-sdk/testutil/mock"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 

@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
-	"github.com/cosmos/ibc-go/v8/testing/mock"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+	// IBC v10.2: mock.NewPV moved from ibc-go/testing/mock to cosmos-sdk/testutil/mock
+	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	"github.com/stretchr/testify/suite"
 
 	store "cosmossdk.io/store/types"
@@ -70,8 +71,10 @@ type CCVTestSuite struct {
 }
 
 // NewCCVTestSuite returns a new instance of CCVTestSuite, ready to be tested against using suite.Run().
+// IBC v10: AppIniter replaced by ibctesting.AppCreator
+// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/integration/setup.go#L69-L70
 func NewCCVTestSuite[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
-	providerAppIniter icstestingutils.AppIniter,
+	providerAppIniter ibctesting.AppCreator,
 	consumerAppIniter icstestingutils.ValSetAppIniter,
 	skippedTests []string,
 ) *CCVTestSuite {
@@ -274,8 +277,9 @@ func initConsumerChain(
 	bundle.TransferPath = ibctesting.NewPath(bundle.Chain, s.providerChain)
 	bundle.TransferPath.EndpointA.ChannelConfig.PortID = transfertypes.PortID
 	bundle.TransferPath.EndpointB.ChannelConfig.PortID = transfertypes.PortID
-	bundle.TransferPath.EndpointA.ChannelConfig.Version = transfertypes.Version
-	bundle.TransferPath.EndpointB.ChannelConfig.Version = transfertypes.Version
+	// IBC v10.2: Version constant replaced by V1
+	bundle.TransferPath.EndpointA.ChannelConfig.Version = transfertypes.V1
+	bundle.TransferPath.EndpointB.ChannelConfig.Version = transfertypes.V1
 
 	// commit state on this consumer chain
 	s.coordinator.CommitBlock(bundle.Chain)

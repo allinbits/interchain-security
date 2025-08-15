@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 

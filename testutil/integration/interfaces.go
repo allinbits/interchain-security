@@ -5,7 +5,7 @@ import (
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	"cosmossdk.io/core/comet"
 	"cosmossdk.io/math"

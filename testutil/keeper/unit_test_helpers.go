@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -84,7 +84,7 @@ func NewInMemKeeperParams(tb testing.TB) InMemKeeperParams {
 type MockedKeepers struct {
 	*MockScopedKeeper
 	*MockChannelKeeper
-	*MockPortKeeper
+	// IBC v10: MockPortKeeper removed
 	*MockConnectionKeeper
 	*MockClientKeeper
 	*MockStakingKeeper
@@ -102,7 +102,7 @@ func NewMockedKeepers(ctrl *gomock.Controller) MockedKeepers {
 	return MockedKeepers{
 		MockScopedKeeper:       NewMockScopedKeeper(ctrl),
 		MockChannelKeeper:      NewMockChannelKeeper(ctrl),
-		MockPortKeeper:         NewMockPortKeeper(ctrl),
+		// IBC v10: MockPortKeeper removed
 		MockConnectionKeeper:   NewMockConnectionKeeper(ctrl),
 		MockClientKeeper:       NewMockClientKeeper(ctrl),
 		MockStakingKeeper:      NewMockStakingKeeper(ctrl),
@@ -117,13 +117,12 @@ func NewMockedKeepers(ctrl *gomock.Controller) MockedKeepers {
 
 // NewInMemProviderKeeper instantiates an in-mem provider keeper from params and mocked keepers
 func NewInMemProviderKeeper(params InMemKeeperParams, mocks MockedKeepers) providerkeeper.Keeper {
+	// IBC v10: scopedKeeper and portKeeper removed
 	return providerkeeper.NewKeeper(
 		params.Cdc,
 		params.StoreKey,
 		*params.ParamsSubspace,
-		mocks.MockScopedKeeper,
 		mocks.MockChannelKeeper,
-		mocks.MockPortKeeper,
 		mocks.MockConnectionKeeper,
 		mocks.MockClientKeeper,
 		mocks.MockStakingKeeper,
@@ -142,13 +141,12 @@ func NewInMemProviderKeeper(params InMemKeeperParams, mocks MockedKeepers) provi
 
 // NewInMemConsumerKeeper instantiates an in-mem consumer keeper from params and mocked keepers
 func NewInMemConsumerKeeper(params InMemKeeperParams, mocks MockedKeepers) consumerkeeper.Keeper {
+	// IBC v10: scopedKeeper and portKeeper removed
 	return consumerkeeper.NewKeeper(
 		params.Cdc,
 		params.StoreKey,
 		*params.ParamsSubspace,
-		mocks.MockScopedKeeper,
 		mocks.MockChannelKeeper,
-		mocks.MockPortKeeper,
 		mocks.MockConnectionKeeper,
 		mocks.MockClientKeeper,
 		mocks.MockSlashingKeeper,

@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
 	"github.com/stretchr/testify/require"
 
@@ -248,7 +248,8 @@ func newChain(
 	t *testing.T,
 	modelParams ModelParams,
 	coord *ibctesting.Coordinator,
-	appInit icstestingutils.AppIniter,
+	// IBC v10: AppIniter replaced by ibctesting.AppCreator
+	appInit ibctesting.AppCreator,
 	chainID string,
 	validators *cmttypes.ValidatorSet,
 	signers map[string]cmttypes.PrivValidator,
@@ -287,12 +288,13 @@ func newChain(
 		Coordinator: coord,
 		ChainID:     chainID,
 		App:         app,
-		CurrentHeader: cmtproto.Header{
+		// IBC v10: CurrentHeader renamed to ProposedHeader, QueryServer removed
+		// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/mbt/driver/setup.go#L291-L296
+		ProposedHeader: cmtproto.Header{
 			ChainID: chainID,
 			Height:  1,
 			Time:    coord.CurrentTime.UTC(),
 		},
-		QueryServer:    app.GetIBCKeeper(),
 		TxConfig:       app.GetTxConfig(),
 		Codec:          app.AppCodec(),
 		Vals:           validators,
@@ -341,9 +343,11 @@ func (s *Driver) ConfigureNewPath(consumerChain, providerChain *ibctesting.TestC
 	tmCfg.TrustingPeriod = params.TrustingPeriodPerChain[consumerChainId]
 	tmCfg.MaxClockDrift = params.TrustingPeriodPerChain[ChainId(providerChain.ChainID)] * 5 // make the clock drift a non-issue
 
+	// IBC v10: LastHeader renamed to LatestCommittedHeader
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/mbt/driver/setup.go#L346-L350
 	consumerClientState := ibctmtypes.NewClientState(
 		providerChain.ChainID, tmCfg.TrustLevel, tmCfg.TrustingPeriod, tmCfg.UnbondingPeriod, tmCfg.MaxClockDrift,
-		providerChain.LastHeader.GetHeight().(clienttypes.Height), commitmenttypes.GetSDKSpecs(),
+		providerChain.LatestCommittedHeader.GetHeight().(clienttypes.Height), commitmenttypes.GetSDKSpecs(),
 		[]string{"upgrade", "upgradedIBCState"},
 	)
 
@@ -396,7 +400,10 @@ func (s *Driver) ConfigureNewPath(consumerChain, providerChain *ibctesting.TestC
 
 	// Handshake
 	s.coordinator.CreateConnections(path)
-	s.coordinator.CreateChannels(path)
+	// IBC v10.2: CreateChannels moved from Coordinator to Path (was on Coordinator in v10.1)
+	// ICS v7.0.1 uses IBC v10.1.1 where it's still coordinator.CreateChannels(path)
+	// We use IBC v10.2.0 where it's now path.CreateChannels()
+	path.CreateChannels()
 
 	// Usually the consumer sets the channel ID when it receives a first VSC packet
 	// to the provider. For testing purposes, we can set it here. This is because
@@ -422,7 +429,8 @@ func (s *Driver) ConfigureNewPath(consumerChain, providerChain *ibctesting.TestC
 }
 
 func (s *Driver) providerHeader() *ibctmtypes.Header {
-	return s.coordinator.Chains["provider"].LastHeader
+	// IBC v10: LastHeader renamed to LatestCommittedHeader
+	return s.coordinator.Chains["provider"].LatestCommittedHeader
 }
 
 func (s *Driver) setupProvider(
@@ -485,7 +493,8 @@ func (s *Driver) setupConsumer(
 }
 
 func createConsumerGenesis(modelParams ModelParams, providerChain *ibctesting.TestChain, consumerClientState *ibctmtypes.ClientState) *consumertypes.GenesisState {
-	providerConsState := providerChain.LastHeader.ConsensusState()
+	// IBC v10: LastHeader renamed to LatestCommittedHeader
+	providerConsState := providerChain.LatestCommittedHeader.ConsensusState()
 
 	valUpdates := cmttypes.TM2PB.ValidatorUpdates(providerChain.Vals)
 	params := ccvtypes.NewParams(

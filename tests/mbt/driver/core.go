@@ -10,9 +10,9 @@ import (
 
 	"cosmossdk.io/math"
 
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	tendermint "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	tendermint "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
@@ -82,7 +82,8 @@ func (s *Driver) providerChain() *ibctesting.TestChain {
 }
 
 func (s *Driver) providerHeight() int64 {
-	return s.providerChain().CurrentHeader.Height
+	// IBC v10.2: CurrentHeader renamed to ProposedHeader
+	return s.providerChain().ProposedHeader.Height
 }
 
 func (s *Driver) providerCtx() sdk.Context {
@@ -112,13 +113,15 @@ func (s *Driver) consumerCtx(chain ChainId) sdk.Context {
 // runningTime returns the timestamp of the current header of chain
 func (s *Driver) runningTime(chain ChainId) time.Time {
 	testChain := s.chain(chain)
-	return testChain.CurrentHeader.Time
+	// IBC v10.2: CurrentHeader renamed to ProposedHeader
+	return testChain.ProposedHeader.Time
 }
 
 // lastTime returns the timestamp of the last header of chain
 func (s *Driver) lastTime(chain ChainId) time.Time {
 	testChain := s.chain(chain)
-	return testChain.LastHeader.Header.Time
+	// IBC v10.2: LastHeader renamed to LatestCommittedHeader
+	return testChain.LatestCommittedHeader.Header.Time
 }
 
 // delegator retrieves the address for the delegator account
@@ -383,7 +386,8 @@ func (s *Driver) setTime(chain ChainId, newTime time.Time) {
 	testChain, found := s.coordinator.Chains[string(chain)]
 	require.True(s.t, found, "chain %s not found", chain)
 
-	testChain.CurrentHeader.Time = newTime
+	// IBC v10.2: CurrentHeader renamed to ProposedHeader
+	testChain.ProposedHeader.Time = newTime
 }
 
 func (s *Driver) AssignKey(chain ChainId, valIndex int64, value crypto.PublicKey) error {

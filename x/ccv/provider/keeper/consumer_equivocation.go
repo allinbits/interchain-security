@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -336,16 +336,21 @@ func (k Keeper) CheckMisbehaviour(ctx sdk.Context, misbehaviour ibctmtypes.Misbe
 
 	clientStore := k.clientKeeper.ClientStore(ctx, clientId)
 
-	// CheckForMisbehaviour verifies that the headers have different blockID hashes
-	ok := clientState.CheckForMisbehaviour(ctx, k.cdc, clientStore, &misbehaviour)
+	// IBC v10: Cast to concrete tendermint ClientState to access misbehaviour methods
+	tmClientState, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
+		return errorsmod.Wrapf(ibcclienttypes.ErrInvalidClient, "client state is not tendermint client state")
+	}
+
+	// CheckForMisbehaviour verifies that the headers have different blockID hashes
+	if !tmClientState.CheckForMisbehaviour(ctx, k.cdc, clientStore, &misbehaviour) {
 		return errorsmod.Wrapf(ibcclienttypes.ErrInvalidMisbehaviour, "invalid misbehaviour for client-id: %s", misbehaviour.ClientId)
 	}
 
 	// VerifyClientMessage calls verifyMisbehaviour which verifies that the headers in the misbehaviour
 	// are valid against their respective trusted consensus states and that at least a TrustLevel of the validator set signed their commit,
 	// see checkMisbehaviourHeader in ibc-go/blob/v7.3.0/modules/light-clients/07-tendermint/misbehaviour_handle.go#L126
-	if err := clientState.VerifyClientMessage(ctx, k.cdc, clientStore, &misbehaviour); err != nil {
+	if err := tmClientState.VerifyClientMessage(ctx, k.cdc, clientStore, &misbehaviour); err != nil {
 		return err
 	}
 

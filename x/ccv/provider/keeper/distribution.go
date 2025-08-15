@@ -4,7 +4,7 @@ import (
 	"context"
 
 	storetypes "cosmossdk.io/store/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

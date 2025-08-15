@@ -9,9 +9,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/log"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -63,9 +62,9 @@ func TMCryptoPublicKeyToConsAddr(k tmprotocrypto.PublicKey) (sdk.ConsAddress, er
 
 // SendIBCPacket sends an IBC packet with packetData
 // over the source channelID and portID
+// IBC v10: Removed scopedKeeper parameter as capabilities are no longer used
 func SendIBCPacket(
 	ctx sdk.Context,
-	scopedKeeper ScopedKeeper,
 	channelKeeper ChannelKeeper,
 	sourceChannelID string,
 	sourcePortID string,
@@ -76,13 +75,9 @@ func SendIBCPacket(
 	if !ok {
 		return errorsmod.Wrapf(channeltypes.ErrChannelNotFound, "channel not found for channel ID: %s", sourceChannelID)
 	}
-	channelCap, ok := scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(sourcePortID, sourceChannelID))
-	if !ok {
-		return errorsmod.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
-	}
+	// Note: Capabilities have been removed in IBC v10
 
 	_, err := channelKeeper.SendPacket(ctx,
-		channelCap,
 		sourcePortID,
 		sourceChannelID,
 		clienttypes.Height{}, //  timeout height disabled

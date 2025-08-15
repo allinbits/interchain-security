@@ -1,12 +1,11 @@
 package ibc_testing
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -21,9 +20,10 @@ import (
 	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 )
 
+// IBC v10: AppCreator replaces AppIniter with same signature
+// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/testutil/ibc_testing/generic_setup.go#L24-L26
 type (
-	AppIniter       func() (ibctesting.TestingApp, map[string]json.RawMessage)
-	ValSetAppIniter func([]types.ValidatorUpdate) AppIniter
+	ValSetAppIniter func([]types.ValidatorUpdate) ibctesting.AppCreator
 )
 
 // Contains generic setup code for running integration tests against a provider, consumer,
@@ -69,7 +69,7 @@ func (cb ConsumerBundle) GetKeeper() consumerkeeper.Keeper {
 }
 
 // AddProvider adds a new provider chain to the coordinator and returns the test chain and app type
-func AddProvider[T testutil.ProviderApp](t *testing.T, coordinator *ibctesting.Coordinator, appIniter AppIniter) (
+func AddProvider[T testutil.ProviderApp](t *testing.T, coordinator *ibctesting.Coordinator, appIniter ibctesting.AppCreator) (
 	*ibctesting.TestChain, T,
 ) {
 	t.Helper()
