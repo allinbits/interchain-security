@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	// IBC v10: host import removed - capability paths no longer needed
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	// IBC v10: capability types removed
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/bytes"
@@ -388,26 +388,19 @@ func TestOnAcknowledgementPacketError(t *testing.T) {
 		uint64(time.Now().Add(60*time.Second).UnixNano()),
 	)
 
+	// IBC v10: Capability removed from ChanCloseInit
 	// Still expect no error returned from OnAcknowledgementPacket,
 	// but the input error ack will be handled with appropriate ChanCloseInit calls
-	dummyCap := &capabilitytypes.Capability{}
 	gomock.InOrder(
-
-		mocks.MockScopedKeeper.EXPECT().GetCapability(
-			ctx, host.ChannelCapabilityPath(types.ConsumerPortID, channelIDToDestChain),
-		).Return(dummyCap, true).Times(1),
 		// Due to input error ack, ChanCloseInit is called on channel to destination chain
 		mocks.MockChannelKeeper.EXPECT().ChanCloseInit(
-			ctx, types.ConsumerPortID, channelIDToDestChain, dummyCap,
+			ctx, types.ConsumerPortID, channelIDToDestChain,
 		).Return(nil).Times(1),
 
-		mocks.MockScopedKeeper.EXPECT().GetCapability(
-			ctx, host.ChannelCapabilityPath(types.ConsumerPortID, channelIDToProvider),
-		).Return(dummyCap, true).Times(1),
 		// Due to input error ack and existence of established channel to provider,
 		// ChanCloseInit is called on channel to provider
 		mocks.MockChannelKeeper.EXPECT().ChanCloseInit(
-			ctx, types.ConsumerPortID, channelIDToProvider, dummyCap,
+			ctx, types.ConsumerPortID, channelIDToProvider,
 		).Return(nil).Times(1),
 	)
 

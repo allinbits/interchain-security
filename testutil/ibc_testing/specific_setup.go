@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 
 	db "github.com/cosmos/cosmos-db"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,21 +24,23 @@ import (
 	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 )
 
+// IBC v10: AppIniter replaced by ibctesting.AppCreator
+// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/testutil/ibc_testing/specific_setup.go#L27-L31
 var (
-	_ AppIniter       = ProviderAppIniter
-	_ ValSetAppIniter = ConsumerAppIniter
-	_ ValSetAppIniter = DemocracyConsumerAppIniter
+	_ ibctesting.AppCreator = ProviderAppIniter
+	_ ValSetAppIniter       = ConsumerAppIniter
+	_ ValSetAppIniter       = DemocracyConsumerAppIniter
 )
 
-// ProviderAppIniter implements ibctesting.AppIniter for a provider app
+// ProviderAppIniter implements ibctesting.AppCreator for a provider app
 func ProviderAppIniter() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	encoding := appProvider.MakeTestEncodingConfig()
 	testApp := appProvider.New(log.NewNopLogger(), db.NewMemDB(), nil, true, simtestutil.EmptyAppOptions{})
 	return testApp, appProvider.NewDefaultGenesisState(encoding.Codec)
 }
 
-// ConsumerAppIniter returns a ibctesting.ValSetAppIniter for a consumer app
-func ConsumerAppIniter(initValPowers []types.ValidatorUpdate) AppIniter {
+// ConsumerAppIniter returns a ibctesting.AppCreator for a consumer app
+func ConsumerAppIniter(initValPowers []types.ValidatorUpdate) ibctesting.AppCreator {
 	return func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		encoding := appConsumer.MakeTestEncodingConfig()
 		testApp := appConsumer.New(log.NewNopLogger(), db.NewMemDB(), nil, true, simtestutil.EmptyAppOptions{})
@@ -62,7 +64,7 @@ func ConsumerAppIniter(initValPowers []types.ValidatorUpdate) AppIniter {
 }
 
 // DemocracyConsumerAppIniter implements ibctesting.ValSetAppIniter for a democracy consumer app
-func DemocracyConsumerAppIniter(initValPowers []types.ValidatorUpdate) AppIniter {
+func DemocracyConsumerAppIniter(initValPowers []types.ValidatorUpdate) ibctesting.AppCreator {
 	return func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		encoding := appConsumerDemocracy.MakeTestEncodingConfig()
 		testApp := appConsumerDemocracy.New(log.NewNopLogger(), db.NewMemDB(), nil, true, simtestutil.EmptyAppOptions{})

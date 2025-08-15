@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -180,9 +180,9 @@ func (k Keeper) SendVSCPacketsToChain(ctx sdk.Context, chainID, channelID string
 	pendingPackets := k.GetPendingVSCPackets(ctx, chainID)
 	for _, data := range pendingPackets {
 		// send packet over IBC
+		// IBC v10: SendIBCPacket no longer needs scopedKeeper
 		err := ccv.SendIBCPacket(
 			ctx,
-			k.scopedKeeper,
 			k.channelKeeper,
 			channelID,          // source channel id
 			ccv.ProviderPortID, // source port id

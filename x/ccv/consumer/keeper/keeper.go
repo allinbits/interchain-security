@@ -8,10 +8,10 @@ import (
 
 	addresscodec "cosmossdk.io/core/address"
 	"cosmossdk.io/core/store"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -20,7 +20,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 
 	"cosmossdk.io/log"
 	tmtypes "github.com/cometbft/cometbft/abci/types"
@@ -38,9 +37,8 @@ type Keeper struct {
 	storeKey         storetypes.StoreKey
 	storeService     store.KVStoreService
 	cdc              codec.BinaryCodec
-	scopedKeeper     ccv.ScopedKeeper
+	// IBC v10: scopedKeeper and portKeeper removed following ICS v7 pattern
 	channelKeeper    ccv.ChannelKeeper
-	portKeeper       ccv.PortKeeper
 	connectionKeeper ccv.ConnectionKeeper
 	clientKeeper     ccv.ClientKeeper
 	// standaloneStakingKeeper is the staking keeper that managed proof of stake for a previously standalone chain,
@@ -64,8 +62,8 @@ type Keeper struct {
 // collector (and not the provider chain)
 func NewKeeper(
 	cdc codec.BinaryCodec, key storetypes.StoreKey, paramSpace paramtypes.Subspace,
-	scopedKeeper ccv.ScopedKeeper,
-	channelKeeper ccv.ChannelKeeper, portKeeper ccv.PortKeeper,
+	// IBC v10: scopedKeeper and portKeeper parameters removed following ICS v7
+	channelKeeper ccv.ChannelKeeper,
 	connectionKeeper ccv.ConnectionKeeper, clientKeeper ccv.ClientKeeper,
 	slashingKeeper ccv.SlashingKeeper, bankKeeper ccv.BankKeeper, accountKeeper ccv.AccountKeeper,
 	ibcTransferKeeper ccv.IBCTransferKeeper, ibcCoreKeeper ccv.IBCCoreKeeper,
@@ -81,9 +79,8 @@ func NewKeeper(
 		authority:               authority,
 		storeKey:                key,
 		cdc:                     cdc,
-		scopedKeeper:            scopedKeeper,
+		// IBC v10: scopedKeeper and portKeeper fields removed
 		channelKeeper:           channelKeeper,
-		portKeeper:              portKeeper,
 		connectionKeeper:        connectionKeeper,
 		clientKeeper:            clientKeeper,
 		slashingKeeper:          slashingKeeper,
@@ -125,8 +122,9 @@ func (k *Keeper) SetStandaloneStakingKeeper(sk ccv.StakingKeeper) {
 // non-nil values for all its fields. Otherwise this method will panic.
 func (k Keeper) mustValidateFields() {
 	// Ensures no fields are missed in this validation
-	if reflect.ValueOf(k).NumField() != 19 {
-		panic("number of fields in consumer keeper is not 16")
+	// We have 17 fields (ICS v7.0.1 has 16, but we added storeService)
+	if reflect.ValueOf(k).NumField() != 17 {
+		panic("number of fields in consumer keeper is not 17")
 	}
 
 	// Note 116 / 16 fields will be validated,
@@ -135,10 +133,9 @@ func (k Keeper) mustValidateFields() {
 
 	ccv.PanicIfZeroOrNil(k.storeKey, "storeKey")                           // 1
 	ccv.PanicIfZeroOrNil(k.cdc, "cdc")                                     // 2
-	ccv.PanicIfZeroOrNil(k.scopedKeeper, "scopedKeeper")                   // 3
-	ccv.PanicIfZeroOrNil(k.channelKeeper, "channelKeeper")                 // 4
-	ccv.PanicIfZeroOrNil(k.portKeeper, "portKeeper")                       // 5
-	ccv.PanicIfZeroOrNil(k.connectionKeeper, "connectionKeeper")           // 6
+	// IBC v10: scopedKeeper and portKeeper validation removed
+	ccv.PanicIfZeroOrNil(k.channelKeeper, "channelKeeper")                 // 3
+	ccv.PanicIfZeroOrNil(k.connectionKeeper, "connectionKeeper")           // 4
 	ccv.PanicIfZeroOrNil(k.clientKeeper, "clientKeeper")                   // 7
 	ccv.PanicIfZeroOrNil(k.slashingKeeper, "slashingKeeper")               // 8
 	ccv.PanicIfZeroOrNil(k.bankKeeper, "bankKeeper")                       // 9
@@ -180,27 +177,13 @@ func (k *Keeper) SetHooks(sh ccv.ConsumerHooks) *Keeper {
 
 // ChanCloseInit defines a wrapper function for the channel Keeper's function
 // Following ICS 004: https://github.com/cosmos/ibc/tree/main/spec/core/ics-004-channel-and-packet-semantics#closing-handshake
+// IBC v10: Capabilities have been removed
 func (k Keeper) ChanCloseInit(ctx sdk.Context, portID, channelID string) error {
-	capName := host.ChannelCapabilityPath(portID, channelID)
-	chanCap, ok := k.scopedKeeper.GetCapability(ctx, capName)
-	if !ok {
-		return errorsmod.Wrapf(channeltypes.ErrChannelCapabilityNotFound, "could not retrieve channel capability at: %s", capName)
-	}
-	return k.channelKeeper.ChanCloseInit(ctx, portID, channelID, chanCap)
+	return k.channelKeeper.ChanCloseInit(ctx, portID, channelID)
 }
 
-// IsBound checks if the transfer module is already bound to the desired port
-func (k Keeper) IsBound(ctx sdk.Context, portID string) bool {
-	_, ok := k.scopedKeeper.GetCapability(ctx, host.PortPath(portID))
-	return ok
-}
-
-// BindPort defines a wrapper function for the ort Keeper's function in
-// order to expose it to module's InitGenesis function
-func (k Keeper) BindPort(ctx sdk.Context, portID string) error {
-	cap := k.portKeeper.BindPort(ctx, portID)
-	return k.ClaimCapability(ctx, cap, host.PortPath(portID))
-}
+// IBC v10: IsBound and BindPort methods removed as capabilities are no longer used
+// Evidence: ICS v7 doesn't have these methods in consumer keeper
 
 // GetPort returns the portID for the transfer module. Used in ExportGenesis
 func (k Keeper) GetPort(ctx sdk.Context) string {
@@ -214,15 +197,7 @@ func (k Keeper) SetPort(ctx sdk.Context, portID string) {
 	store.Set(types.PortKey(), []byte(portID))
 }
 
-// AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function
-func (k Keeper) AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool {
-	return k.scopedKeeper.AuthenticateCapability(ctx, cap, name)
-}
-
-// ClaimCapability claims a capability that the IBC module passes to it
-func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
-	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
-}
+// IBC v10: Capability methods removed - no longer needed
 
 // SetProviderClientID sets the clientID for the client to the provider.
 // Set in InitGenesis
