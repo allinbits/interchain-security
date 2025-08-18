@@ -12,6 +12,7 @@ import (
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -116,6 +117,23 @@ type DistributionKeeper interface {
 // ConsumerHooks event hooks for newly bonded cross-chain validators
 type ConsumerHooks interface {
 	AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddresses sdk.ValAddress) error
+}
+
+// Proposal defines the minimal proposal type needed by ICS
+// This is a simplified version that only contains the fields ICS actually uses
+type Proposal struct {
+	Messages []*codectypes.Any
+}
+
+// GetMessages returns the proposal messages
+func (p Proposal) GetMessages() []*codectypes.Any {
+	return p.Messages
+}
+
+// GovKeeper defines the expected interface for the governance keeper
+// Compatible with AtomOne's custom governance implementation
+type GovKeeper interface {
+	GetProposal(ctx sdk.Context, proposalID uint64) (Proposal, bool)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
