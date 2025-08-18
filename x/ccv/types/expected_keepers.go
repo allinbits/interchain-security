@@ -13,6 +13,7 @@ import (
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -116,6 +117,12 @@ type DistributionKeeper interface {
 // ConsumerHooks event hooks for newly bonded cross-chain validators
 type ConsumerHooks interface {
 	AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddresses sdk.ValAddress) error
+}
+
+// GovKeeper defines the expected interface for the governance keeper
+// Compatible with AtomOne's custom governance implementation
+type GovKeeper interface {
+	GetProposal(ctx sdk.Context, proposalID uint64) (v1.Proposal, bool)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.

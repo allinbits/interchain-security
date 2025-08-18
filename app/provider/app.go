@@ -81,6 +81,7 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
@@ -124,6 +125,58 @@ const (
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
+
+// AtomOneGovKeeper wraps the standard SDK gov keeper to behave like AtomOne's gov keeper
+// This implements the ccv.GovKeeper interface
+type AtomOneGovKeeper struct {
+	keeper *govkeeper.Keeper
+}
+
+// GetProposal implements the AtomOne-style GetProposal method
+func (a *AtomOneGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (govv1.Proposal, bool) {
+	prop, err := a.keeper.Proposals.Get(ctx, proposalID)
+	if err != nil {
+		return govv1.Proposal{}, false
+	}
+	return prop, true
+}
+
+// AtomOneGovHooksWrapper wraps ICS provider hooks to work with standard SDK gov module
+// This bridges between AtomOne-style hooks (no errors) and SDK hooks (with errors)
+type AtomOneGovHooksWrapper struct {
+	hooks ibcproviderkeeper.Hooks
+}
+
+// Implement standard SDK GovHooks interface by wrapping AtomOne-style hooks
+func (w AtomOneGovHooksWrapper) AfterProposalSubmission(ctx context.Context, proposalID uint64) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	w.hooks.AfterProposalSubmission(sdkCtx, proposalID)
+	return nil
+}
+
+func (w AtomOneGovHooksWrapper) AfterProposalVotingPeriodEnded(ctx context.Context, proposalID uint64) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	w.hooks.AfterProposalVotingPeriodEnded(sdkCtx, proposalID)
+	return nil
+}
+
+func (w AtomOneGovHooksWrapper) AfterProposalDeposit(ctx context.Context, proposalID uint64, depositorAddr sdk.AccAddress) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	w.hooks.AfterProposalDeposit(sdkCtx, proposalID, depositorAddr)
+	return nil
+}
+
+func (w AtomOneGovHooksWrapper) AfterProposalVote(ctx context.Context, proposalID uint64, voterAddr sdk.AccAddress) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	w.hooks.AfterProposalVote(sdkCtx, proposalID, voterAddr)
+	return nil
+}
+
+func (w AtomOneGovHooksWrapper) AfterProposalFailedMinDeposit(ctx context.Context, proposalID uint64) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	w.hooks.AfterProposalFailedMinDeposit(sdkCtx, proposalID)
+	return nil
+}
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -460,6 +513,9 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	// Create AtomOne-style gov keeper wrapper
+	atomOneGovKeeper := &AtomOneGovKeeper{keeper: app.GovKeeper}
+
 	// IBC v10: scopedKeeper and portKeeper removed from provider keeper initialization
 	app.ProviderKeeper = ibcproviderkeeper.NewKeeper(
 		appCodec,
@@ -473,7 +529,7 @@ func New(
 		app.AccountKeeper,
 		app.DistrKeeper,
 		app.BankKeeper,
-		*app.GovKeeper,
+		atomOneGovKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
@@ -490,8 +546,9 @@ func New(
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
+	// Use the AtomOne hooks wrapper to bridge between the two interfaces
 	app.GovKeeper = app.GovKeeper.SetHooks(
-		govtypes.NewMultiGovHooks(app.ProviderKeeper.Hooks()),
+		govtypes.NewMultiGovHooks(AtomOneGovHooksWrapper{hooks: app.ProviderKeeper.Hooks()}),
 	)
 
 	providerModule := ibcprovider.NewAppModule(&app.ProviderKeeper, app.GetSubspace(providertypes.ModuleName))

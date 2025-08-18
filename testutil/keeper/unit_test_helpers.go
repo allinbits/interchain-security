@@ -29,7 +29,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
 	providerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
@@ -78,6 +78,14 @@ func NewInMemKeeperParams(tb testing.TB) InMemKeeperParams {
 		ParamsSubspace: &paramsSubspace,
 		Ctx:            ctx,
 	}
+}
+
+// TestGovKeeper is a mock implementation of GovKeeper for testing
+type TestGovKeeper struct{}
+
+// GetProposal returns an empty proposal - tests don't use actual proposals
+func (k TestGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (v1.Proposal, bool) {
+	return v1.Proposal{}, false
 }
 
 // A struct holding pointers to any mocked external keeper needed for provider/consumer keeper setup.
@@ -130,8 +138,7 @@ func NewInMemProviderKeeper(params InMemKeeperParams, mocks MockedKeepers) provi
 		mocks.MockAccountKeeper,
 		mocks.MockDistributionKeeper,
 		mocks.MockBankKeeper,
-		// mocks.MockGovKeeper,
-		govkeeper.Keeper{}, // HACK: to make parts of the test work
+		TestGovKeeper{}, // Test implementation of GovKeeper
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		address.NewBech32Codec("cosmosvaloper"),
 		address.NewBech32Codec("cosmosvalcons"),

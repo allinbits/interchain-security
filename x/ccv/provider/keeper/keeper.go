@@ -23,7 +23,6 @@ import (
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"cosmossdk.io/log"
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 
 	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
@@ -48,7 +47,7 @@ type Keeper struct {
 	slashingKeeper     ccv.SlashingKeeper
 	distributionKeeper ccv.DistributionKeeper
 	bankKeeper         ccv.BankKeeper
-	govKeeper          govkeeper.Keeper
+	govKeeper          ccv.GovKeeper
 	feeCollectorName   string
 
 	validatorAddressCodec addresscodec.Codec
@@ -64,7 +63,7 @@ func NewKeeper(
 	stakingKeeper ccv.StakingKeeper, slashingKeeper ccv.SlashingKeeper,
 	accountKeeper ccv.AccountKeeper,
 	distributionKeeper ccv.DistributionKeeper, bankKeeper ccv.BankKeeper,
-	govKeeper govkeeper.Keeper,
+	govKeeper ccv.GovKeeper,
 	authority string,
 	validatorAddressCodec, consensusAddressCodec addresscodec.Codec,
 	feeCollectorName string,
