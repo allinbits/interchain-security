@@ -33,8 +33,8 @@ func TestOnChanOpenInit(t *testing.T) {
 		portID         string
 		channelID      string
 		// IBC v10: Capability removed
-		counterparty   channeltypes.Counterparty
-		version        string
+		counterparty channeltypes.Counterparty
+		version      string
 	}
 
 	testCases := []struct {
@@ -132,8 +132,8 @@ func TestOnChanOpenInit(t *testing.T) {
 			portID:         ccv.ConsumerPortID,
 			channelID:      "consumerChannelID",
 			// IBC v10: Capability removed
-			counterparty:   channeltypes.NewCounterparty(ccv.ProviderPortID, "providerChannelID"),
-			version:        ccv.Version,
+			counterparty: channeltypes.NewCounterparty(ccv.ProviderPortID, "providerChannelID"),
+			version:      ccv.Version,
 		}
 
 		tc.setup(&consumerKeeper, &params, mocks)

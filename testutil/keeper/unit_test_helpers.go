@@ -100,8 +100,8 @@ type MockedKeepers struct {
 // NewMockedKeepers instantiates a struct with pointers to properly instantiated mocked keepers.
 func NewMockedKeepers(ctrl *gomock.Controller) MockedKeepers {
 	return MockedKeepers{
-		MockScopedKeeper:       NewMockScopedKeeper(ctrl),
-		MockChannelKeeper:      NewMockChannelKeeper(ctrl),
+		MockScopedKeeper:  NewMockScopedKeeper(ctrl),
+		MockChannelKeeper: NewMockChannelKeeper(ctrl),
 		// IBC v10: MockPortKeeper removed
 		MockConnectionKeeper:   NewMockConnectionKeeper(ctrl),
 		MockClientKeeper:       NewMockClientKeeper(ctrl),

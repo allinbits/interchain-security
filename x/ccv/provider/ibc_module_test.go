@@ -54,11 +54,11 @@ func TestOnChanOpenInit(t *testing.T) {
 func TestOnChanOpenTry(t *testing.T) {
 	// Params for the ChanOpenTry method
 	type params struct {
-		ctx                 sdk.Context
-		order               channeltypes.Order
-		connectionHops      []string
-		portID              string
-		channelID           string
+		ctx            sdk.Context
+		order          channeltypes.Order
+		connectionHops []string
+		portID         string
+		channelID      string
 		// IBC v10: Capability removed
 		counterparty        channeltypes.Counterparty
 		counterpartyVersion string
@@ -126,11 +126,11 @@ func TestOnChanOpenTry(t *testing.T) {
 
 		// Instantiate valid params as default. Individual test cases mutate these as needed.
 		params := params{
-			ctx:                 ctx,
-			order:               channeltypes.ORDERED,
-			connectionHops:      []string{"connectionIDToConsumer"},
-			portID:              ccv.ProviderPortID,
-			channelID:           "providerChannelID",
+			ctx:            ctx,
+			order:          channeltypes.ORDERED,
+			connectionHops: []string{"connectionIDToConsumer"},
+			portID:         ccv.ProviderPortID,
+			channelID:      "providerChannelID",
 			// IBC v10: Capability removed
 			counterparty:        channeltypes.NewCounterparty(ccv.ConsumerPortID, "consumerChannelID"),
 			counterpartyVersion: ccv.Version,

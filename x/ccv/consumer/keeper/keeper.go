@@ -34,9 +34,9 @@ type Keeper struct {
 	// should be the x/gov module account.
 	authority string
 
-	storeKey         storetypes.StoreKey
-	storeService     store.KVStoreService
-	cdc              codec.BinaryCodec
+	storeKey     storetypes.StoreKey
+	storeService store.KVStoreService
+	cdc          codec.BinaryCodec
 	// IBC v10: scopedKeeper and portKeeper removed following ICS v7 pattern
 	channelKeeper    ccv.ChannelKeeper
 	connectionKeeper ccv.ConnectionKeeper
@@ -76,9 +76,9 @@ func NewKeeper(
 	}
 
 	k := Keeper{
-		authority:               authority,
-		storeKey:                key,
-		cdc:                     cdc,
+		authority: authority,
+		storeKey:  key,
+		cdc:       cdc,
 		// IBC v10: scopedKeeper and portKeeper fields removed
 		channelKeeper:           channelKeeper,
 		connectionKeeper:        connectionKeeper,
@@ -131,8 +131,8 @@ func (k Keeper) mustValidateFields() {
 	// hooks are explicitly set after the constructor,
 	// stakingKeeper is optionally set after the constructor,
 
-	ccv.PanicIfZeroOrNil(k.storeKey, "storeKey")                           // 1
-	ccv.PanicIfZeroOrNil(k.cdc, "cdc")                                     // 2
+	ccv.PanicIfZeroOrNil(k.storeKey, "storeKey") // 1
+	ccv.PanicIfZeroOrNil(k.cdc, "cdc")           // 2
 	// IBC v10: scopedKeeper and portKeeper validation removed
 	ccv.PanicIfZeroOrNil(k.channelKeeper, "channelKeeper")                 // 3
 	ccv.PanicIfZeroOrNil(k.connectionKeeper, "connectionKeeper")           // 4

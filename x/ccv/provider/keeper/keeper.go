@@ -37,9 +37,9 @@ type Keeper struct {
 
 	storeKey storetypes.StoreKey
 
-	cdc                codec.BinaryCodec
+	cdc codec.BinaryCodec
 	// IBC v10: scopedKeeper removed following ICS v7 pattern
-	channelKeeper      ccv.ChannelKeeper
+	channelKeeper ccv.ChannelKeeper
 	// IBC v10: portKeeper removed following ICS v7
 	connectionKeeper   ccv.ConnectionKeeper
 	accountKeeper      ccv.AccountKeeper
@@ -70,11 +70,11 @@ func NewKeeper(
 	feeCollectorName string,
 ) Keeper {
 	k := Keeper{
-		cdc:                   cdc,
-		storeKey:              key,
-		authority:             authority,
+		cdc:       cdc,
+		storeKey:  key,
+		authority: authority,
 		// IBC v10: scopedKeeper field removed
-		channelKeeper:         channelKeeper,
+		channelKeeper: channelKeeper,
 		// IBC v10: portKeeper removed
 		connectionKeeper:      connectionKeeper,
 		clientKeeper:          clientKeeper,
@@ -121,10 +121,10 @@ func (k Keeper) mustValidateFields() {
 		panic("validator and/or consensus address codec are nil")
 	}
 
-	ccv.PanicIfZeroOrNil(k.cdc, "cdc")                                     // 1
-	ccv.PanicIfZeroOrNil(k.storeKey, "storeKey")                           // 2
+	ccv.PanicIfZeroOrNil(k.cdc, "cdc")           // 1
+	ccv.PanicIfZeroOrNil(k.storeKey, "storeKey") // 2
 	// IBC v10: scopedKeeper validation removed
-	ccv.PanicIfZeroOrNil(k.channelKeeper, "channelKeeper")                 // 3
+	ccv.PanicIfZeroOrNil(k.channelKeeper, "channelKeeper") // 3
 	// IBC v10: portKeeper validation removed
 	ccv.PanicIfZeroOrNil(k.connectionKeeper, "connectionKeeper")           // 6
 	ccv.PanicIfZeroOrNil(k.accountKeeper, "accountKeeper")                 // 7

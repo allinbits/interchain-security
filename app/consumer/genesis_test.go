@@ -563,7 +563,6 @@ func TestConsumerGenesisTransformationV330ToCurrent(t *testing.T) {
 	require.Equal(t, srcGenesis.Params.HistoricalEntries, resultGenesis.Params.HistoricalEntries)
 	require.Equal(t, srcGenesis.Params.UnbondingPeriod, resultGenesis.Params.UnbondingPeriod)
 
-
 	require.Equal(t, srcGenesis.Params.RewardDenoms, resultGenesis.Params.RewardDenoms)
 	require.Equal(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
 

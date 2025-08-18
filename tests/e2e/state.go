@@ -116,7 +116,6 @@ func (tr Chain) GetChainState(chain ChainID, modelState ChainState) ChainState {
 		chainState.HasToValidate = &hasToValidate
 	}
 
-
 	if modelState.ConsumerPendingPacketQueueSize != nil {
 		pendingPacketQueueSize := tr.target.GetPendingPacketQueueSize(chain)
 		chainState.ConsumerPendingPacketQueueSize = &pendingPacketQueueSize
@@ -951,4 +950,3 @@ func (tr Commands) GetQueryNodeIP(chain ChainID) string {
 	}
 	return fmt.Sprintf("%s.253", tr.chainConfigs[chain].IpPrefix)
 }
-

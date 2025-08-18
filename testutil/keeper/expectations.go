@@ -38,8 +38,8 @@ func GetMocksForCreateConsumerClient(ctx sdk.Context, mocks *MockedKeepers,
 	createClientExp := mocks.MockClientKeeper.EXPECT().CreateClient(
 		gomock.Any(),
 		ibcexported.Tendermint, // clientType
-		gomock.Any(), // clientState bytes
-		gomock.Any(), // consensusState bytes
+		gomock.Any(),           // clientState bytes
+		gomock.Any(),           // consensusState bytes
 	).Return("clientID", nil).Times(1)
 	expectations = append(expectations, createClientExp)
 

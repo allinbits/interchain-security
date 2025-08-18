@@ -101,7 +101,7 @@ func TestInitGenesis(t *testing.T) {
 
 		// IBC v10: Capability handling removed - port binding is handled internally by IBC
 		// Following ICS v7.0.1 pattern which doesn't test capability logic
-		
+
 		// Last total power is queried in InitGenesis
 		if !tc.expPanic {
 			mocks.MockStakingKeeper.EXPECT().GetLastTotalPower(

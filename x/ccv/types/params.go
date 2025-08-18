@@ -87,10 +87,10 @@ func NewParams(enabled bool, blocksPerDistributionTransmission int64,
 		TransferTimeoutPeriod:             transferTimeoutPeriod,
 		ConsumerRedistributionFraction:    consumerRedistributionFraction,
 		HistoricalEntries:                 historicalEntries,
-		UnbondingPeriod:      consumerUnbondingPeriod,
-		RewardDenoms:         rewardDenoms,
-		ProviderRewardDenoms: providerRewardDenoms,
-		RetryDelayPeriod:     retryDelayPeriod,
+		UnbondingPeriod:                   consumerUnbondingPeriod,
+		RewardDenoms:                      rewardDenoms,
+		ProviderRewardDenoms:              providerRewardDenoms,
+		RetryDelayPeriod:                  retryDelayPeriod,
 	}
 }
 

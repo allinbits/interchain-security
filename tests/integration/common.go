@@ -603,7 +603,7 @@ func (suite *CCVTestSuite) GetConsumerEndpointClientAndConsState(
 	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/integration/common.go#L599-L603
 	lightClientModule := ibctm.NewLightClientModule(consumerBundle.App.AppCodec(), consumerBundle.App.GetIBCKeeper().ClientKeeper.GetStoreProvider())
 	latestHeight := lightClientModule.LatestHeight(ctx, clientID)
-	
+
 	consState, found := consumerBundle.App.GetIBCKeeper().ClientKeeper.GetClientConsensusState(
 		ctx, clientID, latestHeight)
 	suite.Require().True(found)
