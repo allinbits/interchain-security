@@ -81,7 +81,6 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
@@ -113,6 +112,7 @@ import (
 	ibcproviderclient "github.com/cosmos/interchain-security/v5/x/ccv/provider/client"
 	ibcproviderkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
 	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
+	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 
 	"github.com/cosmos/cosmos-sdk/testutil/testdata/testpb"
 	sigtypes "github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -133,12 +133,12 @@ type AtomOneGovKeeper struct {
 }
 
 // GetProposal implements the AtomOne-style GetProposal method
-func (a *AtomOneGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (govv1.Proposal, bool) {
+func (a *AtomOneGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (ccvtypes.ProposalI, bool) {
 	prop, err := a.keeper.Proposals.Get(ctx, proposalID)
 	if err != nil {
-		return govv1.Proposal{}, false
+		return nil, false
 	}
-	return prop, true
+	return &prop, true
 }
 
 // AtomOneGovHooksWrapper wraps ICS provider hooks to work with standard SDK gov module

@@ -29,7 +29,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
 	providerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
@@ -83,9 +82,9 @@ func NewInMemKeeperParams(tb testing.TB) InMemKeeperParams {
 // TestGovKeeper is a mock implementation of GovKeeper for testing
 type TestGovKeeper struct{}
 
-// GetProposal returns an empty proposal - tests don't use actual proposals
-func (k TestGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (v1.Proposal, bool) {
-	return v1.Proposal{}, false
+// GetProposal returns nil - tests don't use actual proposals
+func (k TestGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (types.ProposalI, bool) {
+	return nil, false
 }
 
 // A struct holding pointers to any mocked external keeper needed for provider/consumer keeper setup.

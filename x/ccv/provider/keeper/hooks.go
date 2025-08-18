@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
@@ -247,12 +247,12 @@ func (h Hooks) GetConsumerAdditionLegacyPropFromProp(
 	// Iterate over the messages in the proposal
 	// Note that it's assumed that at most ONE message can contain a consumer addition proposal
 	for _, msg := range p.GetMessages() {
-		sdkMsg, isLegacyProposal := msg.GetCachedValue().(*v1.MsgExecLegacyContent)
+		sdkMsg, isLegacyProposal := msg.GetCachedValue().(*govv1.MsgExecLegacyContent)
 		if !isLegacyProposal {
 			continue
 		}
 
-		content, err := v1.LegacyContentFromMessage(sdkMsg)
+		content, err := govv1.LegacyContentFromMessage(sdkMsg)
 		if err != nil {
 			panic(fmt.Errorf("failed to get legacy proposal %d from prop message", proposalID))
 		}

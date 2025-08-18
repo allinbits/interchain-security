@@ -12,8 +12,8 @@ import (
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -119,10 +119,15 @@ type ConsumerHooks interface {
 	AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddresses sdk.ValAddress) error
 }
 
+// ProposalI defines the minimal proposal interface needed by ICS
+type ProposalI interface {
+	GetMessages() []*codectypes.Any
+}
+
 // GovKeeper defines the expected interface for the governance keeper
 // Compatible with AtomOne's custom governance implementation
 type GovKeeper interface {
-	GetProposal(ctx sdk.Context, proposalID uint64) (v1.Proposal, bool)
+	GetProposal(ctx sdk.Context, proposalID uint64) (ProposalI, bool)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
