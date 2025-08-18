@@ -82,9 +82,9 @@ func NewInMemKeeperParams(tb testing.TB) InMemKeeperParams {
 // TestGovKeeper is a mock implementation of GovKeeper for testing
 type TestGovKeeper struct{}
 
-// GetProposal returns nil - tests don't use actual proposals
-func (k TestGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (types.ProposalI, bool) {
-	return nil, false
+// GetProposal returns an empty proposal - tests don't use actual proposals
+func (k TestGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (types.Proposal, bool) {
+	return types.Proposal{}, false
 }
 
 // A struct holding pointers to any mocked external keeper needed for provider/consumer keeper setup.

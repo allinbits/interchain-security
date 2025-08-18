@@ -119,15 +119,21 @@ type ConsumerHooks interface {
 	AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddresses sdk.ValAddress) error
 }
 
-// ProposalI defines the minimal proposal interface needed by ICS
-type ProposalI interface {
-	GetMessages() []*codectypes.Any
+// Proposal defines the minimal proposal type needed by ICS
+// This is a simplified version that only contains the fields ICS actually uses
+type Proposal struct {
+	Messages []*codectypes.Any
+}
+
+// GetMessages returns the proposal messages
+func (p Proposal) GetMessages() []*codectypes.Any {
+	return p.Messages
 }
 
 // GovKeeper defines the expected interface for the governance keeper
 // Compatible with AtomOne's custom governance implementation
 type GovKeeper interface {
-	GetProposal(ctx sdk.Context, proposalID uint64) (ProposalI, bool)
+	GetProposal(ctx sdk.Context, proposalID uint64) (Proposal, bool)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.

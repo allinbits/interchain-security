@@ -133,12 +133,15 @@ type AtomOneGovKeeper struct {
 }
 
 // GetProposal implements the AtomOne-style GetProposal method
-func (a *AtomOneGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (ccvtypes.ProposalI, bool) {
+func (a *AtomOneGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (ccvtypes.Proposal, bool) {
 	prop, err := a.keeper.Proposals.Get(ctx, proposalID)
 	if err != nil {
-		return nil, false
+		return ccvtypes.Proposal{}, false
 	}
-	return &prop, true
+	// Convert SDK proposal to ICS minimal proposal type
+	return ccvtypes.Proposal{
+		Messages: prop.Messages,
+	}, true
 }
 
 // AtomOneGovHooksWrapper wraps ICS provider hooks to work with standard SDK gov module
