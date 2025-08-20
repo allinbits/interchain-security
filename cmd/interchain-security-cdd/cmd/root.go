@@ -30,7 +30,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	txmodule "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	"cosmossdk.io/log"
@@ -241,7 +240,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig appencoding.EncodingConf
 		confixcmd.ConfigCommand(),
 	)
 
-	server.AddCommands(rootCmd, cdd.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	server.AddCommands(rootCmd, cdd.DefaultNodeHome, newApp, appExport, func(*cobra.Command) {})
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
@@ -312,9 +311,6 @@ func appExport(
 	return simApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
 }
 
-func addModuleInitFlags(startCmd *cobra.Command) {
-	crisis.AddModuleInitFlags(startCmd)
-}
 
 // genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
 func genesisCommand(encodingConfig appencoding.EncodingConfig, cmds ...*cobra.Command) *cobra.Command {
