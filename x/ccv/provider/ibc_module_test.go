@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	// IBC v10: host import removed - capability paths no longer needed
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
@@ -13,6 +14,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	// IBC v10: capability types removed
 
 	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
@@ -31,7 +33,7 @@ func TestOnChanOpenInit(t *testing.T) {
 	providerKeeper, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(
 		t, keeperParams)
 	defer ctrl.Finish()
-	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
 	// IBC v10: Capability parameter removed from OnChanOpenInit
 	// OnChanOpenInit must error for provider even with correct arguments
@@ -119,7 +121,7 @@ func TestOnChanOpenTry(t *testing.T) {
 		keeperParams := testkeeper.NewInMemKeeperParams(t)
 		providerKeeper, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(
 			t, keeperParams)
-		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
 		providerKeeper.SetPort(ctx, ccv.ProviderPortID)
 		providerKeeper.SetConsumerClientId(ctx, "consumerChainID", "clientIDToConsumer")
@@ -189,7 +191,7 @@ func TestOnChanOpenAck(t *testing.T) {
 	providerKeeper, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(
 		t, keeperParams)
 	defer ctrl.Finish()
-	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
 	// OnChanOpenAck must error for provider even with correct arguments
 	err := providerModule.OnChanOpenAck(
@@ -311,7 +313,7 @@ func TestOnChanOpenConfirm(t *testing.T) {
 			providerKeeper.SetChainToChannel(ctx, "consumerChainID", "existingChannelID")
 		}
 
-		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
 		err := providerModule.OnChanOpenConfirm(ctx, "providerPortID", "channelID")
 

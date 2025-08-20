@@ -19,6 +19,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+
 	// Removed - types package no longer exists in v10
 	"github.com/spf13/cast"
 
@@ -93,6 +94,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	// IBC v10: Capability module removed
 	// capabilitykeeper removed
 	// capabilitytypes removed
@@ -539,7 +541,7 @@ func New(
 		govtypes.NewMultiGovHooks(AtomOneGovHooksWrapper{hooks: app.ProviderKeeper.Hooks()}),
 	)
 
-	providerModule := ibcprovider.NewAppModule(&app.ProviderKeeper, app.GetSubspace(providertypes.ModuleName))
+	providerModule := ibcprovider.NewAppModule(&app.ProviderKeeper, app.GetSubspace(providertypes.ModuleName), app.keys[providertypes.StoreKey])
 
 	// IBC v10: Updated TransferKeeper initialization
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
