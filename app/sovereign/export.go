@@ -74,7 +74,7 @@ func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []str
 	}
 
 	/* Just to be safe, assert the invariants on current state. */
-	app.CrisisKeeper.AssertInvariants(ctx)
+	// Crisis module removed - no invariants to assert
 
 	/* Handle fee distribution state. */
 
