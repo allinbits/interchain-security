@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	e2e "github.com/cosmos/interchain-security/v5/tests/e2e/testlib"
 	"gopkg.in/yaml.v2"
 
@@ -652,10 +652,6 @@ func (tr Commands) GetIBCTransferParams(chain ChainID) IBCTransferParams {
 
 func (tr Commands) GetHasToValidate(validator ValidatorID) []ChainID {
 	panic("'GetHasToValidate' is not implemented in this version")
-}
-
-func (tr Commands) GetConsumerCommissionRate(chain ChainID, validator ValidatorID) float64 {
-	panic("'GetConsumerCommissionRate' is not implemented in this version")
 }
 
 func uintPtr(i uint) *uint {

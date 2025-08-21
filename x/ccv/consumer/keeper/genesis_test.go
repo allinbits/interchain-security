@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -31,6 +31,7 @@ import (
 func TestInitGenesis(t *testing.T) {
 	// mock the consumer genesis state values
 	provClientID := "tendermint-07"
+	provClientType := "07-tendermint" // IBC v10: client type for CreateClient
 	provChannelID := "ChannelID"
 
 	vscID := uint64(0)
@@ -106,10 +107,15 @@ func TestInitGenesis(t *testing.T) {
 		{
 			"start a new chain",
 			func(ctx sdk.Context, mocks testkeeper.MockedKeepers) {
+				// IBC v10: Following ICS v7 pattern - marshal states to bytes
+				// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/x/ccv/consumer/keeper/genesis_test.go#L106-L115
+				clientStateBytes, err := provClientState.Marshal()
+				require.NoError(t, err)
+				consStateBytes, err := provConsState.Marshal()
+				require.NoError(t, err)
 				gomock.InOrder(
-					testkeeper.ExpectGetCapabilityMock(ctx, mocks, 1),
-					testkeeper.ExpectCreateClientMock(ctx, mocks, provClientID, provClientState, provConsState),
-					testkeeper.ExpectGetCapabilityMock(ctx, mocks, 1),
+					testkeeper.ExpectCreateClientMock(ctx, mocks, provClientType, provClientID, clientStateBytes,
+						consStateBytes),
 				)
 			},
 			consumertypes.NewInitialGenesisState(
@@ -382,7 +388,9 @@ func TestExportGenesis(t *testing.T) {
 func assertConsumerPortIsBound(t *testing.T, ctx sdk.Context, ck *consumerkeeper.Keeper) {
 	t.Helper()
 	require.Equal(t, ck.GetPort(ctx), string(ccv.ConsumerPortID))
-	require.True(t, ck.IsBound(ctx, ccv.ConsumerPortID))
+	// IBC v10: IsBound removed with capability module
+	// Port binding is now handled internally by IBC
+	// require.True(t, ck.IsBound(ctx, ccv.ConsumerPortID))
 }
 
 // assert that the given client ID matches the provider client ID in the store

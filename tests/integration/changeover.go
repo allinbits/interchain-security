@@ -1,8 +1,8 @@
 package integration
 
 import (
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 func (suite *CCVTestSuite) TestRecycleTransferChannel() {
@@ -16,9 +16,11 @@ func (suite *CCVTestSuite) TestRecycleTransferChannel() {
 	suite.Require().Empty(transChan)
 
 	// Create transfer channel manually
+	// IBC v10: Version constant replaced by V1
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/integration/changeover.go#L30
 	distrTransferMsg := channeltypes.NewMsgChannelOpenInit(
 		transfertypes.PortID,
-		transfertypes.Version,
+		transfertypes.V1,
 		channeltypes.UNORDERED,
 		[]string{suite.path.EndpointA.ConnectionID},
 		transfertypes.PortID,

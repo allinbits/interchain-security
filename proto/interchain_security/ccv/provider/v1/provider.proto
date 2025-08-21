@@ -88,32 +88,6 @@ message ConsumerAdditionProposal {
   // chain. it is most relevant for chains performing a sovereign to consumer
   // changeover in order to maintain the existing ibc transfer channel
   string distribution_transmission_channel = 14;
-  // Corresponds to the percentage of validators that have to validate the chain
-  // under the Top N case. For example, 53 corresponds to a Top 53% chain,
-  // meaning that the top 53% provider validators by voting power have to
-  // validate the proposed consumer chain. top_N can either be 0 or any value in
-  // [50, 100]. A chain can join with top_N == 0 as an Opt In chain, or with
-  // top_N ∈ [50, 100] as a Top N chain.
-  uint32 top_N = 15;
-  // Corresponds to the maximum power (percentage-wise) a validator can have on
-  // the consumer chain. For instance, if `validators_power_cap` is set to 32,
-  // it means that no validator can have more than 32% of the voting power on
-  // the consumer chain. Note that this might not be feasible. For example,
-  // think of a consumer chain with only 5 validators and with
-  // `validators_power_cap` set to 10%. In such a scenario, at least one
-  // validator would need to have more than 20% of the total voting power.
-  // Therefore, `validators_power_cap` operates on a best-effort basis.
-  uint32 validators_power_cap = 16;
-  // Corresponds to the maximum number of validators that can validate a
-  // consumer chain. Only applicable to Opt In chains. Setting
-  // `validator_set_cap` on a Top N chain is a no-op.
-  uint32 validator_set_cap = 17;
-  // Corresponds to a list of provider consensus addresses of validators that
-  // are the ONLY ones that can validate the consumer chain.
-  repeated string allowlist = 18;
-  // Corresponds to a list of provider consensus addresses of validators that
-  // CANNOT validate the consumer chain.
-  repeated string denylist = 19;
 }
 
 // ConsumerRemovalProposal is a governance proposal on the provider chain to
@@ -146,32 +120,6 @@ message ConsumerModificationProposal {
   string description = 2;
   // the chain-id of the consumer chain to be modified
   string chain_id = 3;
-  // Corresponds to the percentage of validators that have to validate the chain
-  // under the Top N case. For example, 53 corresponds to a Top 53% chain,
-  // meaning that the top 53% provider validators by voting power have to
-  // validate the proposed consumer chain. top_N can either be 0 or any value in
-  // [50, 100]. A chain can join with top_N == 0 as an Opt In chain, or with
-  // top_N ∈ [50, 100] as a Top N chain.
-  uint32 top_N = 4;
-  // Corresponds to the maximum power (percentage-wise) a validator can have on
-  // the consumer chain. For instance, if `validators_power_cap` is set to 32,
-  // it means that no validator can have more than 32% of the voting power on
-  // the consumer chain. Note that this might not be feasible. For example,
-  // think of a consumer chain with only 5 validators and with
-  // `validators_power_cap` set to 10%. In such a scenario, at least one
-  // validator would need to have more than 20% of the total voting power.
-  // Therefore, `validators_power_cap` operates on a best-effort basis.
-  uint32 validators_power_cap = 5;
-  // Corresponds to the maximum number of validators that can validate a
-  // consumer chain. Only applicable to Opt In chains. Setting
-  // `validator_set_cap` on a Top N chain is a no-op.
-  uint32 validator_set_cap = 6;
-  // Corresponds to a list of provider consensus addresses of validators that
-  // are the ONLY ones that can validate the consumer chain.
-  repeated string allowlist = 7;
-  // Corresponds to a list of provider consensus addresses of validators that
-  // CANNOT validate the consumer chain.
-  repeated string denylist = 8;
 }
 
 // EquivocationProposal is a governance proposal on the provider chain to
@@ -231,6 +179,12 @@ message GlobalSlashEntry {
 // Params defines the parameters for CCV Provider module
 message Params {
 
+  // Reserve 4th slot for removed init_timeout_period param
+  reserved 4;
+
+  // Reserve 5th slot for removed vsc_timeout_period param
+  reserved 5;
+
   // Reserve 8th slot for removed max throttled packet param
   reserved 8;
 
@@ -240,16 +194,6 @@ message Params {
   string trusting_period_fraction = 2;
   // Sent IBC packets will timeout after this duration
   google.protobuf.Duration ccv_timeout_period = 3
-      [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
-  // The channel initialization (IBC channel opening handshake) will timeout
-  // after this duration
-  google.protobuf.Duration init_timeout_period = 4
-      [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
-  // The VSC packets sent by the provider will timeout after this duration.
-  // Note that unlike ccv_timeout_period which is an IBC param,
-  // the vsc_timeout_period is a provider-side param that enables the provider
-  // to timeout VSC packets even when a consumer chain is not live.
-  google.protobuf.Duration vsc_timeout_period = 5
       [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
 
   // The period for which the slash meter is replenished
@@ -300,47 +244,9 @@ message ChannelToChain {
   string chain_id = 2;
 }
 
-// VscUnbondingOps contains the IDs of unbonding operations that are waiting for
-// at least one VSCMaturedPacket with vscID from a consumer chain
-message VscUnbondingOps {
-  uint64 vsc_id = 1;
-  repeated uint64 unbonding_op_ids = 2;
-}
-
-// UnbondingOp contains the ids of consumer chains that need to unbond before
-// the unbonding operation with the given ID can unbond
-message UnbondingOp {
-  uint64 id = 1;
-  // consumer chains that are still unbonding
-  repeated string unbonding_consumer_chains = 2;
-}
-
-message InitTimeoutTimestamp {
-  string chain_id = 1;
-  uint64 timestamp = 2;
-}
-
-message VscSendTimestamp {
-  uint64 vsc_id = 1;
-  google.protobuf.Timestamp timestamp = 2
-      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
-}
-
 // ValidatorSetChangePackets is a pb list of ccv.ValidatorSetChangePacketData.
 message ValidatorSetChangePackets {
   repeated interchain_security.ccv.v1.ValidatorSetChangePacketData list = 1
-      [ (gogoproto.nullable) = false ];
-}
-
-// MaturedUnbondingOps defines a list of ids corresponding to ids of matured
-// unbonding operations.
-message MaturedUnbondingOps { repeated uint64 ids = 1; }
-
-// ExportedVscSendTimestamps is VscSendTimestamp with chainID info for exporting
-// to genesis
-message ExportedVscSendTimestamp {
-  string chain_id = 1;
-  repeated VscSendTimestamp vsc_send_timestamps = 2
       [ (gogoproto.nullable) = false ];
 }
 
@@ -372,11 +278,12 @@ message ValidatorByConsumerAddr {
   bytes provider_addr = 3;
 }
 
-// Used to serialize the ConsumerAddrsToPrune index from key assignment
-// ConsumerAddrsToPrune: (chainID, vscID uint64) -> consumerAddrs AddressList
-message ConsumerAddrsToPrune {
+// Used to serialize the ConsumerAddrsToPruneV2 index from key assignment
+// ConsumerAddrsToPruneV2: (chainID, pruneTs time.Time) -> consumerAddrs AddressList
+message ConsumerAddrsToPruneV2 {
   string chain_id = 1;
-  uint64 vsc_id = 2;
+  google.protobuf.Timestamp prune_ts = 2
+    [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
   AddressList consumer_addrs = 3;
 }
 

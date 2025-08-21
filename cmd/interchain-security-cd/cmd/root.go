@@ -18,7 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	// IBC v10: keyring import removed as Keyring field removed from autocli.AppOptions
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -26,7 +26,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
 	"cosmossdk.io/log"
@@ -113,10 +112,8 @@ func enrichAutoCliOpts(autoCliOpts autocli.AppOptions, clientCtx client.Context)
 	}
 
 	autoCliOpts.ClientCtx = clientCtx
-	autoCliOpts.Keyring, err = keyring.NewAutoCLIKeyring(clientCtx.Keyring)
-	if err != nil {
-		return autocli.AppOptions{}, err
-	}
+	// IBC v10: Keyring field removed from autocli.AppOptions
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/cmd/interchain-security-cd/cmd/root.go#L115
 
 	return autoCliOpts, nil
 }
@@ -221,7 +218,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig appencoding.EncodingConf
 		confixcmd.ConfigCommand(),
 	)
 
-	server.AddCommands(rootCmd, consumer.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	server.AddCommands(rootCmd, consumer.DefaultNodeHome, newApp, appExport, func(*cobra.Command) {})
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
@@ -292,9 +289,6 @@ func appExport(
 	return simApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
 }
 
-func addModuleInitFlags(startCmd *cobra.Command) {
-	crisis.AddModuleInitFlags(startCmd)
-}
 
 // genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
 func genesisCommand(encodingConfig appencoding.EncodingConfig, cmds ...*cobra.Command) *cobra.Command {

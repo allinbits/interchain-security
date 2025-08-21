@@ -5,17 +5,17 @@ import (
 	"strconv"
 	"strings"
 
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	// host removed - no longer used in IBC v10
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	// IBC v10: capability types removed
 
 	"github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
@@ -30,7 +30,6 @@ func (am AppModule) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
@@ -59,12 +58,7 @@ func (am AppModule) OnChanOpenInit(
 			"invalid counterparty port: %s, expected %s", counterparty.PortId, types.ProviderPortID)
 	}
 
-	// Claim channel capability passed back by IBC module
-	if err := am.keeper.ClaimCapability(
-		ctx, chanCap, host.ChannelCapabilityPath(portID, channelID),
-	); err != nil {
-		return "", err
-	}
+	// IBC v10: Capability claiming removed - no longer needed
 
 	if err := am.keeper.VerifyProviderChain(ctx, connectionHops); err != nil {
 		return "", err
@@ -106,7 +100,6 @@ func (am AppModule) OnChanOpenTry(
 	connectionHops []string,
 	portID,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
@@ -162,7 +155,7 @@ func (am AppModule) OnChanOpenAck(
 
 	distrTransferMsg := channeltypes.NewMsgChannelOpenInit(
 		transfertypes.PortID,
-		transfertypes.Version,
+		"ics20-1", // IBC v10: Version constant removed, using literal
 		channeltypes.UNORDERED,
 		connHops,
 		transfertypes.PortID,
@@ -221,8 +214,10 @@ func (am AppModule) OnChanCloseConfirm(
 // OnRecvPacket implements the IBCModule interface. A successful acknowledgement
 // is returned if the packet data is successfully decoded and the receive application
 // logic returns without error.
+// IBC v10: Added channelID parameter
 func (am AppModule) OnRecvPacket(
 	ctx sdk.Context,
+	channelID string,
 	packet channeltypes.Packet,
 	_ sdk.AccAddress,
 ) ibcexported.Acknowledgement {
@@ -272,8 +267,10 @@ func (am AppModule) OnRecvPacket(
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
+// IBC v10: Added channelID parameter
 func (am AppModule) OnAcknowledgementPacket(
 	ctx sdk.Context,
+	channelID string,
 	packet channeltypes.Packet,
 	acknowledgement []byte,
 	_ sdk.AccAddress,
@@ -316,8 +313,10 @@ func (am AppModule) OnAcknowledgementPacket(
 // OnTimeoutPacket implements the IBCModule interface
 // the CCV channel state is changed to CLOSED
 // by the IBC module as the channel is ORDERED
+// IBC v10: Added channelID parameter
 func (am AppModule) OnTimeoutPacket(
 	ctx sdk.Context,
+	channelID string,
 	packet channeltypes.Packet,
 	_ sdk.AccAddress,
 ) error {

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +29,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
 	providerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
@@ -80,11 +79,19 @@ func NewInMemKeeperParams(tb testing.TB) InMemKeeperParams {
 	}
 }
 
+// TestGovKeeper is a mock implementation of GovKeeper for testing
+type TestGovKeeper struct{}
+
+// GetProposal returns an empty proposal - tests don't use actual proposals
+func (k TestGovKeeper) GetProposal(ctx sdk.Context, proposalID uint64) (types.Proposal, bool) {
+	return types.Proposal{}, false
+}
+
 // A struct holding pointers to any mocked external keeper needed for provider/consumer keeper setup.
 type MockedKeepers struct {
 	*MockScopedKeeper
 	*MockChannelKeeper
-	*MockPortKeeper
+	// IBC v10: MockPortKeeper removed
 	*MockConnectionKeeper
 	*MockClientKeeper
 	*MockStakingKeeper
@@ -100,9 +107,9 @@ type MockedKeepers struct {
 // NewMockedKeepers instantiates a struct with pointers to properly instantiated mocked keepers.
 func NewMockedKeepers(ctrl *gomock.Controller) MockedKeepers {
 	return MockedKeepers{
-		MockScopedKeeper:       NewMockScopedKeeper(ctrl),
-		MockChannelKeeper:      NewMockChannelKeeper(ctrl),
-		MockPortKeeper:         NewMockPortKeeper(ctrl),
+		MockScopedKeeper:  NewMockScopedKeeper(ctrl),
+		MockChannelKeeper: NewMockChannelKeeper(ctrl),
+		// IBC v10: MockPortKeeper removed
 		MockConnectionKeeper:   NewMockConnectionKeeper(ctrl),
 		MockClientKeeper:       NewMockClientKeeper(ctrl),
 		MockStakingKeeper:      NewMockStakingKeeper(ctrl),
@@ -117,13 +124,12 @@ func NewMockedKeepers(ctrl *gomock.Controller) MockedKeepers {
 
 // NewInMemProviderKeeper instantiates an in-mem provider keeper from params and mocked keepers
 func NewInMemProviderKeeper(params InMemKeeperParams, mocks MockedKeepers) providerkeeper.Keeper {
+	// IBC v10: scopedKeeper and portKeeper removed
 	return providerkeeper.NewKeeper(
 		params.Cdc,
 		params.StoreKey,
 		*params.ParamsSubspace,
-		mocks.MockScopedKeeper,
 		mocks.MockChannelKeeper,
-		mocks.MockPortKeeper,
 		mocks.MockConnectionKeeper,
 		mocks.MockClientKeeper,
 		mocks.MockStakingKeeper,
@@ -131,8 +137,7 @@ func NewInMemProviderKeeper(params InMemKeeperParams, mocks MockedKeepers) provi
 		mocks.MockAccountKeeper,
 		mocks.MockDistributionKeeper,
 		mocks.MockBankKeeper,
-		// mocks.MockGovKeeper,
-		govkeeper.Keeper{}, // HACK: to make parts of the test work
+		TestGovKeeper{}, // Test implementation of GovKeeper
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		address.NewBech32Codec("cosmosvaloper"),
 		address.NewBech32Codec("cosmosvalcons"),
@@ -142,13 +147,12 @@ func NewInMemProviderKeeper(params InMemKeeperParams, mocks MockedKeepers) provi
 
 // NewInMemConsumerKeeper instantiates an in-mem consumer keeper from params and mocked keepers
 func NewInMemConsumerKeeper(params InMemKeeperParams, mocks MockedKeepers) consumerkeeper.Keeper {
+	// IBC v10: scopedKeeper and portKeeper removed
 	return consumerkeeper.NewKeeper(
 		params.Cdc,
 		params.StoreKey,
 		*params.ParamsSubspace,
-		mocks.MockScopedKeeper,
 		mocks.MockChannelKeeper,
-		mocks.MockPortKeeper,
 		mocks.MockConnectionKeeper,
 		mocks.MockClientKeeper,
 		mocks.MockSlashingKeeper,
@@ -211,13 +215,6 @@ func GetNewSlashPacketData() types.SlashPacketData {
 	}
 }
 
-// Obtains vsc matured packet data with a newly generated key
-func GetNewVSCMaturedPacketData() types.VSCMaturedPacketData {
-	b := make([]byte, 8)
-	_, _ = rand.Read(b)
-	return types.VSCMaturedPacketData{ValsetUpdateId: binary.BigEndian.Uint64(b)}
-}
-
 // SetupForStoppingConsumerChain registers expected mock calls and corresponding state setup
 // which assert that a consumer chain was properly setup to be later stopped from `StopConsumerChain`.
 // Note: This function only setups and tests that we correctly setup a consumer chain that we could later stop when
@@ -259,20 +256,11 @@ func TestProviderStateIsCleanedAfterConsumerChainIsStopped(t *testing.T, ctx sdk
 	require.False(t, found)
 	acks := providerKeeper.GetSlashAcks(ctx, expectedChainID)
 	require.Empty(t, acks)
-	_, found = providerKeeper.GetInitTimeoutTimestamp(ctx, expectedChainID)
-	require.False(t, found)
-
-	require.Empty(t, providerKeeper.GetAllVscSendTimestamps(ctx, expectedChainID))
-
-	// in case the chain was successfully stopped, it should not contain a Top N associated to it
-	_, found = providerKeeper.GetTopN(ctx, expectedChainID)
-	require.False(t, found)
 
 	// test key assignment state is cleaned
 	require.Empty(t, providerKeeper.GetAllValidatorConsumerPubKeys(ctx, &expectedChainID))
 	require.Empty(t, providerKeeper.GetAllValidatorsByConsumerAddr(ctx, &expectedChainID))
 	require.Empty(t, providerKeeper.GetAllConsumerAddrsToPrune(ctx, expectedChainID))
-	require.Empty(t, providerKeeper.GetAllCommissionRateValidators(ctx, expectedChainID))
 	require.Zero(t, providerKeeper.GetEquivocationEvidenceMinHeight(ctx, expectedChainID))
 }
 
@@ -292,11 +280,6 @@ func GetTestConsumerAdditionProp() *providertypes.ConsumerAdditionProposal {
 		types.DefaultCCVTimeoutPeriod,
 		types.DefaultTransferTimeoutPeriod,
 		types.DefaultConsumerUnbondingPeriod,
-		0,
-		0,
-		0,
-		nil,
-		nil,
 	).(*providertypes.ConsumerAdditionProposal)
 
 	return prop

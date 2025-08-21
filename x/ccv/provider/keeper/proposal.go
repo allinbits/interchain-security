@@ -2,15 +2,15 @@ package keeper
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
@@ -40,11 +40,6 @@ func (k Keeper) HandleConsumerAdditionProposal(ctx sdk.Context, proposal *types.
 		BlocksPerDistributionTransmission: proposal.BlocksPerDistributionTransmission,
 		HistoricalEntries:                 proposal.HistoricalEntries,
 		DistributionTransmissionChannel:   proposal.DistributionTransmissionChannel,
-		Top_N:                             proposal.Top_N,
-		ValidatorsPowerCap:                proposal.ValidatorsPowerCap,
-		ValidatorSetCap:                   proposal.ValidatorSetCap,
-		Allowlist:                         proposal.Allowlist,
-		Denylist:                          proposal.Denylist,
 	}
 
 	return k.HandleLegacyConsumerAdditionProposal(ctx, &p)
@@ -75,14 +70,9 @@ func (k Keeper) HandleConsumerRewardDenomProposal(ctx sdk.Context, proposal *typ
 // HandleConsumerModificationProposal modifies a running consumer chain
 func (k Keeper) HandleConsumerModificationProposal(ctx sdk.Context, proposal *types.MsgConsumerModification) error {
 	p := types.ConsumerModificationProposal{
-		Title:              proposal.Title,
-		Description:        proposal.Description,
-		ChainId:            proposal.ChainId,
-		Top_N:              proposal.Top_N,
-		ValidatorsPowerCap: proposal.ValidatorsPowerCap,
-		ValidatorSetCap:    proposal.ValidatorSetCap,
-		Allowlist:          proposal.Allowlist,
-		Denylist:           proposal.Denylist,
+		Title:       proposal.Title,
+		Description: proposal.Description,
+		ChainId:     proposal.ChainId,
 	}
 
 	return k.HandleLegacyConsumerModificationProposal(ctx, &p)
@@ -135,15 +125,15 @@ func (k Keeper) CreateConsumerClient(ctx sdk.Context, prop *types.ConsumerAdditi
 		validatorSetHash, // use the hash of the updated initial valset
 	)
 
-	clientID, err := k.clientKeeper.CreateClient(ctx, clientState, consensusState)
+	// IBC v10: CreateClient now requires clientType string and marshaled states
+	clientStateBz := k.cdc.MustMarshal(clientState)
+	consensusStateBz := k.cdc.MustMarshal(consensusState)
+
+	clientID, err := k.clientKeeper.CreateClient(ctx, ibcexported.Tendermint, clientStateBz, consensusStateBz)
 	if err != nil {
 		return err
 	}
 	k.SetConsumerClientId(ctx, chainID, clientID)
-
-	// add the init timeout timestamp for this consumer chain
-	ts := ctx.BlockTime().Add(k.GetParams(ctx).InitTimeoutPeriod)
-	k.SetInitTimeoutTimestamp(ctx, chainID, uint64(ts.UnixNano()))
 
 	k.Logger(ctx).Info("consumer chain registered (client created)",
 		"chainID", chainID,
@@ -157,7 +147,6 @@ func (k Keeper) CreateConsumerClient(ctx sdk.Context, prop *types.ConsumerAdditi
 			sdk.NewAttribute(ccv.AttributeChainID, chainID),
 			sdk.NewAttribute(clienttypes.AttributeKeyClientID, clientID),
 			sdk.NewAttribute(types.AttributeInitialHeight, prop.InitialHeight.String()),
-			sdk.NewAttribute(types.AttributeInitializationTimeout, strconv.Itoa(int(ts.UnixNano()))),
 			sdk.NewAttribute(types.AttributeTrustingPeriod, clientState.TrustingPeriod.String()),
 			sdk.NewAttribute(types.AttributeUnbondingPeriod, clientState.UnbondingPeriod.String()),
 		),
@@ -182,10 +171,8 @@ func (k Keeper) StopConsumerChain(ctx sdk.Context, chainID string, closeChan boo
 	// clean up states
 	k.DeleteConsumerClientId(ctx, chainID)
 	k.DeleteConsumerGenesis(ctx, chainID)
-	k.DeleteInitTimeoutTimestamp(ctx, chainID)
 	// Note: this call panics if the key assignment state is invalid
 	k.DeleteKeyAssignments(ctx, chainID)
-	k.DeleteMinimumPowerInTopN(ctx, chainID)
 	k.DeleteEquivocationEvidenceMinHeight(ctx, chainID)
 
 	// close channel and delete the mappings between chain ID and channel ID
@@ -208,47 +195,12 @@ func (k Keeper) StopConsumerChain(ctx sdk.Context, chainID string, closeChan boo
 		k.DeleteChainToChannel(ctx, chainID)
 		k.DeleteChannelToChain(ctx, channelID)
 
-		// delete VSC send timestamps
-		k.DeleteVscSendTimestampsForConsumer(ctx, chainID)
-	}
-
-	// delete consumer commission rate
-	provAddrs := k.GetAllCommissionRateValidators(ctx, chainID)
-	for _, addr := range provAddrs {
-		k.DeleteConsumerCommissionRate(ctx, chainID, addr)
 	}
 
 	k.DeleteInitChainHeight(ctx, chainID)
 	k.DeleteSlashAcks(ctx, chainID)
 	k.DeletePendingVSCPackets(ctx, chainID)
 
-	// release unbonding operations
-	for _, unbondingOpsIndex := range k.GetAllUnbondingOpIndexes(ctx, chainID) {
-		// iterate over the unbonding operations for the current VSC ID
-		var maturedIds []uint64
-		for _, id := range unbondingOpsIndex.UnbondingOpIds {
-			// Remove consumer chain ID from unbonding op record.
-			// Note that RemoveConsumerFromUnbondingOp cannot panic here
-			// as it is expected that for all UnbondingOpIds in every
-			// VscUnbondingOps returned by GetAllUnbondingOpIndexes
-			// there is an unbonding op in store that can be retrieved
-			// via via GetUnbondingOp.
-			if k.RemoveConsumerFromUnbondingOp(ctx, id, chainID) {
-				// Store id of matured unbonding op for later completion of unbonding in staking module
-				maturedIds = append(maturedIds, id)
-			}
-		}
-		k.AppendMaturedUnbondingOps(ctx, maturedIds)
-		k.DeleteUnbondingOpIndex(ctx, chainID, unbondingOpsIndex.VscId)
-	}
-
-	k.DeleteTopN(ctx, chainID)
-	k.DeleteValidatorsPowerCap(ctx, chainID)
-	k.DeleteValidatorSetCap(ctx, chainID)
-	k.DeleteAllowlist(ctx, chainID)
-	k.DeleteDenylist(ctx, chainID)
-
-	k.DeleteAllOptedIn(ctx, chainID)
 	k.DeleteConsumerValSet(ctx, chainID)
 
 	k.Logger(ctx).Info("consumer chain removed from provider", "chainID", chainID)
@@ -281,7 +233,9 @@ func (k Keeper) MakeConsumerGenesis(
 	clientState.TrustingPeriod = trustPeriod
 	clientState.UnbondingPeriod = providerUnbondingPeriod
 
-	consState, err := k.clientKeeper.GetSelfConsensusState(ctx, height)
+	// IBC v10: GetSelfConsensusState removed, using custom implementation
+	// Evidence: ICS v7 consumer_lifecycle.go implements this function
+	consState, err := k.getSelfConsensusState(ctx, height)
 	if err != nil {
 		return gen, nil, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "error %s getting self consensus state for: %s", err, height)
 	}
@@ -292,15 +246,7 @@ func (k Keeper) MakeConsumerGenesis(
 		return gen, nil, errorsmod.Wrapf(stakingtypes.ErrNoValidatorFound, "error getting last bonded validators: %s", err)
 	}
 
-	if prop.Top_N > 0 {
-		// in a Top-N chain, we automatically opt in all validators that belong to the top N
-		minPower, err := k.ComputeMinPowerInTopN(ctx, bondedValidators, prop.Top_N)
-		if err != nil {
-			return gen, nil, err
-		}
-		k.OptInTopNValidators(ctx, chainID, bondedValidators, minPower)
-		k.SetMinimumPowerInTopN(ctx, chainID, minPower)
-	}
+	// For Replicated Security, all bonded validators validate the consumer chain
 	nextValidators := k.ComputeNextValidators(ctx, chainID, bondedValidators)
 
 	k.SetConsumerValSet(ctx, chainID, nextValidators)
@@ -332,7 +278,7 @@ func (k Keeper) MakeConsumerGenesis(
 
 	gen = *ccv.NewInitialConsumerGenesisState(
 		clientState,
-		consState.(*ibctmtypes.ConsensusState),
+		consState,
 		initialUpdatesWithConsumerKeys,
 		consumerGenesisParams,
 	)
@@ -388,28 +334,6 @@ func (k Keeper) BeginBlockInit(ctx sdk.Context) {
 	for i, prop := range propsToExecute {
 		// create consumer client in a cached context to handle errors
 		cachedCtx, writeFn := ctx.CacheContext()
-
-		k.SetTopN(cachedCtx, prop.ChainId, prop.Top_N)
-		k.SetValidatorSetCap(cachedCtx, prop.ChainId, prop.ValidatorSetCap)
-		k.SetValidatorsPowerCap(cachedCtx, prop.ChainId, prop.ValidatorsPowerCap)
-
-		for _, address := range prop.Allowlist {
-			consAddr, err := sdk.ConsAddressFromBech32(address)
-			if err != nil {
-				continue
-			}
-
-			k.SetAllowlist(cachedCtx, prop.ChainId, types.NewProviderConsAddress(consAddr))
-		}
-
-		for _, address := range prop.Denylist {
-			consAddr, err := sdk.ConsAddressFromBech32(address)
-			if err != nil {
-				continue
-			}
-
-			k.SetDenylist(cachedCtx, prop.ChainId, types.NewProviderConsAddress(consAddr))
-		}
 
 		err := k.CreateConsumerClient(cachedCtx, &propsToExecute[i])
 		if err != nil {
@@ -657,4 +581,27 @@ func (k Keeper) StopConsumerChainInCachedCtx(ctx sdk.Context, p types.ConsumerRe
 	cc, writeCache = ctx.CacheContext()
 	err = k.StopConsumerChain(cc, p.ChainId, true)
 	return
+}
+
+// getSelfConsensusState returns the consensus state of the provider chain
+// at the given height using historical info from the staking module.
+// This replaces the removed GetSelfConsensusState from IBC v10's ClientKeeper.
+// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/x/ccv/provider/keeper/consumer_lifecycle.go#L508
+func (k Keeper) getSelfConsensusState(ctx sdk.Context, height clienttypes.Height) (*ibctmtypes.ConsensusState, error) {
+	// check that height revision matches chainID revision
+	revision := clienttypes.ParseChainID(ctx.ChainID())
+	if revision != height.GetRevisionNumber() {
+		return nil, errorsmod.Wrapf(clienttypes.ErrInvalidHeight, "chainID revision number does not match height revision number: expected %d, got %d", revision, height.GetRevisionNumber())
+	}
+	histInfo, err := k.stakingKeeper.GetHistoricalInfo(ctx, int64(height.RevisionHeight))
+	if err != nil {
+		return nil, errorsmod.Wrapf(err, "height %d", height.RevisionHeight)
+	}
+
+	consensusState := &ibctmtypes.ConsensusState{
+		Timestamp:          histInfo.Header.Time,
+		Root:               commitmenttypes.NewMerkleRoot(histInfo.Header.GetAppHash()),
+		NextValidatorsHash: histInfo.Header.NextValidatorsHash,
+	}
+	return consensusState, nil
 }

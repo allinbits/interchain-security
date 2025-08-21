@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -28,25 +28,6 @@ func (k Keeper) GetTrustingPeriodFraction(ctx sdk.Context) string {
 func (k Keeper) GetCCVTimeoutPeriod(ctx sdk.Context) time.Duration {
 	params := k.GetParams(ctx)
 	return params.CcvTimeoutPeriod
-}
-
-// GetInitTimeoutPeriod returns the init timeout period
-func (k Keeper) GetInitTimeoutPeriod(ctx sdk.Context) time.Duration {
-	params := k.GetParams(ctx)
-	return params.InitTimeoutPeriod
-}
-
-// GetVscTimeoutPeriod returns the vsc timeout period
-func (k Keeper) GetVscTimeoutPeriod(ctx sdk.Context) time.Duration {
-	params := k.GetParams(ctx)
-	return params.VscTimeoutPeriod
-}
-
-// SetVscTimeoutPeriod sets the vsc timeout period
-func (k Keeper) SetVscTimeoutPeriod(ctx sdk.Context, period time.Duration) {
-	params := k.GetParams(ctx)
-	params.VscTimeoutPeriod = period
-	k.SetParams(ctx, params)
 }
 
 // GetSlashMeterReplenishPeriod returns the period in which:

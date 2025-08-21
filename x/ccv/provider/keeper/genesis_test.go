@@ -1,13 +1,11 @@
 package keeper_test
 
 import (
-	"sort"
 	"testing"
 	"time"
 
 	"cosmossdk.io/math"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	"github.com/golang/mock/gomock"
+	// IBC v10: host and gomock imports removed - capability handling no longer needed
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,7 +24,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 	expClientID := "client"
 	oneHourFromNow := time.Now().UTC().Add(time.Hour)
 	initHeight, vscID := uint64(5), uint64(1)
-	ubdIndex := []uint64{0, 1, 2}
 	params := providertypes.DefaultParams()
 
 	// create validator keys and addresses for key assignment
@@ -36,32 +33,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 	consumerCryptoId := crypto.NewCryptoIdentityFromIntSeed(7897)
 	consumerTmPubKey := consumerCryptoId.TMProtoCryptoPublicKey()
 	consumerConsAddr := consumerCryptoId.ConsumerConsAddress()
-
-	initTimeoutTimeStamps := []providertypes.InitTimeoutTimestamp{
-		{ChainId: cChainIDs[0], Timestamp: uint64(time.Now().UTC().UnixNano()) + 10},
-		{ChainId: cChainIDs[1], Timestamp: uint64(time.Now().UTC().UnixNano()) + 15},
-	}
-
-	now := time.Now().UTC()
-	exportedVscSendTimeStampsC0 := providertypes.ExportedVscSendTimestamp{
-		ChainId: "c0",
-		VscSendTimestamps: []providertypes.VscSendTimestamp{
-			{VscId: 1, Timestamp: now.Add(time.Hour)},
-			{VscId: 2, Timestamp: now.Add(2 * time.Hour)},
-		},
-	}
-
-	exportedVscSendTimeStampsC1 := providertypes.ExportedVscSendTimestamp{
-		ChainId: "c1",
-		VscSendTimestamps: []providertypes.VscSendTimestamp{
-			{VscId: 1, Timestamp: now.Add(-time.Hour)},
-			{VscId: 2, Timestamp: now.Add(time.Hour)},
-		},
-	}
-
-	var exportedVscSendTimeStampsAll []providertypes.ExportedVscSendTimestamp
-	exportedVscSendTimeStampsAll = append(exportedVscSendTimeStampsAll, exportedVscSendTimeStampsC0)
-	exportedVscSendTimeStampsAll = append(exportedVscSendTimeStampsAll, exportedVscSendTimeStampsC1)
 
 	// create genesis struct
 	provGenesis := providertypes.NewGenesisState(vscID,
@@ -73,9 +44,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 				"channel",
 				initHeight,
 				*ccv.DefaultConsumerGenesisState(),
-				[]providertypes.VscUnbondingOps{
-					{VscId: vscID, UnbondingOpIds: ubdIndex},
-				},
 				[]ccv.ValidatorSetChangePacketData{},
 				[]string{"slashedValidatorConsAddress"},
 			),
@@ -85,16 +53,10 @@ func TestInitAndExportGenesis(t *testing.T) {
 				"",
 				0,
 				*ccv.DefaultConsumerGenesisState(),
-				nil,
 				[]ccv.ValidatorSetChangePacketData{{ValsetUpdateId: vscID}},
 				nil,
 			),
 		},
-		[]providertypes.UnbondingOp{{
-			Id:                      vscID,
-			UnbondingConsumerChains: []string{cChainIDs[0]},
-		}},
-		&providertypes.MaturedUnbondingOps{Ids: ubdIndex},
 		[]providertypes.ConsumerAdditionProposal{{
 			ChainId:   cChainIDs[0],
 			SpawnTime: oneHourFromNow,
@@ -118,28 +80,22 @@ func TestInitAndExportGenesis(t *testing.T) {
 				ConsumerAddr: consumerConsAddr.ToSdkConsAddr(),
 			},
 		},
-		[]providertypes.ConsumerAddrsToPrune{
+		[]providertypes.ConsumerAddrsToPruneV2{
 			{
 				ChainId:       cChainIDs[0],
-				VscId:         vscID,
+				PruneTs:       oneHourFromNow,
 				ConsumerAddrs: &providertypes.AddressList{Addresses: [][]byte{consumerConsAddr.ToSdkConsAddr()}},
 			},
 		},
-		initTimeoutTimeStamps,
-		exportedVscSendTimeStampsAll,
 	)
 
 	// Instantiate in-mem provider keeper with mocks
 	pk, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(t, testkeeper.NewInMemKeeperParams(t))
 	defer ctrl.Finish()
 
-	gomock.InOrder(
-		mocks.MockScopedKeeper.EXPECT().GetCapability(
-			ctx, host.PortPath(ccv.ProviderPortID),
-		).Return(nil, true).Times(1),
-		mocks.MockStakingKeeper.EXPECT().GetLastTotalPower(
-			ctx).Return(math.NewInt(100), nil).Times(1), // Return total voting power as 100
-	)
+	// IBC v10: Capability check removed - port binding handled internally
+	mocks.MockStakingKeeper.EXPECT().GetLastTotalPower(
+		ctx).Return(math.NewInt(100), nil).Times(1) // Return total voting power as 100
 
 	// init provider chain
 	pk.InitGenesis(ctx, provGenesis)
@@ -157,11 +113,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.Equal(t, expectedCandidate, pk.GetSlashMeterReplenishTimeCandidate(ctx))
 
 	// check local provider chain states
-	ubdOps, found := pk.GetUnbondingOp(ctx, vscID)
-	require.True(t, found)
-	require.Equal(t, provGenesis.UnbondingOps[0], ubdOps)
-	matureUbdOps := pk.GetMaturedUnbondingOps(ctx)
-	require.Equal(t, ubdIndex, matureUbdOps)
 	chainID, found := pk.GetChannelToChain(ctx, provGenesis.ConsumerStates[0].ChannelId)
 	require.True(t, found)
 	require.Equal(t, cChainIDs[0], chainID)
@@ -183,7 +134,7 @@ func TestInitAndExportGenesis(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, provAddr, providerAddr)
 
-	addrs := pk.GetConsumerAddrsToPrune(ctx, cChainIDs[0], vscID)
+	addrs := pk.GetConsumerAddrsToPrune(ctx, cChainIDs[0], oneHourFromNow)
 	// Expect same list as what was provided in provGenesis
 	expectedAddrList := providertypes.AddressList{Addresses: [][]byte{consumerConsAddr.ToSdkConsAddr()}}
 	require.Equal(t, expectedAddrList, addrs)
@@ -193,24 +144,6 @@ func TestInitAndExportGenesis(t *testing.T) {
 
 	// check the exported genesis
 	require.Equal(t, provGenesis, pk.ExportGenesis(ctx))
-
-	initTimeoutTimestampInStore := pk.GetAllInitTimeoutTimestamps(ctx)
-	sort.Slice(initTimeoutTimestampInStore, func(i, j int) bool {
-		return initTimeoutTimestampInStore[i].Timestamp < initTimeoutTimestampInStore[j].Timestamp
-	})
-	require.Equal(t, initTimeoutTimestampInStore, initTimeoutTimeStamps)
-
-	vscSendTimestampsC0InStore := pk.GetAllVscSendTimestamps(ctx, cChainIDs[0])
-	sort.Slice(vscSendTimestampsC0InStore, func(i, j int) bool {
-		return vscSendTimestampsC0InStore[i].VscId < vscSendTimestampsC0InStore[j].VscId
-	})
-	require.Equal(t, vscSendTimestampsC0InStore, exportedVscSendTimeStampsC0.VscSendTimestamps)
-
-	vscSendTimestampsC1InStore := pk.GetAllVscSendTimestamps(ctx, cChainIDs[1])
-	sort.Slice(vscSendTimestampsC1InStore, func(i, j int) bool {
-		return vscSendTimestampsC1InStore[i].VscId < vscSendTimestampsC1InStore[j].VscId
-	})
-	require.Equal(t, vscSendTimestampsC1InStore, exportedVscSendTimeStampsC1.VscSendTimestamps)
 }
 
 func assertConsumerChainStates(t *testing.T, ctx sdk.Context, pk keeper.Keeper, consumerStates ...providertypes.ConsumerState) {
@@ -239,12 +172,6 @@ func assertConsumerChainStates(t *testing.T, ctx sdk.Context, pk keeper.Keeper, 
 		if expVSC := cs.GetPendingValsetChanges(); expVSC != nil {
 			gotVSC := pk.GetPendingVSCPackets(ctx, chainID)
 			require.Equal(t, expVSC, gotVSC)
-		}
-
-		for _, ubdOpIdx := range cs.UnbondingOpsIndex {
-			ubdIndex, found := pk.GetUnbondingOpIndex(ctx, chainID, ubdOpIdx.VscId)
-			require.True(t, found)
-			require.Equal(t, ubdOpIdx.UnbondingOpIds, ubdIndex)
 		}
 
 		require.Equal(t, cs.SlashDowntimeAck, pk.GetSlashAcks(ctx, chainID))

@@ -3,17 +3,19 @@ package provider_test
 import (
 	"testing"
 
-	"github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	"github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
+	// IBC v10: host import removed - capability paths no longer needed
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+
+	// IBC v10: capability types removed
 
 	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
 	"github.com/cosmos/interchain-security/v5/x/ccv/provider"
@@ -31,8 +33,9 @@ func TestOnChanOpenInit(t *testing.T) {
 	providerKeeper, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(
 		t, keeperParams)
 	defer ctrl.Finish()
-	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
+	// IBC v10: Capability parameter removed from OnChanOpenInit
 	// OnChanOpenInit must error for provider even with correct arguments
 	_, err := providerModule.OnChanOpenInit(
 		ctx,
@@ -40,7 +43,6 @@ func TestOnChanOpenInit(t *testing.T) {
 		[]string{"connection-1"},
 		ccv.ProviderPortID,
 		"channel-1",
-		nil,
 		channeltypes.NewCounterparty(ccv.ConsumerPortID, "channel-1"),
 		ccv.Version,
 	)
@@ -54,12 +56,12 @@ func TestOnChanOpenInit(t *testing.T) {
 func TestOnChanOpenTry(t *testing.T) {
 	// Params for the ChanOpenTry method
 	type params struct {
-		ctx                 sdk.Context
-		order               channeltypes.Order
-		connectionHops      []string
-		portID              string
-		channelID           string
-		chanCap             *capabilitytypes.Capability
+		ctx            sdk.Context
+		order          channeltypes.Order
+		connectionHops []string
+		portID         string
+		channelID      string
+		// IBC v10: Capability removed
 		counterparty        channeltypes.Counterparty
 		counterpartyVersion string
 	}
@@ -119,19 +121,19 @@ func TestOnChanOpenTry(t *testing.T) {
 		keeperParams := testkeeper.NewInMemKeeperParams(t)
 		providerKeeper, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(
 			t, keeperParams)
-		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
 		providerKeeper.SetPort(ctx, ccv.ProviderPortID)
 		providerKeeper.SetConsumerClientId(ctx, "consumerChainID", "clientIDToConsumer")
 
 		// Instantiate valid params as default. Individual test cases mutate these as needed.
 		params := params{
-			ctx:                 ctx,
-			order:               channeltypes.ORDERED,
-			connectionHops:      []string{"connectionIDToConsumer"},
-			portID:              ccv.ProviderPortID,
-			channelID:           "providerChannelID",
-			chanCap:             &capabilitytypes.Capability{},
+			ctx:            ctx,
+			order:          channeltypes.ORDERED,
+			connectionHops: []string{"connectionIDToConsumer"},
+			portID:         ccv.ProviderPortID,
+			channelID:      "providerChannelID",
+			// IBC v10: Capability removed
 			counterparty:        channeltypes.NewCounterparty(ccv.ConsumerPortID, "consumerChannelID"),
 			counterpartyVersion: ccv.Version,
 		}
@@ -140,10 +142,9 @@ func TestOnChanOpenTry(t *testing.T) {
 		moduleAcct := authtypes.ModuleAccount{BaseAccount: &authtypes.BaseAccount{}}
 		moduleAcct.BaseAccount.Address = authtypes.NewModuleAddress(providertypes.ConsumerRewardsPool).String()
 
+		// IBC v10: Capability claiming removed
 		// Number of calls is not asserted, since not all code paths are hit for failures
 		gomock.InOrder(
-			mocks.MockScopedKeeper.EXPECT().ClaimCapability(
-				params.ctx, params.chanCap, host.ChannelCapabilityPath(params.portID, params.channelID)).AnyTimes(),
 			mocks.MockConnectionKeeper.EXPECT().GetConnection(ctx, "connectionIDToConsumer").Return(
 				conntypes.ConnectionEnd{ClientId: "clientIDToConsumer"}, true,
 			).AnyTimes(),
@@ -155,13 +156,13 @@ func TestOnChanOpenTry(t *testing.T) {
 
 		tc.mutateParams(&params, &providerKeeper)
 
+		// IBC v10: Capability parameter removed from OnChanOpenTry
 		metadata, err := providerModule.OnChanOpenTry(
 			params.ctx,
 			params.order,
 			params.connectionHops,
 			params.portID,
 			params.channelID,
-			params.chanCap,
 			params.counterparty,
 			params.counterpartyVersion,
 		)
@@ -190,7 +191,7 @@ func TestOnChanOpenAck(t *testing.T) {
 	providerKeeper, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(
 		t, keeperParams)
 	defer ctrl.Finish()
-	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+	providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
 	// OnChanOpenAck must error for provider even with correct arguments
 	err := providerModule.OnChanOpenAck(
@@ -312,7 +313,7 @@ func TestOnChanOpenConfirm(t *testing.T) {
 			providerKeeper.SetChainToChannel(ctx, "consumerChainID", "existingChannelID")
 		}
 
-		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace)
+		providerModule := provider.NewAppModule(&providerKeeper, *keeperParams.ParamsSubspace, keeperParams.StoreKey)
 
 		err := providerModule.OnChanOpenConfirm(ctx, "providerPortID", "channelID")
 

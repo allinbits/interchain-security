@@ -54,8 +54,6 @@ func (app *App) ExportAppStateAndValidators(
 //
 //	in favour of export at a block height
 func (app *App) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []string) {
-	/* Just to be safe, assert the invariants on current state. */
-	app.CrisisKeeper.AssertInvariants(ctx)
 
 	// set context height to zero
 	height := ctx.BlockHeight()

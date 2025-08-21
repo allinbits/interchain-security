@@ -3,7 +3,7 @@ package integration
 import (
 	"time"
 
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/suite"
 
 	"cosmossdk.io/math"
@@ -215,9 +215,11 @@ func (s *ConsumerDemocracyTestSuite) TestDemocracyGovernanceWhitelisting() {
 	}
 	err = submitProposalWithDepositAndVote(govKeeper, s.consumerCtx(), []sdk.Msg{msg_1, msg_2}, votingAccounts, proposer.GetAddress(), depositAmount)
 	s.Assert().NoError(err)
+	// IBC v10: CurrentHeader renamed to ProposedHeader
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/integration/democracy.go#L218-L220
 	// set current header time to be equal or later than voting end time in order to process proposal from active queue,
 	// once the proposal is added to the chain
-	s.consumerChain.CurrentHeader.Time = s.consumerChain.CurrentHeader.Time.Add(*params.VotingPeriod)
+	s.consumerChain.ProposedHeader.Time = s.consumerChain.ProposedHeader.Time.Add(*params.VotingPeriod)
 	// at this moment, proposal is added, but not yet executed. we are saving old param values for comparison
 	oldAuthParamValue := accountKeeper.GetParams(s.consumerCtx()).MaxMemoCharacters
 	oldMintParams, err := mintKeeper.Params.Get(s.consumerCtx())
@@ -240,7 +242,8 @@ func (s *ConsumerDemocracyTestSuite) TestDemocracyGovernanceWhitelisting() {
 	// submit proposal with allowed changes
 	err = submitProposalWithDepositAndVote(govKeeper, s.consumerCtx(), []sdk.Msg{msg_1}, votingAccounts, proposer.GetAddress(), depositAmount)
 	s.Assert().NoError(err)
-	s.consumerChain.CurrentHeader.Time = s.consumerChain.CurrentHeader.Time.Add(*params.VotingPeriod)
+	// IBC v10: CurrentHeader renamed to ProposedHeader
+	s.consumerChain.ProposedHeader.Time = s.consumerChain.ProposedHeader.Time.Add(*params.VotingPeriod)
 	oldMintParam, err := mintKeeper.Params.Get(s.consumerCtx())
 	s.Require().NoError(err)
 	oldMintParamValue = oldMintParam.InflationMax
@@ -259,7 +262,8 @@ func (s *ConsumerDemocracyTestSuite) TestDemocracyGovernanceWhitelisting() {
 
 	err = submitProposalWithDepositAndVote(govKeeper, s.consumerCtx(), []sdk.Msg{msg_2}, votingAccounts, proposer.GetAddress(), depositAmount)
 	s.Assert().NoError(err)
-	s.consumerChain.CurrentHeader.Time = s.consumerChain.CurrentHeader.Time.Add(*params.VotingPeriod)
+	// IBC v10: CurrentHeader renamed to ProposedHeader
+	s.consumerChain.ProposedHeader.Time = s.consumerChain.ProposedHeader.Time.Add(*params.VotingPeriod)
 	s.consumerChain.NextBlock()
 	oldAuthParamValue = accountKeeper.GetParams(s.consumerCtx()).MaxMemoCharacters
 	s.consumerChain.NextBlock()
@@ -304,7 +308,8 @@ func (s *ConsumerDemocracyTestSuite) TestDemocracyMsgUpdateParams() {
 	s.Assert().NoError(err)
 	// set current header time to be equal or later than voting end time in order to process proposal from active queue,
 	// once the proposal is added to the chain
-	s.consumerChain.CurrentHeader.Time = s.consumerChain.CurrentHeader.Time.Add(*params.VotingPeriod)
+	// IBC v10: CurrentHeader renamed to ProposedHeader
+	s.consumerChain.ProposedHeader.Time = s.consumerChain.ProposedHeader.Time.Add(*params.VotingPeriod)
 
 	s.consumerChain.NextBlock()
 

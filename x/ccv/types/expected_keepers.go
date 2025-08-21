@@ -4,19 +4,20 @@ import (
 	context "context"
 	"time"
 
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	conntypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	// Capabilities removed in IBC v10
 
 	abci "github.com/cometbft/cometbft/abci/types"
 )
@@ -55,6 +56,7 @@ type StakingKeeper interface {
 	GetUnbondingDelegationByUnbondingID(ctx context.Context, id uint64) (stakingtypes.UnbondingDelegation, error)
 	GetRedelegationByUnbondingID(ctx context.Context, id uint64) (stakingtypes.Redelegation, error)
 	GetValidatorByUnbondingID(ctx context.Context, id uint64) (stakingtypes.Validator, error)
+	GetHistoricalInfo(ctx context.Context, height int64) (stakingtypes.HistoricalInfo, error) // IBC v10: Added for getSelfConsensusState
 }
 
 // SlashingKeeper defines the contract expected to perform ccv slashing
@@ -75,22 +77,18 @@ type ChannelKeeper interface {
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
 	SendPacket(
 		ctx sdk.Context,
-		chanCap *capabilitytypes.Capability,
 		sourcePort string,
 		sourceChannel string,
 		timeoutHeight clienttypes.Height,
 		timeoutTimestamp uint64,
 		data []byte,
 	) (sequence uint64, err error)
-	WriteAcknowledgement(ctx sdk.Context, chanCap *capabilitytypes.Capability, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
-	ChanCloseInit(ctx sdk.Context, portID, channelID string, chanCap *capabilitytypes.Capability) error
-	GetChannelConnection(ctx sdk.Context, portID, channelID string) (string, ibcexported.ConnectionI, error)
+	WriteAcknowledgement(ctx sdk.Context, packet ibcexported.PacketI, acknowledgement ibcexported.Acknowledgement) error
+	ChanCloseInit(ctx sdk.Context, portID, channelID string) error
+	GetChannelConnection(ctx sdk.Context, portID, channelID string) (string, conntypes.ConnectionEnd, error)
 }
 
-// PortKeeper defines the expected IBC port keeper
-type PortKeeper interface {
-	BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability
-}
+// IBC v10: PortKeeper removed following ICS v7 pattern
 
 // ConnectionKeeper defines the expected IBC connection keeper
 type ConnectionKeeper interface {
@@ -99,10 +97,11 @@ type ConnectionKeeper interface {
 
 // ClientKeeper defines the expected IBC client keeper
 type ClientKeeper interface {
-	CreateClient(ctx sdk.Context, clientState ibcexported.ClientState, consensusState ibcexported.ConsensusState) (string, error)
+	// IBC v10: CreateClient now takes clientType and byte arrays instead of interfaces
+	CreateClient(ctx sdk.Context, clientType string, clientState, consensusState []byte) (string, error)
 	GetClientState(ctx sdk.Context, clientID string) (ibcexported.ClientState, bool)
 	GetLatestClientConsensusState(ctx sdk.Context, clientID string) (ibcexported.ConsensusState, bool)
-	GetSelfConsensusState(ctx sdk.Context, height ibcexported.Height) (ibcexported.ConsensusState, error)
+	// IBC v10: GetSelfConsensusState removed - provider uses custom getSelfConsensusState implementation
 	ClientStore(ctx sdk.Context, clientID string) storetypes.KVStore
 	SetClientState(ctx sdk.Context, clientID string, clientState ibcexported.ClientState)
 	GetClientConsensusState(ctx sdk.Context, clientID string, height ibcexported.Height) (ibcexported.ConsensusState, bool)
@@ -118,6 +117,23 @@ type DistributionKeeper interface {
 // ConsumerHooks event hooks for newly bonded cross-chain validators
 type ConsumerHooks interface {
 	AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddresses sdk.ValAddress) error
+}
+
+// Proposal defines the minimal proposal type needed by ICS
+// This is a simplified version that only contains the fields ICS actually uses
+type Proposal struct {
+	Messages []*codectypes.Any
+}
+
+// GetMessages returns the proposal messages
+func (p Proposal) GetMessages() []*codectypes.Any {
+	return p.Messages
+}
+
+// GovKeeper defines the expected interface for the governance keeper
+// Compatible with AtomOne's custom governance implementation
+type GovKeeper interface {
+	GetProposal(ctx sdk.Context, proposalID uint64) (Proposal, bool)
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
@@ -148,7 +164,5 @@ type IBCCoreKeeper interface {
 }
 
 type ScopedKeeper interface {
-	GetCapability(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool)
-	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
-	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
+	// Capability methods removed in IBC v10
 }

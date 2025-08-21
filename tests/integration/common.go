@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	commitmenttypes "github.com/cosmos/ibc-go/v8/modules/core/23-commitment/types"
-	"github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
+	"github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
@@ -301,6 +301,7 @@ func relayAllCommittedPackets(
 //
 // Note that it is expected for the provider unbonding period
 // to be one day larger than the consumer unbonding period.
+// TODO (mpoke) get rid of consumer unbonding period
 func incrementTimeByUnbondingPeriod(s *CCVTestSuite, chainType ChainType) {
 	// Get unboding periods
 	providerUnbondingPeriod, err := s.providerApp.GetTestStakingKeeper().UnbondingTime(s.providerCtx())
@@ -315,7 +316,7 @@ func incrementTimeByUnbondingPeriod(s *CCVTestSuite, chainType ChainType) {
 	incrementTime(s, jumpPeriod)
 }
 
-func checkStakingUnbondingOps(s *CCVTestSuite, id uint64, found, onHold bool, msgAndArgs ...interface{}) {
+func checkStakingUnbondingOps(s *CCVTestSuite, id uint64, found bool, msgAndArgs ...interface{}) {
 	stakingUnbondingOp, wasFound := getStakingUnbondingDelegationEntry(s.providerCtx(), s.providerApp.GetTestStakingKeeper(), id)
 	s.Require().Equal(
 		found,
@@ -323,51 +324,13 @@ func checkStakingUnbondingOps(s *CCVTestSuite, id uint64, found, onHold bool, ms
 		fmt.Sprintf("checkStakingUnbondingOps failed - getStakingUnbondingDelegationEntry; %s", msgAndArgs...),
 	)
 	if wasFound {
-		s.Require().True(
-			onHold == (0 < stakingUnbondingOp.UnbondingOnHoldRefCount),
-			fmt.Sprintf("checkStakingUnbondingOps failed - onHold; %s", msgAndArgs...),
-		)
-	}
-}
-
-func checkCCVUnbondingOp(s *CCVTestSuite, providerCtx sdk.Context, chainID string, valUpdateID uint64, found bool, msgAndArgs ...interface{}) {
-	entries := s.providerApp.GetProviderKeeper().GetUnbondingOpsFromIndex(providerCtx, chainID, valUpdateID)
-	if found {
-		s.Require().NotEmpty(entries, fmt.Sprintf("checkCCVUnbondingOp failed - should not be empty; %s", msgAndArgs...))
-		s.Require().Greater(
-			len(entries),
-			0,
-			fmt.Sprintf("checkCCVUnbondingOp failed - no unbonding ops found; %s", msgAndArgs...),
-		)
-		s.Require().Greater(
-			len(entries[0].UnbondingConsumerChains),
-			0,
-			fmt.Sprintf("checkCCVUnbondingOp failed - unbonding op with no consumer chains; %s", msgAndArgs...),
-		)
+		// make sure UnbondingOnHoldRefCount remains zero
 		s.Require().Equal(
-			"testchain2",
-			entries[0].UnbondingConsumerChains[0],
-			fmt.Sprintf("checkCCVUnbondingOp failed - unbonding op with unexpected consumer chain; %s", msgAndArgs...),
+			int64(0),
+			stakingUnbondingOp.UnbondingOnHoldRefCount,
+			fmt.Sprintf("checkStakingUnbondingOps failed - UnbondingOnHoldRefCount; %s", msgAndArgs...),
 		)
 	}
-}
-
-// Checks that an expected amount of redelegations exist for a delegator
-// via the staking keeper, then returns those redelegations.
-func checkRedelegations(s *CCVTestSuite, delAddr sdk.AccAddress,
-	expect uint16,
-) []stakingtypes.Redelegation {
-	redelegations, err := s.providerApp.GetTestStakingKeeper().GetRedelegations(s.providerCtx(), delAddr, 2)
-	s.Require().NoError(err)
-	s.Require().Len(redelegations, int(expect))
-	return redelegations
-}
-
-// Checks that a redelegation entry has a completion time equal to an expected time
-func checkRedelegationEntryCompletionTime(
-	s *CCVTestSuite, entry stakingtypes.RedelegationEntry, expectedCompletion time.Time,
-) {
-	s.Require().Equal(expectedCompletion, entry.CompletionTime)
 }
 
 func getStakingUnbondingDelegationEntry(ctx sdk.Context, k testutil.TestStakingKeeper, id uint64) (stakingUnbondingOp stakingtypes.UnbondingDelegationEntry, found bool) {
@@ -427,7 +390,9 @@ func (suite *CCVTestSuite) commitConsumerPacket(ctx sdk.Context, packetData ccv.
 
 	packet := suite.newPacketFromConsumer(packetData.GetBytes(), 1, suite.path, clienttypes.Height{}, timeout)
 
-	return channeltypes.CommitPacket(suite.consumerChain.App.AppCodec(), packet)
+	// IBC v10: CommitPacket no longer takes codec parameter
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/integration/common.go#L337
+	return channeltypes.CommitPacket(packet)
 }
 
 // constructSlashPacketFromConsumer constructs an IBC packet embedding
@@ -561,13 +526,15 @@ func (suite *CCVTestSuite) CreateCustomClient(endpoint *ibctesting.Endpoint, unb
 	require.NoError(endpoint.Chain.TB, err)
 	tmConfig.TrustingPeriod = trustPeriod
 
-	height := endpoint.Counterparty.Chain.LastHeader.GetHeight().(clienttypes.Height)
+	// IBC v10: LastHeader renamed to LatestCommittedHeader
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/integration/common.go#L564-L570
+	height := endpoint.Counterparty.Chain.LatestCommittedHeader.GetHeight().(clienttypes.Height)
 	UpgradePath := []string{"upgrade", "upgradedIBCState"}
 	clientState := ibctm.NewClientState(
 		endpoint.Counterparty.Chain.ChainID, tmConfig.TrustLevel, tmConfig.TrustingPeriod, tmConfig.UnbondingPeriod, tmConfig.MaxClockDrift,
 		height, commitmenttypes.GetSDKSpecs(), UpgradePath,
 	)
-	consensusState := endpoint.Counterparty.Chain.LastHeader.ConsensusState()
+	consensusState := endpoint.Counterparty.Chain.LatestCommittedHeader.ConsensusState()
 
 	msg, err := clienttypes.NewMsgCreateClient(
 		clientState, consensusState, endpoint.Chain.SenderAccount.GetAddress().String(),
@@ -595,8 +562,13 @@ func (suite *CCVTestSuite) GetConsumerEndpointClientAndConsState(
 	clientState, found := consumerBundle.App.GetIBCKeeper().ClientKeeper.GetClientState(ctx, clientID)
 	suite.Require().True(found)
 
+	// IBC v10: GetLatestHeight removed from ClientState, use LightClientModule
+	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/tests/integration/common.go#L599-L603
+	lightClientModule := ibctm.NewLightClientModule(consumerBundle.App.AppCodec(), consumerBundle.App.GetIBCKeeper().ClientKeeper.GetStoreProvider())
+	latestHeight := lightClientModule.LatestHeight(ctx, clientID)
+
 	consState, found := consumerBundle.App.GetIBCKeeper().ClientKeeper.GetClientConsensusState(
-		ctx, clientID, clientState.GetLatestHeight())
+		ctx, clientID, latestHeight)
 	suite.Require().True(found)
 
 	return clientState, consState
