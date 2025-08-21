@@ -42,7 +42,8 @@ const (
 	// MaturedUnbondingOpsByteKey is the byte key that stores the list of all unbonding operations ids
 	// that have matured from a consumer chain perspective,
 	// i.e., no longer waiting on the unbonding period to elapse on any consumer chain
-	MaturedUnbondingOpsByteKey
+	// Note: This was Deprecated when removing vscmatured packet
+	DeprecatedMaturedUnbondingOpsByteKey
 
 	// ValidatorSetUpdateIdByteKey is the byte key that stores the current validator set update id
 	ValidatorSetUpdateIdByteKey
@@ -66,7 +67,8 @@ const (
 
 	// InitTimeoutTimestampBytePrefix is the byte prefix for storing
 	// the init timeout timestamp for a given consumer chainID.
-	InitTimeoutTimestampBytePrefix
+	// Note: This was Deprecated when removing vscmatured packet
+	DeprecatedInitTimeoutTimestampBytePrefix
 
 	// PendingCAPBytePrefix is the byte prefix for storing pending consumer addition proposals before the spawn time occurs.
 	// The key includes the BigEndian timestamp to allow for efficient chronological iteration
@@ -78,11 +80,13 @@ const (
 
 	// UnbondingOpBytePrefix is the byte prefix that stores a record of all the ids of consumer chains that
 	// need to unbond before a given unbonding operation can unbond on this chain.
-	UnbondingOpBytePrefix
+	// Note: This was Deprecated when removing vscmatured packet
+	DeprecatedUnbondingOpBytePrefix
 
 	// UnbondingOpIndexBytePrefix is byte prefix of the index for looking up which unbonding
 	// operations are waiting for a given consumer chain to unbond
-	UnbondingOpIndexBytePrefix
+	// Note: This was Deprecated when removing vscmatured packet
+	DeprecatedUnbondingOpIndexBytePrefix
 
 	// ValsetUpdateBlockHeightBytePrefix is the byte prefix that will store the mapping from vscIDs to block heights
 	ValsetUpdateBlockHeightBytePrefix
@@ -102,7 +106,8 @@ const (
 
 	// VscSendTimestampBytePrefix is the byte prefix for storing
 	// the list of VSC sending timestamps for a given consumer chainID.
-	VscSendTimestampBytePrefix
+	// Note: This was Deprecated when removing vscmatured packet
+	DeprecatedVscSendTimestampBytePrefix
 
 	// ThrottledPacketDataSizeBytePrefix is the byte prefix for storing the size of chain-specific throttled packet data queues
 	ThrottledPacketDataSizeBytePrefix
@@ -123,7 +128,9 @@ const (
 	// KeyAssignmentReplacementsBytePrefix was the byte prefix used to store the key assignments that needed to be replaced in the current block
 	// NOTE: This prefix is deprecated, but left in place to avoid consumer state migrations
 	// [DEPRECATED]
-	KeyAssignmentReplacementsBytePrefix
+	// Note: THAT WAS THE OLD NOTE, WHAT DO I DO
+	// This was Deprecated when removing vscmatured packet
+	DeprecatedKeyAssignmentReplacementsBytePrefix
 
 	// ConsumerAddrsToPruneBytePrefix is the byte prefix that will store the mapping from VSC ids
 	// to consumer validators addresses needed for pruning
@@ -138,7 +145,8 @@ const (
 
 	// VSCMaturedHandledThisBlockBytePrefix is the byte prefix storing the number of vsc matured packets
 	// handled in the current block
-	VSCMaturedHandledThisBlockBytePrefix
+	// This was Deprecated when removing vscmatured packet
+	DeprecatedVSCMaturedHandledThisBlockBytePrefix
 
 	// EquivocationEvidenceMinHeightBytePrefix is the byte prefix storing the mapping from consumer chain IDs
 	// to the minimum height of a valid consumer equivocation evidence
@@ -155,7 +163,11 @@ const (
 	// allocated to the consumer rewards pool
 	ConsumerRewardsAllocationBytePrefix
 
+	// ConsumerAddrsToPruneV2Key is the byte prefix for storing consumer validators addresses
+	// that need to be pruned.
+	ConsumerAddrsToPruneV2BytePrefix
 	// NOTE: DO NOT ADD NEW BYTE PREFIXES HERE WITHOUT ADDING THEM TO getAllKeyPrefixes() IN keys_test.go
+
 )
 
 //
@@ -177,11 +189,6 @@ func ParametersKey() []byte {
 // PortKey returns the key to the port ID in the store
 func PortKey() []byte {
 	return []byte{PortByteKey}
-}
-
-// MaturedUnbondingOpsKey returns the key for storing the list of matured unbonding operations.
-func MaturedUnbondingOpsKey() []byte {
-	return []byte{MaturedUnbondingOpsByteKey}
 }
 
 // ValidatorSetUpdateIdKey is the key that stores the current validator set update id
@@ -214,11 +221,6 @@ func ChainToClientKey(chainID string) []byte {
 	return append([]byte{ChainToClientBytePrefix}, []byte(chainID)...)
 }
 
-// InitTimeoutTimestampKey returns the key under which the init timeout timestamp for the given chainID is stored.
-func InitTimeoutTimestampKey(chainID string) []byte {
-	return append([]byte{InitTimeoutTimestampBytePrefix}, []byte(chainID)...)
-}
-
 // PendingCAPKey returns the key under which a pending consumer addition proposal is stored.
 // The key has the following format: PendingCAPBytePrefix | timestamp.UnixNano() | chainID
 func PendingCAPKey(timestamp time.Time, chainID string) []byte {
@@ -245,27 +247,6 @@ func PendingCRPKey(timestamp time.Time, chainID string) []byte {
 		// Append the chainId
 		[]byte(chainID),
 	)
-}
-
-// UnbondingOpKey returns the key that stores a record of all the ids of consumer chains that
-// need to unbond before a given unbonding operation can unbond on this chain.
-func UnbondingOpKey(id uint64) []byte {
-	bz := make([]byte, 8)
-	binary.BigEndian.PutUint64(bz, id)
-	return append([]byte{UnbondingOpBytePrefix}, bz...)
-}
-
-// UnbondingOpIndexKey returns an unbonding op index key
-// Note: chainId is hashed to a fixed length sequence of bytes here to prevent
-// injection attack between chainIDs.
-func UnbondingOpIndexKey(chainID string, vscID uint64) []byte {
-	return ChainIdAndUintIdKey(UnbondingOpIndexBytePrefix, chainID, vscID)
-}
-
-// ParseUnbondingOpIndexKey parses an unbonding op index key for VSC ID
-// Removes the prefix + chainID from index key and returns only the key part.
-func ParseUnbondingOpIndexKey(key []byte) (string, uint64, error) {
-	return ParseChainIdAndUintIdKey(UnbondingOpIndexBytePrefix, key)
 }
 
 // ValsetUpdateBlockHeightKey returns the key that storing the mapping from valset update ID to block height
@@ -295,18 +276,6 @@ func InitChainHeightKey(chainID string) []byte {
 // pending ValidatorSetChangePacket data is stored for a given chain ID
 func PendingVSCsKey(chainID string) []byte {
 	return append([]byte{PendingVSCsBytePrefix}, []byte(chainID)...)
-}
-
-// VscSendingTimestampKey returns the key under which the
-// sending timestamp of the VSCPacket with vsc ID is stored
-func VscSendingTimestampKey(chainID string, vscID uint64) []byte {
-	return ChainIdAndUintIdKey(VscSendTimestampBytePrefix, chainID, vscID)
-}
-
-// ParseVscTimeoutTimestampKey returns chain ID and vsc ID
-// for a VscSendingTimestampKey or an error if unparsable
-func ParseVscSendingTimestampKey(bz []byte) (string, uint64, error) {
-	return ParseChainIdAndUintIdKey(VscSendTimestampBytePrefix, bz)
 }
 
 // ThrottledPacketDataSizeKey returns the key storing the size of the throttled packet data queue for a given chain ID
@@ -382,12 +351,6 @@ func ConsumerValidatorsKey(chainID string, addr ProviderConsAddress) []byte {
 // on consumer chains to validator addresses on the provider chain is stored
 func ValidatorsByConsumerAddrKey(chainID string, addr ConsumerConsAddress) []byte {
 	return ChainIdAndConsAddrKey(ValidatorsByConsumerAddrBytePrefix, chainID, addr.ToSdkConsAddr())
-}
-
-// ConsumerAddrsToPruneKey returns the key under which the
-// mapping from VSC ids to consumer validators addresses is stored
-func ConsumerAddrsToPruneKey(chainID string, vscID uint64) []byte {
-	return ChainIdAndUintIdKey(ConsumerAddrsToPruneBytePrefix, chainID, vscID)
 }
 
 // SlashLogKey returns the key to a validator's slash log
@@ -509,10 +472,6 @@ func ParseChainIdAndConsAddrKey(prefix byte, bz []byte) (string, sdk.ConsAddress
 	return chainID, addr, nil
 }
 
-func VSCMaturedHandledThisBlockKey() []byte {
-	return []byte{VSCMaturedHandledThisBlockBytePrefix}
-}
-
 // ProposedConsumerChainKey returns the key of proposed consumer chainId in consumerAddition gov proposal before voting finishes, the stored key format is prefix|proposalID, value is chainID
 func ProposedConsumerChainKey(proposalID uint64) []byte {
 	return ccvtypes.AppendMany(
@@ -542,6 +501,12 @@ func ConsumerValidatorKey(chainID string, providerAddr []byte) []byte {
 // ConsumerRewardsAllocationKey returns the key used to store the ICS rewards per consumer chain
 func ConsumerRewardsAllocationKey(chainID string) []byte {
 	return append([]byte{ConsumerRewardsAllocationBytePrefix}, []byte(chainID)...)
+}
+
+// ConsumerAddrsToPruneV2Key returns the key for storing the consumer validators
+// addresses that need to be pruned.
+func ConsumerAddrsToPruneV2Key(chainID string, pruneTs time.Time) []byte {
+	return ChainIdAndTsKey(ConsumerAddrsToPruneV2BytePrefix, chainID, pruneTs)
 }
 
 //

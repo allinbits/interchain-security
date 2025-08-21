@@ -9,7 +9,6 @@ const (
 	EventTypeExecuteConsumerChainSlash = "execute_consumer_chain_slash"
 	AttributeInfractionHeight          = "infraction_height"
 	AttributeInitialHeight             = "initial_height"
-	AttributeInitializationTimeout     = "initialization_timeout"
 	AttributeTrustingPeriod            = "trusting_period"
 	AttributeUnbondingPeriod           = "unbonding_period"
 	AttributeProviderValidatorAddress  = "provider_validator_address"

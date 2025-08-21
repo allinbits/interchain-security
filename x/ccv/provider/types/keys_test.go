@@ -27,38 +27,32 @@ func TestNoDuplicates(t *testing.T) {
 func getAllKeyPrefixes() []byte {
 	return []byte{
 		providertypes.PortByteKey,
-		providertypes.MaturedUnbondingOpsByteKey,
 		providertypes.ValidatorSetUpdateIdByteKey,
 		providertypes.SlashMeterByteKey,
 		providertypes.SlashMeterReplenishTimeCandidateByteKey,
 		providertypes.ChainToChannelBytePrefix,
 		providertypes.ChannelToChainBytePrefix,
 		providertypes.ChainToClientBytePrefix,
-		providertypes.InitTimeoutTimestampBytePrefix,
 		providertypes.PendingCAPBytePrefix,
 		providertypes.PendingCRPBytePrefix,
-		providertypes.UnbondingOpBytePrefix,
-		providertypes.UnbondingOpIndexBytePrefix,
 		providertypes.ValsetUpdateBlockHeightBytePrefix,
 		providertypes.ConsumerGenesisBytePrefix,
 		providertypes.SlashAcksBytePrefix,
 		providertypes.InitChainHeightBytePrefix,
 		providertypes.PendingVSCsBytePrefix,
-		providertypes.VscSendTimestampBytePrefix,
 		providertypes.ThrottledPacketDataSizeBytePrefix,
 		providertypes.ThrottledPacketDataBytePrefix,
 		providertypes.GlobalSlashEntryBytePrefix,
 		providertypes.ConsumerValidatorsBytePrefix,
 		providertypes.ValidatorsByConsumerAddrBytePrefix,
-		providertypes.KeyAssignmentReplacementsBytePrefix,
 		providertypes.ConsumerAddrsToPruneBytePrefix,
 		providertypes.SlashLogBytePrefix,
-		providertypes.VSCMaturedHandledThisBlockBytePrefix,
 		providertypes.EquivocationEvidenceMinHeightBytePrefix,
 		providertypes.ProposedConsumerChainByteKey,
 		providertypes.ConsumerValidatorBytePrefix,
 		providertypes.ConsumerRewardsAllocationBytePrefix,
 		providertypes.ParametersByteKey,
+		providertypes.ConsumerAddrsToPruneV2BytePrefix,
 	}
 }
 
@@ -76,33 +70,27 @@ func TestNoPrefixOverlap(t *testing.T) {
 func getAllFullyDefinedKeys() [][]byte {
 	return [][]byte{
 		providertypes.PortKey(),
-		providertypes.MaturedUnbondingOpsKey(),
 		providertypes.ValidatorSetUpdateIdKey(),
 		providertypes.SlashMeterKey(),
 		providertypes.SlashMeterReplenishTimeCandidateKey(),
 		providertypes.ChainToChannelKey("chainID"),
 		providertypes.ChannelToChainKey("channelID"),
 		providertypes.ChainToClientKey("chainID"),
-		providertypes.InitTimeoutTimestampKey("chainID"),
 		providertypes.PendingCAPKey(time.Time{}, "chainID"),
 		providertypes.PendingCRPKey(time.Time{}, "chainID"),
-		providertypes.UnbondingOpKey(7),
-		providertypes.UnbondingOpIndexKey("chainID", 7),
 		providertypes.ValsetUpdateBlockHeightKey(7),
 		providertypes.ConsumerGenesisKey("chainID"),
 		providertypes.SlashAcksKey("chainID"),
 		providertypes.InitChainHeightKey("chainID"),
 		providertypes.PendingVSCsKey("chainID"),
-		providertypes.VscSendingTimestampKey("chainID", 8),
 		providertypes.ThrottledPacketDataSizeKey("chainID"),
 		providertypes.ThrottledPacketDataKey("chainID", 88),
 		providertypes.GlobalSlashEntryKey(providertypes.GlobalSlashEntry{}),
 		providertypes.ConsumerValidatorsKey("chainID", providertypes.NewProviderConsAddress([]byte{0x05})),
 		providertypes.ValidatorsByConsumerAddrKey("chainID", providertypes.NewConsumerConsAddress([]byte{0x05})),
-		providertypes.ConsumerAddrsToPruneKey("chainID", 88),
 		providertypes.SlashLogKey(providertypes.NewProviderConsAddress([]byte{0x05})),
-		providertypes.VSCMaturedHandledThisBlockKey(),
 		providertypes.EquivocationEvidenceMinHeightKey("chainID"),
+		providertypes.ConsumerAddrsToPruneV2Key("chainID", time.Time{}),
 	}
 }
 
@@ -251,7 +239,6 @@ func TestKeysWithPrefixAndId(t *testing.T) {
 		providertypes.ChainToChannelKey,
 		providertypes.ChannelToChainKey,
 		providertypes.ChainToClientKey,
-		providertypes.InitTimeoutTimestampKey,
 		providertypes.ConsumerGenesisKey,
 		providertypes.SlashAcksKey,
 		providertypes.InitChainHeightKey,
@@ -262,7 +249,6 @@ func TestKeysWithPrefixAndId(t *testing.T) {
 		providertypes.ChainToChannelBytePrefix,
 		providertypes.ChannelToChainBytePrefix,
 		providertypes.ChainToClientBytePrefix,
-		providertypes.InitTimeoutTimestampBytePrefix,
 		providertypes.ConsumerGenesisBytePrefix,
 		providertypes.SlashAcksBytePrefix,
 		providertypes.InitChainHeightBytePrefix,
@@ -288,12 +274,10 @@ func TestKeysWithPrefixAndId(t *testing.T) {
 
 func TestKeysWithUint64Payload(t *testing.T) {
 	funcs := []func(uint64) []byte{
-		providertypes.UnbondingOpKey,
 		providertypes.ValsetUpdateBlockHeightKey,
 	}
 
 	expectedBytePrefixes := []byte{
-		providertypes.UnbondingOpBytePrefix,
 		providertypes.ValsetUpdateBlockHeightBytePrefix,
 	}
 
