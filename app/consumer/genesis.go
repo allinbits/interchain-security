@@ -59,21 +59,9 @@ func transformToNew(jsonRaw []byte, ctx client.Context) (json.RawMessage, error)
 		return nil, fmt.Errorf("reading consumer genesis data failed: %s", err)
 	}
 
-	initialValSet := oldConsumerGenesis.InitialValSet
-	// transformation from >= v3.3.x
-	if len(initialValSet) == 0 {
-		initialValSet = oldConsumerGenesis.Provider.InitialValSet
-	}
-
-	clientState := oldConsumerGenesis.ProviderClientState
-	if clientState == nil {
-		clientState = oldConsumerGenesis.Provider.ClientState
-	}
-
-	consensusState := oldConsumerGenesis.ProviderConsensusState
-	if consensusState == nil {
-		consensusState = oldConsumerGenesis.Provider.ConsensusState
-	}
+	initialValSet := oldConsumerGenesis.Provider.InitialValSet
+	clientState := oldConsumerGenesis.Provider.ClientState
+	consensusState := oldConsumerGenesis.Provider.ConsensusState
 
 	// Use DefaultRetryDelayPeriod if not set
 	if oldConsumerGenesis.Params.RetryDelayPeriod == 0 {

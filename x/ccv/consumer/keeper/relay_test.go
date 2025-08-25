@@ -8,6 +8,7 @@ import (
 
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	// IBC v10: host import removed - capability paths no longer needed
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	// IBC v10: capability types removed
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -150,11 +152,6 @@ func TestOnRecvVSCPacket(t *testing.T) {
 	// Set channel to provider, still in context of consumer chain
 	consumerKeeper.SetProviderChannel(ctx, consumerCCVChannelID)
 
-	// Set module params with custom unbonding period
-	moduleParams := types.DefaultParams()
-	moduleParams.UnbondingPeriod = 100 * time.Hour
-	consumerKeeper.SetParams(ctx, moduleParams)
-
 	for _, tc := range testCases {
 		var newChanges types.ValidatorSetChangePacketData
 		err := types.ModuleCdc.UnmarshalJSON(tc.packet.GetData(), &newChanges)
@@ -182,13 +179,6 @@ func TestOnRecvVSCPacket(t *testing.T) {
 			return tc.expectedPendingChanges.ValidatorUpdates[i].PubKey.Compare(tc.expectedPendingChanges.ValidatorUpdates[j].PubKey) == -1
 		})
 		require.Equal(t, tc.expectedPendingChanges, *actualPendingChanges, "pending changes not equal to expected changes after successful packet receive. case: %s", tc.name)
-
-		expectedTime := ctx.BlockTime().Add(consumerKeeper.GetUnbondingPeriod(ctx))
-		require.True(
-			t,
-			consumerKeeper.PacketMaturityTimeExists(ctx, newChanges.ValsetUpdateId, expectedTime),
-			"no packet maturity time for case: %s", tc.name,
-		)
 	}
 }
 

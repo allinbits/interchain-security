@@ -2,7 +2,6 @@ package types
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +32,6 @@ func getAllKeyPrefixes() []byte {
 		LastStandaloneHeightByteKey,
 		DeprecatedSmallestNonOptOutPowerByteKey,
 		HistoricalInfoBytePrefix,
-		PacketMaturityTimeBytePrefix,
 		HeightValsetUpdateIDBytePrefix,
 		OutstandingDowntimeBytePrefix,
 		PendingDataPacketsBytePrefix,
@@ -71,7 +69,6 @@ func getAllFullyDefinedKeys() [][]byte {
 		InitialValSetKey(),
 		// LastStandaloneHeightKey() is deprecated
 		HistoricalInfoKey(0),
-		PacketMaturityTimeKey(0, time.Time{}),
 		HeightValsetUpdateIDKey(0),
 		OutstandingDowntimeKey([]byte{}),
 		PendingDataPacketsKey(473289),

@@ -62,12 +62,6 @@ func TestInitGenesis(t *testing.T) {
 		[]string{"upgrade", "upgradedIBCState"},
 	)
 
-	matPackets := []consumertypes.MaturingVSCPacket{
-		{
-			VscId:        1,
-			MaturityTime: time.Now().UTC(),
-		},
-	}
 	pendingDataPackets := consumertypes.ConsumerPacketDataList{
 		List: []ccv.ConsumerPacketData{
 			{
@@ -143,7 +137,6 @@ func TestInitGenesis(t *testing.T) {
 			consumertypes.NewRestartGenesisState(
 				provClientID,
 				"",
-				matPackets,
 				valset,
 				defaultHeightValsetUpdateIDs,
 				pendingDataPackets,
@@ -179,7 +172,6 @@ func TestInitGenesis(t *testing.T) {
 			consumertypes.NewRestartGenesisState(
 				provClientID,
 				provChannelID,
-				matPackets,
 				valset,
 				updatedHeightValsetUpdateIDs,
 				pendingDataPackets,
@@ -195,8 +187,6 @@ func TestInitGenesis(t *testing.T) {
 				gotChannelID, ok := ck.GetProviderChannel(ctx)
 				require.True(t, ok)
 				require.Equal(t, provChannelID, gotChannelID)
-
-				require.True(t, ck.PacketMaturityTimeExists(ctx, matPackets[0].VscId, matPackets[0].MaturityTime))
 
 				obtainedPendingPackets := ck.GetPendingPackets(ctx)
 				for idx, expectedPacketData := range pendingDataPackets.List {
@@ -244,13 +234,6 @@ func TestExportGenesis(t *testing.T) {
 
 	vscID := uint64(0)
 	blockHeight := uint64(0)
-
-	matPackets := []consumertypes.MaturingVSCPacket{
-		{
-			VscId:        1,
-			MaturityTime: time.Now().UTC(),
-		},
-	}
 
 	// mock a validator set
 	pubKey := ed25519.GenPrivKey().PubKey()
@@ -316,7 +299,6 @@ func TestExportGenesis(t *testing.T) {
 			consumertypes.NewRestartGenesisState(
 				provClientID,
 				"",
-				nil,
 				valset,
 				defaultHeightValsetUpdateIDs,
 				consPackets,
@@ -345,14 +327,12 @@ func TestExportGenesis(t *testing.T) {
 				}
 
 				// populate the required states for an established CCV channel
-				ck.SetPacketMaturityTime(ctx, matPackets[0].VscId, matPackets[0].MaturityTime)
 				ck.SetOutstandingDowntime(ctx, sdk.ConsAddress(validator.Address.Bytes()))
 				ck.SetLastTransmissionBlockHeight(ctx, ltbh)
 			},
 			consumertypes.NewRestartGenesisState(
 				provClientID,
 				provChannelID,
-				matPackets,
 				valset,
 				updatedHeightValsetUpdateIDs,
 				consPackets,

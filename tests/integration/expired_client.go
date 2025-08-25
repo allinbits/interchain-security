@@ -54,10 +54,9 @@ func (s *CCVTestSuite) TestVSCPacketSendExpiredClient() {
 	// try again to send CCV packets to consumer
 	s.nextEpoch()
 
-	// check that the packets are still in the list of pending VSC packets
+	// check that no packets are still in the list of pending VSC packets
 	packets = providerKeeper.GetPendingVSCPackets(s.providerCtx(), s.consumerChain.ChainID)
-	s.Require().NotEmpty(packets, "no pending VSC packets found")
-	s.Require().Equal(2, len(packets), "unexpected number of pending VSC packets")
+	s.Require().Empty(packets)
 
 	// upgrade expired client to the consumer
 	upgradeExpiredClient(s, Consumer)
@@ -76,10 +75,6 @@ func (s *CCVTestSuite) TestVSCPacketSendExpiredClient() {
 	s.nextEpoch()
 	// - relay all VSC packet from provider to consumer
 	relayAllCommittedPackets(s, s.providerChain, s.path, ccv.ProviderPortID, s.path.EndpointB.ChannelID, 3)
-	// - increment time so that the unbonding period ends on the consumer
-	incrementTimeByUnbondingPeriod(s, Consumer)
-	// - relay all VSCMatured packet from consumer to provider
-	relayAllCommittedPackets(s, s.consumerChain, s.path, ccv.ConsumerPortID, s.path.EndpointA.ChannelID, 3)
 }
 
 // TestConsumerPacketSendExpiredClient tests the consumer sending packets when the provider client is expired.
@@ -139,8 +134,8 @@ func (s *CCVTestSuite) TestConsumerPacketSendExpiredClient() {
 	// check that the packets were added to the list of pending data packets
 	consumerPackets = consumerKeeper.GetPendingPackets(s.consumerCtx())
 	s.Require().NotEmpty(consumerPackets)
-	// At this point we expect 4 packets, two vsc matured packets and two trailing slash packets
-	s.Require().Len(consumerPackets, 4, "unexpected number of pending data packets")
+	// At this point we expect two trailing slash packets
+	s.Require().Len(consumerPackets, 2, "unexpected number of pending data packets")
 
 	// upgrade expired client to the consumer
 	upgradeExpiredClient(s, Provider)
@@ -148,12 +143,12 @@ func (s *CCVTestSuite) TestConsumerPacketSendExpiredClient() {
 	// go to next block to trigger SendPendingPackets
 	s.consumerChain.NextBlock()
 
-	// Check that the leading vsc matured packets were sent and no longer pending
+	// Check that both slash packets are still pending
 	consumerPackets = consumerKeeper.GetPendingPackets(s.consumerCtx())
 	s.Require().Len(consumerPackets, 2, "unexpected number of pending data packets")
 
 	// relay committed packets from consumer to provider, first slash packet should be committed
-	relayAllCommittedPackets(s, s.consumerChain, s.path, ccv.ConsumerPortID, s.path.EndpointA.ChannelID, 3) // two vsc matured + one slash
+	relayAllCommittedPackets(s, s.consumerChain, s.path, ccv.ConsumerPortID, s.path.EndpointA.ChannelID, 1) // one slash
 
 	// First slash has been acked, now only the second slash packet should remain as pending
 	consumerPackets = consumerKeeper.GetPendingPackets(s.consumerCtx())
@@ -175,10 +170,6 @@ func (s *CCVTestSuite) TestConsumerPacketSendExpiredClient() {
 	s.nextEpoch()
 	// - relay 1 VSC packet from provider to consumer
 	relayAllCommittedPackets(s, s.providerChain, s.path, ccv.ProviderPortID, s.path.EndpointB.ChannelID, 1)
-	// - increment time so that the unbonding period ends on the provider
-	incrementTimeByUnbondingPeriod(s, Consumer)
-	// - relay 1 VSCMatured packet from consumer to provider
-	relayAllCommittedPackets(s, s.consumerChain, s.path, ccv.ConsumerPortID, s.path.EndpointA.ChannelID, 1)
 }
 
 // expireClient expires the client to the `clientTo` chain

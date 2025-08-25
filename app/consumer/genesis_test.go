@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,6 @@ import (
 const (
 	V4x  = "v4.x"
 	V33x = "v3.3.x"
-	V2x  = "v2.x"
 )
 
 // Testdata mapping consumer genesis exports to a provider module version as
@@ -455,86 +453,6 @@ func transformConsumerGenesis(filePath string, version *string) ([]byte, error) 
 	return result.Bytes(), nil
 }
 
-// Check transformation of a version 2 ConsumerGenesis export to
-// consumer genesis json format used by current consumer implementation.
-func TestConsumerGenesisTransformationFromV2ToCurrent(t *testing.T) {
-	version := V2x
-	ctx := getClientCtx()
-
-	srcGenesis := consumerTypes.GenesisState{}
-	err := ctx.Codec.UnmarshalJSON([]byte(consumerGenesisStates[version]), &srcGenesis)
-	require.NoError(t, err, "Error parsing old version of ccv genesis content for consumer")
-
-	filePath := createConsumerDataGenesisFile(t, version)
-	defer os.Remove(filePath)
-	resultGenesis := consumerTypes.GenesisState{}
-	result, err := transformConsumerGenesis(filePath, nil)
-	require.NoError(t, err)
-	err = ctx.Codec.UnmarshalJSON(result, &resultGenesis)
-	require.NoError(t, err)
-
-	// Some basic sanity checks on the content.
-	require.NotNil(t, resultGenesis.Provider.ClientState)
-	require.Equal(t, "cosmoshub-4", resultGenesis.Provider.ClientState.ChainId)
-
-	require.Empty(t, resultGenesis.InitialValSet)
-	require.NotEmpty(t, resultGenesis.Provider.InitialValSet)
-	require.Equal(t, resultGenesis.Params.RetryDelayPeriod, ccvtypes.DefaultRetryDelayPeriod)
-
-	// Check params: retry_delay_period prevents direct comparison
-	require.EqualValues(t, srcGenesis.Params.Enabled, resultGenesis.Params.Enabled)
-	require.EqualValues(t, srcGenesis.Params.BlocksPerDistributionTransmission, resultGenesis.Params.BlocksPerDistributionTransmission)
-	require.EqualValues(t, srcGenesis.Params.DistributionTransmissionChannel, resultGenesis.Params.DistributionTransmissionChannel)
-	require.EqualValues(t, srcGenesis.Params.ProviderFeePoolAddrStr, resultGenesis.Params.ProviderFeePoolAddrStr)
-	require.EqualValues(t, srcGenesis.Params.CcvTimeoutPeriod, resultGenesis.Params.CcvTimeoutPeriod)
-	require.EqualValues(t, srcGenesis.Params.TransferTimeoutPeriod, resultGenesis.Params.TransferTimeoutPeriod)
-	require.EqualValues(t, srcGenesis.Params.ConsumerRedistributionFraction, resultGenesis.Params.ConsumerRedistributionFraction)
-	require.EqualValues(t, srcGenesis.Params.HistoricalEntries, resultGenesis.Params.HistoricalEntries)
-	require.EqualValues(t, srcGenesis.Params.UnbondingPeriod, resultGenesis.Params.UnbondingPeriod)
-
-	require.EqualValues(t, srcGenesis.Params.RewardDenoms, resultGenesis.Params.RewardDenoms)
-	require.EqualValues(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
-
-	require.Equal(t, srcGenesis.ProviderClientState, resultGenesis.Provider.ClientState)
-	require.Nil(t, resultGenesis.ProviderClientState)
-
-	require.Equal(t, srcGenesis.Provider.ConsensusState, resultGenesis.ProviderConsensusState)
-	require.Nil(t, resultGenesis.ProviderConsensusState)
-
-	require.Equal(t, srcGenesis.NewChain, resultGenesis.NewChain)
-	require.Equal(t, "", resultGenesis.ProviderClientId)
-	require.Equal(t, "", resultGenesis.ProviderChannelId)
-	require.Equal(t, srcGenesis.InitialValSet, resultGenesis.Provider.InitialValSet)
-	require.Empty(t, resultGenesis.InitialValSet)
-}
-
-// Check transformation of provider v3.3.x implementation to consumer V2
-func TestConsumerGenesisTransformationV330ToV2(t *testing.T) {
-	version := V33x
-	filePath := createConsumerDataGenesisFile(t, version)
-	defer os.Remove(filePath)
-
-	var srcGenesis consumerTypes.GenesisState
-	ctx := getClientCtx()
-	err := ctx.Codec.UnmarshalJSON([]byte(consumerGenesisStates[version]), &srcGenesis)
-	require.NoError(t, err)
-
-	targetVersion := V2x
-	result, err := transformConsumerGenesis(filePath, &targetVersion)
-	require.NoError(t, err)
-
-	resultGenesis := consumerTypes.GenesisState{}
-	err = ctx.Codec.UnmarshalJSON(result, &resultGenesis)
-	require.NoError(t, err)
-
-	require.Equal(t, srcGenesis.Params, resultGenesis.Params)
-	require.Equal(t, srcGenesis.Provider.ClientState, resultGenesis.ProviderClientState)
-	require.Equal(t, srcGenesis.Provider.ConsensusState, resultGenesis.ProviderConsensusState)
-	require.Equal(t, srcGenesis.NewChain, resultGenesis.NewChain)
-	require.Equal(t, "", resultGenesis.ProviderClientId)
-	require.Equal(t, "", resultGenesis.ProviderChannelId)
-}
-
 // Check transformation of provider v3.3.x implementation to current consumer version
 func TestConsumerGenesisTransformationV330ToCurrent(t *testing.T) {
 	version := V33x
@@ -569,60 +487,11 @@ func TestConsumerGenesisTransformationV330ToCurrent(t *testing.T) {
 	require.Equal(t, resultGenesis.Params.RetryDelayPeriod, ccvtypes.DefaultRetryDelayPeriod)
 
 	require.Equal(t, srcGenesis.Provider.ClientState, resultGenesis.Provider.ClientState)
-	require.Nil(t, resultGenesis.ProviderClientState)
-	require.Nil(t, resultGenesis.ProviderConsensusState)
 
 	require.Equal(t, srcGenesis.Provider.ConsensusState, resultGenesis.Provider.ConsensusState)
 	require.Equal(t, srcGenesis.NewChain, resultGenesis.NewChain)
 	require.Equal(t, "", resultGenesis.ProviderClientId)
 	require.Equal(t, "", resultGenesis.ProviderChannelId)
-}
-
-// Check transformation of provider v4.x implementation to consumer V2
-func TestConsumerGenesisTransformationV4ToV2(t *testing.T) {
-	version := V4x
-	filePath := createConsumerDataGenesisFile(t, version)
-	defer os.Remove(filePath)
-
-	var srcGenesis consumerTypes.GenesisState
-	ctx := getClientCtx()
-	err := ctx.Codec.UnmarshalJSON([]byte(consumerGenesisStates[version]), &srcGenesis)
-	require.NoError(t, err)
-
-	targetVersion := V2x
-	result, err := transformConsumerGenesis(filePath, &targetVersion)
-	require.NoError(t, err)
-
-	resultGenesis := consumerTypes.GenesisState{}
-	err = ctx.Codec.UnmarshalJSON(result, &resultGenesis)
-	require.NoError(t, err)
-
-	// Check params: retry_delay_period prevents direct comparison
-	require.EqualValues(t, srcGenesis.Params.Enabled, resultGenesis.Params.Enabled)
-	require.EqualValues(t, srcGenesis.Params.BlocksPerDistributionTransmission, resultGenesis.Params.BlocksPerDistributionTransmission)
-	require.EqualValues(t, srcGenesis.Params.DistributionTransmissionChannel, resultGenesis.Params.DistributionTransmissionChannel)
-	require.EqualValues(t, srcGenesis.Params.ProviderFeePoolAddrStr, resultGenesis.Params.ProviderFeePoolAddrStr)
-	require.EqualValues(t, srcGenesis.Params.CcvTimeoutPeriod, resultGenesis.Params.CcvTimeoutPeriod)
-	require.EqualValues(t, srcGenesis.Params.TransferTimeoutPeriod, resultGenesis.Params.TransferTimeoutPeriod)
-	require.EqualValues(t, srcGenesis.Params.ConsumerRedistributionFraction, resultGenesis.Params.ConsumerRedistributionFraction)
-	require.EqualValues(t, srcGenesis.Params.HistoricalEntries, resultGenesis.Params.HistoricalEntries)
-	require.EqualValues(t, srcGenesis.Params.UnbondingPeriod, resultGenesis.Params.UnbondingPeriod)
-	require.EqualValues(t, srcGenesis.Params.RewardDenoms, resultGenesis.Params.RewardDenoms)
-	require.EqualValues(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
-	require.Equal(t, resultGenesis.Params.RetryDelayPeriod, time.Duration(0))
-
-	require.Equal(t, srcGenesis.Provider.ClientState, resultGenesis.ProviderClientState)
-	require.Nil(t, resultGenesis.Provider.ClientState)
-	require.Equal(t, srcGenesis.Provider.ConsensusState, resultGenesis.ProviderConsensusState)
-	require.Nil(t, resultGenesis.Provider.ConsensusState)
-	require.Equal(t, "", resultGenesis.ProviderClientId)
-	require.Equal(t, "", resultGenesis.ProviderChannelId)
-
-	require.Equal(t, 0, len(resultGenesis.Provider.InitialValSet))
-	require.Equal(t, srcGenesis.Provider.InitialValSet, resultGenesis.InitialValSet)
-	require.Empty(t, resultGenesis.Provider.InitialValSet)
-
-	require.Equal(t, srcGenesis.NewChain, resultGenesis.NewChain)
 }
 
 // Check transformation of provider v3.3.x implementation to consumer V2
@@ -657,14 +526,11 @@ func TestConsumerGenesisTransformationV4ToV33(t *testing.T) {
 	require.EqualValues(t, srcGenesis.Params.ProviderRewardDenoms, resultGenesis.Params.ProviderRewardDenoms)
 
 	require.Equal(t, srcGenesis.Provider.ClientState, resultGenesis.Provider.ClientState)
-	require.Nil(t, resultGenesis.ProviderClientState)
 
 	require.Equal(t, srcGenesis.Provider.ConsensusState, resultGenesis.Provider.ConsensusState)
-	require.Nil(t, resultGenesis.ProviderConsensusState)
 
 	require.Equal(t, srcGenesis.NewChain, resultGenesis.NewChain)
 	require.Equal(t, "", resultGenesis.ProviderClientId)
 	require.Equal(t, "", resultGenesis.ProviderChannelId)
 	require.Equal(t, srcGenesis.Provider.InitialValSet, resultGenesis.Provider.InitialValSet)
-	require.Empty(t, resultGenesis.InitialValSet)
 }
