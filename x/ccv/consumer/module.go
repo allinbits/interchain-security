@@ -123,13 +123,8 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	consumertypes.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(&am.keeper))
 	consumertypes.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
-	m := keeper.NewMigrator(am.keeper, am.paramSpace)
-	if err := cfg.RegisterMigration(consumertypes.ModuleName, 1, m.Migrate1to2); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s", consumertypes.ModuleName, err))
-	}
-	if err := cfg.RegisterMigration(consumertypes.ModuleName, 2, m.Migrate2to3); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s -- from 2 -> 3", consumertypes.ModuleName, err))
-	}
+	// No migrations needed for this fork
+	_ = keeper.NewMigrator(am.keeper, am.paramSpace)
 }
 
 // InitGenesis performs genesis initialization for the consumer module. It returns
