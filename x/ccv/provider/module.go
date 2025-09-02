@@ -124,25 +124,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	providertypes.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	providertypes.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
-	migrator := migrations.NewMigrator(*am.keeper, am.paramSpace, am.storeKey)
-	if err := cfg.RegisterMigration(providertypes.ModuleName, 2, migrator.Migrate2to3); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s -- from 2 -> 3", providertypes.ModuleName, err))
-	}
-	if err := cfg.RegisterMigration(providertypes.ModuleName, 3, migrator.Migrate3to4); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s -- from 3 -> 4", providertypes.ModuleName, err))
-	}
-	if err := cfg.RegisterMigration(providertypes.ModuleName, 4, migrator.Migrate4to5); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s -- from 4 -> 5", providertypes.ModuleName, err))
-	}
-	if err := cfg.RegisterMigration(providertypes.ModuleName, 5, migrator.Migrate5to6); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s -- from 5 -> 6", providertypes.ModuleName, err))
-	}
-	if err := cfg.RegisterMigration(providertypes.ModuleName, 6, migrator.Migrate6to7); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s -- from 6 -> 7", providertypes.ModuleName, err))
-	}
-	if err := cfg.RegisterMigration(providertypes.ModuleName, 7, migrator.Migrate7to8); err != nil {
-		panic(fmt.Sprintf("failed to register migrator for %s: %s -- from 7 -> 8", providertypes.ModuleName, err))
-	}
+	_ = migrations.NewMigrator(*am.keeper, am.paramSpace, am.storeKey)
 }
 
 // InitGenesis performs genesis initialization for the provider module. It returns no validator updates.
