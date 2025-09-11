@@ -184,6 +184,3 @@ until $BIN query block --type=height 1 --node "tcp://$CHAIN_IP_PREFIX.$QUERY_NOD
 set -e
 
 echo "done!!!!!!!!"
-
-# ICS1 E2E FIX: Removed interactive read that was blocking E2E tests
-# read -p "Press Return to Close..."
