@@ -105,6 +105,7 @@ import (
 	tmos "github.com/cometbft/cometbft/libs/os"
 	dbm "github.com/cosmos/cosmos-db"
 
+	"github.com/cosmos/interchain-security/v5/app/common"
 	appencoding "github.com/cosmos/interchain-security/v5/app/encoding"
 	testutil "github.com/cosmos/interchain-security/v5/testutil/integration"
 	ibcprovider "github.com/cosmos/interchain-security/v5/x/ccv/provider"
@@ -235,22 +236,6 @@ var (
 	_ servertypes.Application = (*App)(nil)
 	_ ibctesting.TestingApp   = (*App)(nil)
 )
-
-// ICS1 E2E FIX: Simple implementation of VersionModifier interface
-// AtomOne SDK v0.50.14 requires a VersionModifier for ABCI queries to work.
-// This implementation returns protocol version 0, which is sufficient for testing.
-// Without this, Hermes fails with "app.versionModifier is nil" when querying ABCI info.
-type simpleVersionModifier struct{}
-
-func (s simpleVersionModifier) SetAppVersion(ctx context.Context, version uint64) error {
-	// For now, we don't need to store the version
-	return nil
-}
-
-func (s simpleVersionModifier) AppVersion(ctx context.Context) (uint64, error) {
-	// Return protocol version 0 as default
-	return 0, nil
-}
 
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
@@ -396,9 +381,9 @@ func New(
 
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
 	
-	// ICS1 E2E FIX: Set a simple VersionModifier to fix "app.versionModifier is nil" error
-	// This is needed for ABCI queries to work properly with AtomOne SDK
-	bApp.SetVersionModifier(simpleVersionModifier{})
+	// ICS1 E2E FIX: Set VersionModifier to fix "app.versionModifier is nil" error
+	// Uses shared implementation from app/common package
+	bApp.SetVersionModifier(common.SimpleVersionModifier{})
 
 	// IBC v10: Capability keeper and scoped keepers removed
 
@@ -500,13 +485,6 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// ICS1 E2E FIX: Register the tendermint light client module with IBC v10
-	// This is required for the 07-tendermint light client to work properly
-	// Based on AtomOne's implementation
-	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
-	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
-	app.IBCKeeper.ClientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
-
 	// create evidence keeper with router
 	app.EvidenceKeeper = *evidencekeeper.NewKeeper(
 		appCodec,
@@ -594,6 +572,9 @@ func New(
 	ibcRouter.AddRoute(providertypes.ModuleName, providerModule)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
+	// IBC v10: Create light client module for tendermint
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, app.IBCKeeper.ClientKeeper.GetStoreProvider())
+	app.IBCKeeper.ClientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
