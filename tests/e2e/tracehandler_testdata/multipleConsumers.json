@@ -60,7 +60,6 @@
         "revision_height": 1
       },
       "DistributionChannel": "",
-      "TopN": 100,
       "ValidatorsPowerCap": 0,
       "ValidatorSetCap": 0,
       "Allowlist": null,
@@ -342,7 +341,6 @@
         "revision_height": 1
       },
       "DistributionChannel": "",
-      "TopN": 100,
       "ValidatorsPowerCap": 0,
       "ValidatorSetCap": 0,
       "Allowlist": null,

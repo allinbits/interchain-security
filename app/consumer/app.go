@@ -95,6 +95,7 @@ import (
 	ibcconsumer "github.com/cosmos/interchain-security/v5/x/ccv/consumer"
 	ibcconsumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	ibcconsumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 )
 
 const (
@@ -153,6 +154,22 @@ var (
 	_ servertypes.Application = (*App)(nil)
 	_ ibctesting.TestingApp   = (*App)(nil)
 )
+
+// ICS1 E2E FIX: Simple implementation of VersionModifier interface
+// AtomOne SDK v0.50.14 requires a VersionModifier for ABCI queries to work.
+// This implementation returns protocol version 0, which is sufficient for testing.
+// Without this, Hermes fails with "app.versionModifier is nil" when querying ABCI info.
+type simpleVersionModifier struct{}
+
+func (s simpleVersionModifier) SetAppVersion(ctx context.Context, version uint64) error {
+	// For now, we don't need to store the version
+	return nil
+}
+
+func (s simpleVersionModifier) AppVersion(ctx context.Context) (uint64, error) {
+	// Return protocol version 0 as default
+	return 0, nil
+}
 
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
@@ -256,6 +273,10 @@ func New(
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]), authtypes.NewModuleAddress(govtypes.ModuleName).String(), runtime.EventService{})
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
+	
+	// ICS1 E2E FIX: Set a simple VersionModifier to fix "app.versionModifier is nil" error
+	// This is needed for ABCI queries to work properly with AtomOne SDK
+	bApp.SetVersionModifier(simpleVersionModifier{})
 
 	// IBC v10: Capability keeper and scoped keepers removed
 
@@ -344,6 +365,13 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	// ICS1 E2E FIX: Register the tendermint light client module with IBC v10
+	// This is required for the 07-tendermint light client to work properly
+	// Based on AtomOne's implementation
+	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
+	app.IBCKeeper.ClientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
+
 	// initialize the actual consumer keeper
 	// IBC v10: Pass IBC keepers directly following ICS v7 pattern
 	app.ConsumerKeeper = ibcconsumerkeeper.NewKeeper(
@@ -387,7 +415,10 @@ func New(
 	// create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcmodule)
-	ibcRouter.AddRoute(ibcconsumertypes.ModuleName, consumerModule)
+	// ICS1 E2E FIX: Use ConsumerPortID ("consumer") instead of ModuleName ("ccvconsumer")
+	// This aligns with upstream ICS conventions where the port is named "consumer" not "ccvconsumer".
+	// Hermes expects to find the CCV channel on port "consumer" for proper IBC channel creation.
+	ibcRouter.AddRoute(ccvtypes.ConsumerPortID, consumerModule)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
@@ -401,11 +432,6 @@ func New(
 	)
 
 	app.EvidenceKeeper = *evidenceKeeper
-
-	// IBC v10: Create light client module for tendermint
-	// Reference: https://github.com/cosmos/interchain-security/blob/v7.0.1/app/consumer/app.go#L403-L404
-	tmLightClientModule := ibctm.NewLightClientModule(appCodec, app.IBCKeeper.ClientKeeper.GetStoreProvider())
-	app.IBCKeeper.ClientKeeper.AddRoute(ibctm.ModuleName, tmLightClientModule)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.

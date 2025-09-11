@@ -39,5 +39,9 @@ func ExecuteCommandWithVerbosity(cmd *exec.Cmd, cmdName string, verbose bool) {
 
 // Executes a command with verbosity specified by CLI flag
 func ExecuteCommand(cmd *exec.Cmd, cmdName string) {
-	ExecuteCommandWithVerbosity(cmd, cmdName, *verbose)
+	verboseFlag := false
+	if verbose != nil {
+		verboseFlag = *verbose
+	}
+	ExecuteCommandWithVerbosity(cmd, cmdName, verboseFlag)
 }

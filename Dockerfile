@@ -28,8 +28,8 @@ RUN go mod tidy
 # Install interchain security binary
 RUN make install
 
-# Get Hermes build
-FROM --platform=linux/amd64 ghcr.io/informalsystems/hermes:1.10.0 AS hermes-builder
+# Get Hermes build - using ICS-specific image with required patches
+FROM --platform=linux/amd64 otacrew/hermes-ics:latest AS hermes-builder
 
 # Get CometMock
 FROM ghcr.io/informalsystems/cometmock:v0.38.x as cometmock-builder

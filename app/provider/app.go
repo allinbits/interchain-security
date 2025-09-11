@@ -236,6 +236,22 @@ var (
 	_ ibctesting.TestingApp   = (*App)(nil)
 )
 
+// ICS1 E2E FIX: Simple implementation of VersionModifier interface
+// AtomOne SDK v0.50.14 requires a VersionModifier for ABCI queries to work.
+// This implementation returns protocol version 0, which is sufficient for testing.
+// Without this, Hermes fails with "app.versionModifier is nil" when querying ABCI info.
+type simpleVersionModifier struct{}
+
+func (s simpleVersionModifier) SetAppVersion(ctx context.Context, version uint64) error {
+	// For now, we don't need to store the version
+	return nil
+}
+
+func (s simpleVersionModifier) AppVersion(ctx context.Context) (uint64, error) {
+	// Return protocol version 0 as default
+	return 0, nil
+}
+
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
@@ -379,6 +395,10 @@ func New(
 	)
 
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
+	
+	// ICS1 E2E FIX: Set a simple VersionModifier to fix "app.versionModifier is nil" error
+	// This is needed for ABCI queries to work properly with AtomOne SDK
+	bApp.SetVersionModifier(simpleVersionModifier{})
 
 	// IBC v10: Capability keeper and scoped keepers removed
 
@@ -479,6 +499,13 @@ func New(
 		app.UpgradeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+
+	// ICS1 E2E FIX: Register the tendermint light client module with IBC v10
+	// This is required for the 07-tendermint light client to work properly
+	// Based on AtomOne's implementation
+	storeProvider := app.IBCKeeper.ClientKeeper.GetStoreProvider()
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
+	app.IBCKeeper.ClientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
 	// create evidence keeper with router
 	app.EvidenceKeeper = *evidencekeeper.NewKeeper(
@@ -592,7 +619,7 @@ func New(
 
 		ibc.NewAppModule(app.IBCKeeper),
 		// IBC v10: ibctm requires LightClientModule parameter
-		// ibctm.NewAppModule(), // TODO: Need to pass LightClientModule
+		ibctm.NewAppModule(tmLightClientModule),
 		params.NewAppModule(app.ParamsKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		providerModule,

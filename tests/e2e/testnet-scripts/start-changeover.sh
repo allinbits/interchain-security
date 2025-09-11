@@ -179,9 +179,11 @@ QUERY_NODE_SUFFIX=$(echo "$VALIDATORS" | jq -r ".[0].ip_suffix")
 echo "NODE SUFFIX: $QUERY_NODE_SUFFIX"
 # poll for chain start
 set +e
-until $BIN query block query block --type=height 0 --node "tcp://$CHAIN_IP_PREFIX.$QUERY_NODE_SUFFIX:26658" | grep -q -v '{"block_id":{"hash":"","parts":{"total":0,"hash":""}},"block":null}'; do sleep 0.3 ; done
+# ICS1 E2E FIX: Query height 1 instead of 0 (blocks start at 1)
+until $BIN query block --type=height 1 --node "tcp://$CHAIN_IP_PREFIX.$QUERY_NODE_SUFFIX:26658" 2>/dev/null | grep -q "height"; do sleep 0.3 ; done
 set -e
 
 echo "done!!!!!!!!"
 
-read -p "Press Return to Close..."
+# ICS1 E2E FIX: Removed interactive read that was blocking E2E tests
+# read -p "Press Return to Close..."

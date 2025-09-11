@@ -56,7 +56,7 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) err
 // EndBlockVSU contains the EndBlock logic needed for
 // the Validator Set Update sub-protocol
 func (k Keeper) EndBlockVSU(ctx sdk.Context) {
-
+	// ICS1-DEBUG: Add logging to track epoch boundaries
 	if ctx.BlockHeight()%k.GetBlocksPerEpoch(ctx) == 0 {
 		// only queue and send VSCPackets at the boundaries of an epoch
 
@@ -130,6 +130,22 @@ func (k Keeper) QueueVSCPackets(ctx sdk.Context) {
 	if err != nil {
 		panic(fmt.Errorf("failed to get last validators: %w", err))
 	}
+	
+	// ICS1-DEBUG: Log validator powers being used for VSC
+	k.Logger(ctx).Info("ICS1-DEBUG: QueueVSCPackets fetching validator powers",
+		"height", ctx.BlockHeight(),
+		"num_bonded", len(bondedValidators),
+	)
+	for i, val := range bondedValidators {
+		if i < 3 { // Log first 3 validators for debugging
+			valAddr, _ := sdk.ValAddressFromBech32(val.GetOperator())
+			power, _ := k.stakingKeeper.GetLastValidatorPower(ctx, valAddr)
+			k.Logger(ctx).Debug("ICS1-DEBUG: Validator power",
+				"operator", val.GetOperator(),
+				"power", power,
+			)
+		}
+	}
 
 	for _, chainID := range k.GetAllRegisteredConsumerChainIDs(ctx) {
 		currentValidators := k.GetConsumerValSet(ctx, chainID)
@@ -143,14 +159,19 @@ func (k Keeper) QueueVSCPackets(ctx sdk.Context) {
 
 		// check whether there are changes in the validator set;
 		if len(valUpdates) != 0 {
+			// ICS1-DEBUG: Log the actual validator updates being queued
+			for _, update := range valUpdates {
+				k.Logger(ctx).Debug("VSC validator update",
+					"chainID", chainID,
+					"pubkey", update.PubKey.String(),
+					"power", update.Power,
+				)
+			}
+			
 			// construct validator set change packet data
 			packet := ccv.NewValidatorSetChangePacketData(valUpdates, valUpdateID, k.ConsumeSlashAcks(ctx, chainID))
 			k.AppendPendingVSCPackets(ctx, chainID, packet)
-			k.Logger(ctx).Info("VSCPacket enqueued:",
-				"chainID", chainID,
-				"vscID", valUpdateID,
-				"len updates", len(valUpdates),
-			)
+			k.Logger(ctx).Info("VSCPacket enqueued:", "chainID", chainID, "vscID", valUpdateID, "len updates", len(valUpdates))
 		}
 	}
 

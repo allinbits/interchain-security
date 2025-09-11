@@ -160,6 +160,10 @@ func (k Keeper) CreateConsumerValidator(ctx sdk.Context, chainID string, validat
 		return types.ConsumerValidator{}, err
 	}
 	power, err := k.stakingKeeper.GetLastValidatorPower(ctx, valAddr)
+	if err != nil {
+		return types.ConsumerValidator{}, fmt.Errorf("could not retrieve validator's (%+v) power: %w",
+			validator, err)
+	}
 	consAddr, err := validator.GetConsAddr()
 	if err != nil {
 		return types.ConsumerValidator{}, fmt.Errorf("could not retrieve validator's (%+v) consensus address: %w",

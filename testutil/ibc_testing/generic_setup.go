@@ -3,6 +3,7 @@ package ibc_testing
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
@@ -138,7 +139,10 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 
 	// NOTE: we cannot use the time.Now() because the coordinator chooses a hardcoded start time
 	// using time.Now() could set the spawn time to be too far in the past or too far in the future
-	prop.SpawnTime = coordinator.CurrentTime
+	// ICS1 E2E FIX: Set spawn time in the past to ensure immediate processing
+	// Without this, CommitBlock doesn't advance time enough for BeginBlockInit to process the proposal
+	// This matches the pattern used in unit tests (see proposal_test.go)
+	prop.SpawnTime = coordinator.CurrentTime.Add(-time.Hour)
 	// NOTE: the initial height passed to CreateConsumerClient
 	// must be the height on the consumer when InitGenesis is called
 	prop.InitialHeight = clienttypes.Height{RevisionNumber: 0, RevisionHeight: 2}
@@ -146,6 +150,20 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	providerKeeper.SetPendingConsumerAdditionProp(providerChain.GetContext(), prop)
 	props := providerKeeper.GetAllPendingConsumerAdditionProps(providerChain.GetContext())
 	s.Require().Len(props, 1, "unexpected len consumer addition proposals in AddConsumer")
+	
+	// ICS1 E2E DEBUG: Check validator status before processing
+	vals, err := providerKeeper.GetLastBondedValidators(providerChain.GetContext())
+	s.Require().NoError(err)
+	totalPower := int64(0)
+	for _, v := range vals {
+		valAddr, _ := sdk.ValAddressFromBech32(v.GetOperator())
+		power, err := providerApp.GetTestStakingKeeper().GetLastValidatorPower(providerChain.GetContext(), valAddr)
+		if err == nil {
+			totalPower += power
+		}
+	}
+	s.T().Logf("ICS1 DEBUG: Before CommitBlock - chainID=%s, spawnTime=%v, bondedValidators=%d, totalPower=%d", 
+		prop.ChainId, prop.SpawnTime, len(vals), totalPower)
 
 	// For Replicated Security, all validators automatically participate
 	// No opt-in needed
@@ -154,11 +172,24 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	// and create the client and genesis of consumer
 	coordinator.CommitBlock(providerChain)
 
+	// ICS1 E2E DEBUG: Check if proposal exists and what time it is
+	allProps := providerKeeper.GetAllPendingConsumerAdditionProps(providerChain.GetContext())
+	s.T().Logf("ICS1 DEBUG: After CommitBlock, found %d pending props", len(allProps))
+	for _, p := range allProps {
+		s.T().Logf("ICS1 DEBUG: Prop chainID=%s, spawnTime=%v, blockTime=%v", 
+			p.ChainId, p.SpawnTime, providerChain.GetContext().BlockTime())
+	}
+
 	// get genesis state created by the provider
 	consumerGenesisState, found := providerKeeper.GetConsumerGenesis(
 		providerChain.GetContext(),
 		chainID,
 	)
+
+	// ICS1 E2E DEBUG: Check if client was created
+	clientID, clientFound := providerKeeper.GetConsumerClientId(providerChain.GetContext(), chainID)
+	s.T().Logf("ICS1 DEBUG: After processing - clientFound=%v, clientID=%s, genesisFound=%v", 
+		clientFound, clientID, found)
 
 	s.Require().True(found, "consumer genesis not found in AddConsumer")
 

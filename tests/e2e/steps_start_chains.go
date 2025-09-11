@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 )
@@ -54,7 +52,7 @@ func stepsStartConsumerChain(consumerName string, proposalIndex, chainIndex uint
 							Chain:         ChainID(consumerName),
 							SpawnTime:     0,
 							InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 1},
-							Status:        strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD)),
+							Status:        gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD.String(),
 						},
 					},
 					ProposedConsumerChains: &[]string{consumerName},
@@ -134,7 +132,7 @@ func stepsStartConsumerChain(consumerName string, proposalIndex, chainIndex uint
 							Chain:         ChainID(consumerName),
 							SpawnTime:     0,
 							InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 1},
-							Status:        strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_PASSED)),
+							Status:        gov.ProposalStatus_PROPOSAL_STATUS_PASSED.String(),
 						},
 					},
 					ValBalances: &map[ValidatorID]uint{

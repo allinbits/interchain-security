@@ -1,7 +1,6 @@
 package main
 
 import (
-	"strconv"
 	"time"
 
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -38,7 +37,7 @@ func stepsStopChain(consumerName string, propNumber uint) []Step {
 							Deposit:  10000001,
 							Chain:    ChainID(consumerName),
 							StopTime: 0,
-							Status:   strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD)),
+							Status:   gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD.String(),
 						},
 					},
 					ConsumerChains: &map[ChainID]bool{"consu": true}, // consumer chain not yet removed
@@ -59,7 +58,7 @@ func stepsStopChain(consumerName string, propNumber uint) []Step {
 							Deposit:  10000001,
 							Chain:    ChainID(consumerName),
 							StopTime: 0,
-							Status:   strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_PASSED)),
+							Status:   gov.ProposalStatus_PROPOSAL_STATUS_PASSED.String(),
 						},
 					},
 					ValBalances: &map[ValidatorID]uint{
@@ -96,7 +95,7 @@ func stepsConsumerRemovalPropNotPassing(consumerName string, propNumber uint) []
 							Deposit:  10000001,
 							Chain:    ChainID(consumerName),
 							StopTime: 0,
-							Status:   strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD)),
+							Status:   gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD.String(),
 						},
 					},
 					ConsumerChains: &map[ChainID]bool{"consu": true}, // consumer chain not removed
@@ -117,7 +116,7 @@ func stepsConsumerRemovalPropNotPassing(consumerName string, propNumber uint) []
 							Deposit:  10000001,
 							Chain:    ChainID(consumerName),
 							StopTime: 0,
-							Status:   strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_REJECTED)),
+							Status:   gov.ProposalStatus_PROPOSAL_STATUS_REJECTED.String(),
 						},
 					},
 					ValBalances: &map[ValidatorID]uint{

@@ -351,7 +351,7 @@ func createTestConfigs(cfgType TestConfigType, providerVersions, consumerVersion
 			config.SetRelayerConfig(*useGorelayer)
 			config.SetCometMockConfig(*useCometmock)
 			config.transformGenesis = *transformGenesis
-			config.useGorelayer = *useGorelayer
+			config.UseGorelayer = *useGorelayer
 			configs = append(configs, config)
 		}
 	}
