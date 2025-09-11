@@ -48,7 +48,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
-	"github.com/cosmos/interchain-security/v5/app/common"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
@@ -82,6 +81,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/interchain-security/v5/app/common"
 
 	// IBC v10: Capability module removed
 
@@ -155,9 +155,6 @@ var (
 	_ servertypes.Application = (*App)(nil)
 	_ ibctesting.TestingApp   = (*App)(nil)
 )
-
-// ICS1 E2E FIX: SimpleVersionModifier moved to app/common/version_modifier.go
-// to avoid code duplication between provider and consumer apps.
 
 // App extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
@@ -261,7 +258,7 @@ func New(
 	// set the BaseApp's parameter store
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]), authtypes.NewModuleAddress(govtypes.ModuleName).String(), runtime.EventService{})
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
-	
+
 	// ICS1 E2E FIX: Set a simple VersionModifier to fix "app.versionModifier is nil" error
 	// This is needed for ABCI queries to work properly with AtomOne SDK
 	bApp.SetVersionModifier(common.SimpleVersionModifier{})
