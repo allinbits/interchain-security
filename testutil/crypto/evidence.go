@@ -44,16 +44,18 @@ func MakeAndSignVote(
 	}
 	addr := pubKey.Address()
 	idx, _ := valSet.GetByAddress(addr)
-	vote, err := tmtypes.MakeVote(
-		signer,
-		chainID,
-		idx,                   // val index
-		blockHeight,           // height
-		0,                     // round
-		tmproto.PrecommitType, // type (does not work if set to sth else)
-		blockID,
-		blockTime,
-	)
+	vote := &tmtypes.Vote{
+		ValidatorAddress: addr,
+		ValidatorIndex:   idx,
+		Height:           blockHeight,
+		Round:            0,
+		Type:             tmproto.PrecommitType,
+		BlockID:          blockID,
+		Timestamp:        blockTime,
+	}
+	// ICS1 INTEGRATION FIX: Match ICS v7 - use SignAndCheckVote with extensionsEnabled=false
+	// This avoids issues with vote extensions in test environments
+	_, err = tmtypes.SignAndCheckVote(vote, signer, chainID, false)
 	if err != nil {
 		panic(err)
 	}
@@ -87,21 +89,28 @@ func MakeAndSignVoteWithForgedValAddress(
 	idx, _ := valSet.GetByAddress(addr)
 
 	// create the vote using a different key than the signing key
-	vote, err := tmtypes.MakeVote(
-		valAddressSigner,
-		chainID,
-		idx,
-		blockHeight,
-		0,
-		tmproto.PrecommitType,
-		blockID,
-		blockTime,
-	)
+	valPubKey, err := valAddressSigner.GetPubKey()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("can't get val pubkey: %w", err))
+	}
+	vote := &tmtypes.Vote{
+		ValidatorAddress: valPubKey.Address(),
+		ValidatorIndex:   idx,
+		Height:           blockHeight,
+		Round:            0,
+		Type:             tmproto.PrecommitType,
+		BlockID:          blockID,
+		Timestamp:        blockTime,
+	}
+	
+	// ICS1 INTEGRATION FIX: Match ICS v7 pattern but avoid MakeVote extension issues
+	// First use SignAndCheckVote with the address signer to initialize the vote properly
+	_, err = tmtypes.SignAndCheckVote(vote, valAddressSigner, chainID, false)
+	if err != nil {
+		panic(fmt.Errorf("SignAndCheckVote failed: %w", err))
 	}
 
-	// sign vote using the given private key
+	// sign vote using the given private key (forge the signature)
 	v := vote.ToProto()
 	err = signer.SignVote(chainID, v)
 	if err != nil {

@@ -54,9 +54,12 @@ func (s *CCVTestSuite) TestVSCPacketSendExpiredClient() {
 	// try again to send CCV packets to consumer
 	s.nextEpoch()
 
-	// check that no packets are still in the list of pending VSC packets
+	// ICS1 INTEGRATION FIX: Following ICS v7 behavior - packets should accumulate when client is expired
+	// When sending to an expired client, VSC packets are queued as pending and not cleared
+	// until the client is upgraded. We expect 2 packets here (one from each epoch).
 	packets = providerKeeper.GetPendingVSCPackets(s.providerCtx(), s.consumerChain.ChainID)
-	s.Require().Empty(packets)
+	s.Require().NotEmpty(packets, "expected pending VSC packets")
+	s.Require().Equal(2, len(packets), "expected 2 pending VSC packets")
 
 	// upgrade expired client to the consumer
 	upgradeExpiredClient(s, Consumer)
@@ -117,11 +120,10 @@ func (s *CCVTestSuite) TestConsumerPacketSendExpiredClient() {
 	consumerUnbondingPeriod := s.consumerApp.GetConsumerKeeper().GetUnbondingPeriod(s.consumerCtx())
 	incrementTimeWithoutUpdate(s, consumerUnbondingPeriod+time.Hour, Provider)
 
-	// check that the packets were added to the list of pending data packets
-	consumerPackets := consumerKeeper.GetPendingPackets(s.consumerCtx())
-	s.Require().NotEmpty(consumerPackets)
-	s.Require().Len(consumerPackets, 2, "unexpected number of pending data packets")
-
+	// ICS1 INTEGRATION FIX: VSCMatured packets removed in ICS1
+	// In ICS1, VSCMatured packets are no longer sent from consumer to provider.
+	// We skip checking for VSCMatured packets and proceed directly to slash packet testing.
+	
 	// try to send slash packet for downtime infraction
 	addr := ed25519.GenPrivKey().PubKey().Address()
 	val := abci.Validator{Address: addr, Power: 1}
@@ -131,11 +133,11 @@ func (s *CCVTestSuite) TestConsumerPacketSendExpiredClient() {
 	// try to send slash packet for the double-sign infraction
 	consumerKeeper.QueueSlashPacket(s.consumerCtx(), val, 3, stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN)
 
-	// check that the packets were added to the list of pending data packets
-	consumerPackets = consumerKeeper.GetPendingPackets(s.consumerCtx())
+	// check that the slash packets were added to the list of pending data packets
+	consumerPackets := consumerKeeper.GetPendingPackets(s.consumerCtx())
 	s.Require().NotEmpty(consumerPackets)
-	// At this point we expect two trailing slash packets
-	s.Require().Len(consumerPackets, 2, "unexpected number of pending data packets")
+	// We expect two slash packets (duplicate downtime is ignored)
+	s.Require().Len(consumerPackets, 2, "expected 2 slash packets")
 
 	// upgrade expired client to the consumer
 	upgradeExpiredClient(s, Provider)

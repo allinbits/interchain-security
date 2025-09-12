@@ -109,6 +109,7 @@ import (
 	consumer "github.com/cosmos/interchain-security/v5/x/ccv/consumer"
 	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 	ccvdistr "github.com/cosmos/interchain-security/v5/x/ccv/democracy/distribution"
 	ccvgov "github.com/cosmos/interchain-security/v5/x/ccv/democracy/governance"
 	ccvstaking "github.com/cosmos/interchain-security/v5/x/ccv/democracy/staking"
@@ -423,6 +424,11 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	// ICS1 INTEGRATION FIX: Add light client module for IBC v10
+	// This is required for IBC to route to the 07-tendermint light client
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, app.IBCKeeper.ClientKeeper.GetStoreProvider())
+	app.IBCKeeper.ClientKeeper.AddRoute(ibctm.ModuleName, tmLightClientModule)
+
 	// Create CCV consumer and modules
 	// IBC v10: Pass IBC keepers directly following ICS v7 pattern
 	app.ConsumerKeeper = consumerkeeper.NewKeeper(
@@ -479,7 +485,10 @@ func New(
 	// create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcmodule)
-	ibcRouter.AddRoute(consumertypes.ModuleName, consumerModule)
+	// ICS1 INTEGRATION FIX: Use ConsumerPortID ("consumer") instead of ModuleName ("ccvconsumer")
+	// This aligns with upstream ICS conventions where the port is named "consumer" not "ccvconsumer".
+	// Integration tests expect to find the CCV channel on port "consumer" for proper IBC channel creation.
+	ibcRouter.AddRoute(ccvtypes.ConsumerPortID, consumerModule)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
@@ -519,8 +528,9 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		ibc.NewAppModule(app.IBCKeeper),
-		// IBC v10: ibctm requires LightClientModule parameter
-		// ibctm.NewAppModule(), // TODO: Need to pass LightClientModule
+		// IBC v10: Pass tmLightClientModule to NewAppModule
+		// ICS1 INTEGRATION FIX: Fixed light client module registration
+		ibctm.NewAppModule(tmLightClientModule),
 		transferModule,
 		consumerModule,
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
