@@ -151,18 +151,6 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	props := providerKeeper.GetAllPendingConsumerAdditionProps(providerChain.GetContext())
 	s.Require().Len(props, 1, "unexpected len consumer addition proposals in AddConsumer")
 	
-	// ICS1 E2E DEBUG: Check validator status before processing
-	vals, err := providerKeeper.GetLastBondedValidators(providerChain.GetContext())
-	s.Require().NoError(err)
-	totalPower := int64(0)
-	for _, v := range vals {
-		valAddr, _ := sdk.ValAddressFromBech32(v.GetOperator())
-		power, err := providerApp.GetTestStakingKeeper().GetLastValidatorPower(providerChain.GetContext(), valAddr)
-		if err == nil {
-			totalPower += power
-		}
-	}
-
 	// For Replicated Security, all validators automatically participate
 	// No opt-in needed
 

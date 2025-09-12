@@ -124,8 +124,7 @@ func compstepsStartConsumerChain(consumerName string, proposalIndex, chainIndex 
 							Chain:         ChainID(consumerName),
 							SpawnTime:     0,
 							InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 1},
-							Status:        gov.ProposalStatus_PROPOSAL_STATUS_PASSED.String(), // TODO: CHECK if this is bug on SDK SIDE!!!: should be as before gov.ProposalStatus(gov.ProposalStatus_PROPOSAL_STATUS_PASSED).String(),
-						},
+							Status:        gov.ProposalStatus_PROPOSAL_STATUS_PASSED.String(),
 					},
 					ValBalances: &map[ValidatorID]uint{
 						ValidatorID("alice"): 9500000000,

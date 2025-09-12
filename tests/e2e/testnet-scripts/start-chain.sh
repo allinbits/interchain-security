@@ -36,7 +36,7 @@ TENDERMINT_CONFIG_TRANSFORM=$7
 # whether to use CometMock
 USE_COMETMOCK=$8
 
-# The home directory for the chain
+# The home directory for the chain (introduced in ICS v7)
 CHAIN_HOME=$9
 
 # stores a comma separated list of nodes addresses
@@ -199,7 +199,7 @@ do
     # Modify tendermint configs of validator
     if [ "$TENDERMINT_CONFIG_TRANSFORM" != "" ] ; then 
         #'s/foo/bar/;s/abc/def/'
-        sed -i "$TENDERMINT_CONFIG_TRANSFORM" $CHAIN_ID/validator$VAL_ID/config/config.toml
+        sed -i "$TENDERMINT_CONFIG_TRANSFORM" /$CHAIN_HOME/validator$VAL_ID/config/config.toml
     fi
 done
 
