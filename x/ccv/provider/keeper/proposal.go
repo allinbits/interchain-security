@@ -338,17 +338,20 @@ func (k Keeper) BeginBlockInit(ctx sdk.Context) {
 		err := k.CreateConsumerClient(cachedCtx, &propsToExecute[i])
 		if err != nil {
 			// drop the proposal
+			ctx.Logger().Info("consumer client could not be created: %w", err)
 			continue
 		}
 
 		consumerGenesis, found := k.GetConsumerGenesis(cachedCtx, prop.ChainId)
 		if !found {
 			// drop the proposal
+			ctx.Logger().Info("consumer genesis could not be created")
 			continue
 		}
 
 		if len(consumerGenesis.Provider.InitialValSet) == 0 {
 			// drop the proposal
+			ctx.Logger().Info("consumer genesis initial validator set is empty - no validators opted in")
 			continue
 		}
 
