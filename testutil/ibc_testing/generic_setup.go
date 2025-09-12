@@ -162,8 +162,6 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 			totalPower += power
 		}
 	}
-	s.T().Logf("ICS1 DEBUG: Before CommitBlock - chainID=%s, spawnTime=%v, bondedValidators=%d, totalPower=%d", 
-		prop.ChainId, prop.SpawnTime, len(vals), totalPower)
 
 	// For Replicated Security, all validators automatically participate
 	// No opt-in needed
@@ -172,24 +170,11 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	// and create the client and genesis of consumer
 	coordinator.CommitBlock(providerChain)
 
-	// ICS1 E2E DEBUG: Check if proposal exists and what time it is
-	allProps := providerKeeper.GetAllPendingConsumerAdditionProps(providerChain.GetContext())
-	s.T().Logf("ICS1 DEBUG: After CommitBlock, found %d pending props", len(allProps))
-	for _, p := range allProps {
-		s.T().Logf("ICS1 DEBUG: Prop chainID=%s, spawnTime=%v, blockTime=%v", 
-			p.ChainId, p.SpawnTime, providerChain.GetContext().BlockTime())
-	}
-
 	// get genesis state created by the provider
 	consumerGenesisState, found := providerKeeper.GetConsumerGenesis(
 		providerChain.GetContext(),
 		chainID,
 	)
-
-	// ICS1 E2E DEBUG: Check if client was created
-	clientID, clientFound := providerKeeper.GetConsumerClientId(providerChain.GetContext(), chainID)
-	s.T().Logf("ICS1 DEBUG: After processing - clientFound=%v, clientID=%s, genesisFound=%v", 
-		clientFound, clientID, found)
 
 	s.Require().True(found, "consumer genesis not found in AddConsumer")
 

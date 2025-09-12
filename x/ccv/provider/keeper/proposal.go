@@ -237,10 +237,6 @@ func (k Keeper) MakeConsumerGenesis(
 	// Evidence: ICS v7 consumer_lifecycle.go implements this function
 	consState, err := k.getSelfConsensusState(ctx, height)
 	if err != nil {
-		// ICS1 E2E DEBUG: Log the actual error for getSelfConsensusState
-		ctx.Logger().Error("ICS1 DEBUG: getSelfConsensusState failed",
-			"height", height,
-			"error", err.Error())
 		return gen, nil, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "error %s getting self consensus state for: %s", err, height)
 	}
 
@@ -249,11 +245,6 @@ func (k Keeper) MakeConsumerGenesis(
 	if err != nil {
 		return gen, nil, errorsmod.Wrapf(stakingtypes.ErrNoValidatorFound, "error getting last bonded validators: %s", err)
 	}
-
-	// ICS1 E2E DEBUG: Log validator count
-	ctx.Logger().Info("ICS1 DEBUG: MakeConsumerGenesis validator info",
-		"chainID", chainID,
-		"bondedValidatorCount", len(bondedValidators))
 
 	// For Replicated Security, all bonded validators validate the consumer chain
 	nextValidators := k.ComputeNextValidators(ctx, chainID, bondedValidators)
@@ -347,29 +338,17 @@ func (k Keeper) BeginBlockInit(ctx sdk.Context) {
 		err := k.CreateConsumerClient(cachedCtx, &propsToExecute[i])
 		if err != nil {
 			// drop the proposal
-			// ICS1 E2E DEBUG: Log the actual error
-			ctx.Logger().Error("ICS1 DEBUG: consumer client could not be created",
-				"chainID", prop.ChainId,
-				"error", err.Error())
 			continue
 		}
 
 		consumerGenesis, found := k.GetConsumerGenesis(cachedCtx, prop.ChainId)
 		if !found {
 			// drop the proposal
-			// ICS1 E2E DEBUG: This shouldn't happen if CreateConsumerClient succeeded
-			ctx.Logger().Error("ICS1 DEBUG: consumer genesis not found after CreateConsumerClient",
-				"chainID", prop.ChainId)
 			continue
 		}
 
 		if len(consumerGenesis.Provider.InitialValSet) == 0 {
 			// drop the proposal
-			// ICS1 E2E DEBUG: Log more details about empty validator set
-			ctx.Logger().Info("ICS1 DEBUG: consumer genesis initial validator set is empty",
-				"chainID", prop.ChainId,
-				"spawnTime", prop.SpawnTime,
-				"blockTime", ctx.BlockTime())
 			continue
 		}
 
