@@ -13,6 +13,8 @@ For more details on the **Replicated Security protocol**, take a look at the [do
 
 For a list of **currently active releases**, see [RELEASES.md](./RELEASES.md#version-matrix).
 
+For a list of **major ICS features** available in the currently active releases, see [FEATURES.md](./FEATURES.md).
+
 ## Instructions
 
 **Prerequisites**

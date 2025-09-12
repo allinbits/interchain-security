@@ -211,7 +211,12 @@ Example of a consumer chain addition proposal (compare with the [ConsumerAdditio
 	// Note that transfer_channel_id is the ID of the channel end on the consumer chain.
     // it is most relevant for chains performing a standalone to consumer changeover
     // in order to maintain the existing ibc transfer channel
-    "distribution_transmission_channel": "channel-123"  // NOTE: use 
+    "distribution_transmission_channel": "channel-123"  // NOTE: use existing transfer channel if available
+    // Corresponds to the percentage of validators that have to validate the chain under the Top N case.
+    // For example, 53 corresponds to a Top 53% chain, meaning that the top 53% provider validators by voting power
+    // have to validate the proposed consumer chain. top_N can either be 0 or any value in [50, 100].
+    // A chain can join with top_N == 0 as an Opt In chain, or with top_N ∈ [50, 100] as a Top N chain.
+    "top_N": 95,
     // Corresponds to the maximum power (percentage-wise) a validator can have on the consumer chain. For instance, if
     // `validators_power_cap` is set to 32, it means that no validator can have more than 32% of the voting power on the
     // consumer chain. Note that this might not be feasible. For example, think of a consumer chain with only
@@ -228,6 +233,12 @@ Example of a consumer chain addition proposal (compare with the [ConsumerAdditio
     "denylist": []
 }
 ```
+
+:::info
+As seen in the `ConsumerAdditionProposal` example above, the changeover procedure can be used together with [Partial Set Security](../adrs/adr-015-partial-set-security.md).
+This means, that a standalone chain can choose to only be validated by some of the validators of the provider chain by setting `top_N` appropriately, or by
+additionally setting a validators-power cap, validator-set cap, etc. by using the [power-shaping parameters](../features/power-shaping.md).
+:::
 
 ## 3. Submit an Upgrade Proposal & Prepare for Changeover
 

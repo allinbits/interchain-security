@@ -41,6 +41,7 @@ Additionally, reach out to the community via the [forum](https://forum.cosmos.ne
 - [ ] determine consumer chain parameters to be put in the proposal
 - [ ] take note to include a link to your onboarding repository
 - [ ] describe the purpose and benefits of running your chain
+- [ ] determine whether your chain should be an Opt-In chain or a Top N chain (see [Partial Set Security](../features/partial-set-security.md))
 - [ ] if desired, decide on power-shaping parameters (see [Power Shaping](../features/power-shaping.md))
 
 Example of a consumer chain addition proposal.
