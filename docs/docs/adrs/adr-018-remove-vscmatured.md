@@ -30,7 +30,7 @@ Note that keeping the stake locked “forever” would affect the Hub’s livene
 The issue is that whatever attack is possible with an asynchronous view of the staking module, it is eventually possible with the partially synchronous view as well. 
 For example, an attacker could wait for `VscTimeoutPeriod` for the collateral to be unlocked and then send invalid headers to third-party chains that are not aware the consumer's collateral is no longer locked on the Hub (i.e., the consumer is no longer part of ICS). 
 
-Moreover, with the introduction of [PSS](./adr-015-partial-set-security.md), a consumer’s validator set could “lie” about its `UnbondingPeriod` elapsing by sending `VSCMaturedPackets` earlier. 
+Moreover, a consumer’s validator set could “lie” about its `UnbondingPeriod` elapsing by sending `VSCMaturedPackets` earlier. 
 This would result in a discrepancy between a light client’s view of the `UnbondingPeriod` and the actual Hub’s `UnbondingPeriod`.
 
 ## Decision

@@ -70,20 +70,6 @@ This means the Cosmos Hub requires a fork of ICS.
 This fork is maintained by the development team and released using the `-lsm` prefix.
 As soon as the Cosmos Hub uses mainline Cosmos SDK, the `-lsm` releases will reach end of life.
 
-## Version Matrix
-
-Versions of Golang, IBC, Cosmos SDK and CometBFT used by ICS in the currently active releases:
-
-| ICS | Golang | IBC | Cosmos SDK | CometBFT | Note |
-|-----|--------|-----|------------|----------|------|
-| [v3.2.0](https://github.com/cosmos/interchain-security/releases/tag/v3.2.0) | 1.20 | v7.3.0 | v0.47.5 | v0.37.2 |
-| [v4.0.0](https://github.com/cosmos/interchain-security/releases/tag/v4.0.0) | 1.21 | v7.3.1 | v0.47.7 | v0.37.4 | Provider on >= v4.0.0 backwards compatible with consumers >= v3.2.0 |
-| [v4.2.0](https://github.com/cosmos/interchain-security/releases/tag/v4.2.0) | 1.21 | v7.4.0 | v0.47.11 | v0.37.6 |
-| [v4.2.0-lsm](https://github.com/cosmos/interchain-security/releases/tag/v4.2.0-lsm) | 1.21 | v7.4.0 | v0.47.13-ics-lsm | v0.37.6 | Provider only (Cosmos Hub specific) |
-| [v5.0.0](https://github.com/cosmos/interchain-security/releases/tag/v5.0.0) | 1.21 | v8.1.0 | v0.50.4 | v0.38.5 |
-
-**Note:** For a list of major ICS features available in the currently active releases, see [FEATURES.md](./FEATURES.md).
-
 ### Backwards Compatibility
 
 A MAJOR version of ICS will always be backwards compatible with the previous MAJOR version of ICS.

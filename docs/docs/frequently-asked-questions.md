@@ -96,17 +96,6 @@ Currently supported versions:
 
 You can check the [Key Assignment Guide](./features/key-assignment.md) for specific instructions.
 
-## How does Partial Set Security work?
-
-Partial Set Security allows a provider chain to share only a subset of its validator set with a consumer chain. This subset can be determined by the top N% validators by voting power, or by validators opting in to validate the consumer chain. Partial Set Security allows for flexible tradeoffs between security, decentralization, and the budget a consumer chain spends on rewards to validators.
-
-See the [Partial Set Security](./features/partial-set-security.md) section for more information.
-
-## How does a validator know which consumers chains it has to validate?
-
-In order for a validator to keep track of all the chains it has to validate, the validator can use the
-[`has-to-validate` query](validators/partial-set-security-for-validators.md#which-chains-does-a-validator-have-to-validate).
-
 ## How many chains can a validator opt in to?
 
 There is **no** limit in the number of consumers chains a validator can choose to opt in to.

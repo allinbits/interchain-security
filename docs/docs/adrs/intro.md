@@ -40,7 +40,6 @@ To suggest an ADR, please make use of the [ADR template](./templates/adr-templat
 - [ADR 010: Standalone to Consumer Changeover](./adr-010-standalone-changeover.md)
 - [ADR 013: Slashing on the provider for consumer equivocation](./adr-013-equivocation-slashing.md)
 - [ADR 014: Epochs](./adr-014-epochs.md)
-- [ADR 015: Partial Set Security](./adr-015-partial-set-security.md)
 - [ADR 018: Remove VSCMatured Packets](./adr-018-remove-vscmatured.md)
 
 ### Proposed
