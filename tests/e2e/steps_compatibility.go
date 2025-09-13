@@ -125,6 +125,7 @@ func compstepsStartConsumerChain(consumerName string, proposalIndex, chainIndex 
 							SpawnTime:     0,
 							InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 1},
 							Status:        gov.ProposalStatus_PROPOSAL_STATUS_PASSED.String(),
+						},
 					},
 					ValBalances: &map[ValidatorID]uint{
 						ValidatorID("alice"): 9500000000,
