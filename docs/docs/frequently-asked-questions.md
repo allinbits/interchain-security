@@ -64,8 +64,7 @@ This feature discerns between validator operators (infrastructure) and governanc
 
 ## Can validators opt out of validating a consumer chain?
 
-A validator can always opt out from an Opt-In consumer chain.
-A validator can only opt out from a Top N chain if the validator does not belong to the top N% validators.
+No. In the AtomOne ICS1 Replicated Security model, all bonded validators must validate all consumer chains. There is no opt-in or opt-out mechanism.
 
 ## How does Slashing work?
 
@@ -96,42 +95,29 @@ Currently supported versions:
 
 You can check the [Key Assignment Guide](./features/key-assignment.md) for specific instructions.
 
-## How does Partial Set Security work?
+## What is Replicated Security in AtomOne ICS1?
 
-Partial Set Security allows a provider chain to share only a subset of its validator set with a consumer chain. This subset can be determined by the top N% validators by voting power, or by validators opting in to validate the consumer chain. Partial Set Security allows for flexible tradeoffs between security, decentralization, and the budget a consumer chain spends on rewards to validators.
-
-See the [Partial Set Security](./features/partial-set-security.md) section for more information.
+AtomOne ICS1 implements pure Replicated Security, where ALL bonded validators from the provider chain must validate ALL consumer chains. This ensures maximum security for consumer chains as they receive the full security of the provider chain's validator set. Unlike Partial Set Security variants, there is no opt-in/opt-out mechanism - participation is mandatory for all validators.
 
 ## How does a validator know which consumers chains it has to validate?
 
-In order for a validator to keep track of all the chains it has to validate, the validator can use the
-[`has-to-validate` query](validators/partial-set-security-for-validators.md#which-chains-does-a-validator-have-to-validate).
+In AtomOne ICS1's Replicated Security model, validators must validate ALL consumer chains. There is no need for complex queries as participation is mandatory for all bonded validators on the provider chain.
 
-## How many chains can a validator opt in to?
+## How many chains must a validator validate?
 
-There is **no** limit in the number of consumers chains a validator can choose to opt in to.
+Validators must validate ALL consumer chains in the Replicated Security model. There is no opt-in mechanism - participation is mandatory.
 
 ## Can validators assign a consensus keys while a consumer-addition proposal is in voting period?
 Yes, see the [Key Assignment Guide](./features/key-assignment.md) for more information.
 
-## Can validators assign a consensus key during the voting period for a consumer-addition proposal if they are not in the top N?
-Yes.
+## Can validators assign a consensus key during the voting period for a consumer-addition proposal?
+Yes, all validators can assign consensus keys during the voting period.
 
-## Can validators opt in to an Opt-in or Top N chain after its consumer-addition proposal voting period is over but before the spawn time?
-Yes.
+## Do validators need to take any action before a consumer chain launches?
+Validators should ensure they are prepared to validate the consumer chain when it launches. All bonded validators will automatically be included in the consumer chain's validator set.
 
-## Can validators opt in to an Opt-in chain after the spawn time if nobody else opted in?
-No, the consumer chain will not be added if nobody opted in by the spawn time. At least one validator, regardless of its voting power, must opt in before the spawn time arrives in order for the chain can start.
+## How are validator commissions handled in Replicated Security?
+All validators participate in all consumer chains and receive rewards according to the consumer chain's reward distribution parameters.
 
-## Can all validators opt out of an Opt-in chain?
-Yes, the consumer chain will halt with an ERR CONSENSUS FAILURE error after the opt-out message for the last validator is received.
-
-## Can validators set a commission rate for chains they have not opted in to?
-Yes, and this is useful for validators that are not in the top N% of the provider chain, but might move into the top N% in the future.
-By setting the commission rate ahead of time, they can make sure that they immediately have a commission rate of their choosing as soon as they are in the top N%.
-
-## Can a consumer chain modify its power shaping parameters?
-Yes, by issuing a [`ConsumerModificationProposal`](./features/proposals.md#consumermodificationproposal).
-
-## Can a Top N consumer chain become Opt-In or vice versa? 
-Yes, by issuing a [`ConsumerModificationProposal`](./features/proposals.md#consumermodificationproposal).
+## Can a consumer chain modify its parameters?
+Yes, by issuing a [`ConsumerModificationProposal`](./features/proposals.md#consumermodificationproposal), though power shaping and opt-in features are not available in the Replicated Security model.

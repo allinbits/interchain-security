@@ -10,9 +10,9 @@ To help you on your journey, the ICS team has provided multiple examples of a mi
 
 The source code for the example app can be found [here](https://github.com/cosmos/interchain-security/tree/main/app/consumer).
 
-Please note that consumer chains do not implement the staking module - part of the validator set of the provider is replicated over to the consumer,
-meaning that the consumer uses a subset of provider validator set and the stake of the validators on the provider determines their stake on the consumer.
-Note that after the introduction of [Partial Set Security](../adrs/adr-015-partial-set-security.md), not all the provider validators have to validate a consumer chain (e.g., if `top_N != 100`).
+Please note that consumer chains do not implement the staking module - the entire validator set of the provider is replicated over to the consumer in AtomOne ICS1,
+meaning that the consumer uses the full provider validator set and the stake of the validators on the provider determines their stake on the consumer.
+In the Replicated Security model, all bonded validators from the provider chain validate the consumer chain.
 
 Your chain should import the consumer module from `x/consumer` and register it in the correct places in your `app.go`.
 The `x/consumer` module will allow your chain to communicate with the provider using the ICS protocol. The module handles all IBC communication with the provider, and it is a simple drop-in.

@@ -7,11 +7,9 @@ sidebar_position: 1
 We advise that you join the [Interchain Security testnet](https://github.com/cosmos/testnets/tree/master/interchain-security) to gain hands-on experience with running consumer chains.
 :::
 
-At present, Interchain Security requires some or all the validators of the provider chain (ie. Cosmos Hub) to run validator nodes for a consumer chain.
-Whether a validator has to run a validator node for a consumer chain depends on whether the consumer chain is a Top N or an
-Opt-In chain and also on the [power-shaping features](../features/power-shaping.md). A validator can use the
-[`has-to-validate` query](./partial-set-security-for-validators.md#which-chains-does-a-validator-have-to-validate)
-to keep track of all the chains it has to validate.
+In AtomOne ICS1's Replicated Security model, ALL validators of the provider chain must run validator nodes for every consumer chain.
+There is no opt-in or opt-out mechanism - participation is mandatory for all bonded validators.
+This ensures maximum security for consumer chains as they receive the full security of the provider chain's validator set.
 
 
 Once a `ConsumerAdditionProposal` passes, relevant validators need to prepare to run the consumer chain binaries (these will be linked in their proposals) and set up validator nodes on governance-approved consumer chains.

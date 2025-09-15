@@ -235,9 +235,8 @@ Example of a consumer chain addition proposal (compare with the [ConsumerAdditio
 ```
 
 :::info
-As seen in the `ConsumerAdditionProposal` example above, the changeover procedure can be used together with [Partial Set Security](../adrs/adr-015-partial-set-security.md).
-This means, that a standalone chain can choose to only be validated by some of the validators of the provider chain by setting `top_N` appropriately, or by
-additionally setting a validators-power cap, validator-set cap, etc. by using the [power-shaping parameters](../features/power-shaping.md).
+In AtomOne ICS1's Replicated Security model, the changeover procedure will transition the standalone chain to be validated by ALL bonded validators from the provider chain.
+There is no partial validator set option - all provider validators must participate in securing the consumer chain.
 :::
 
 ## 3. Submit an Upgrade Proposal & Prepare for Changeover
