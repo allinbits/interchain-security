@@ -10,12 +10,21 @@ permissions:
   contents: read
 
 jobs:
-  break-check:
+  # Breaking change check disabled for AtomOne ICS1 fork
+  # This fork intentionally removes PSS features which are breaking changes
+  # The original break-check job has been disabled as we expect breaking changes
+  placeholder:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: bufbuild/buf-setup-action@v1.34.0
-      - uses: bufbuild/buf-breaking-action@v1
-        with:
-          input: "proto"
-          against: "https://github.com/${{ github.repository }}.git#branch=${{ github.event.pull_request.base.ref }},ref=HEAD~1,subdir=proto"
+      - run: echo "Protobuf breaking change check disabled for AtomOne ICS1 fork"
+
+  # Original job commented out:
+  # break-check:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: bufbuild/buf-setup-action@v1.34.0
+  #     - uses: bufbuild/buf-breaking-action@v1
+  #       with:
+  #         input: "proto"
+  #         against: "https://github.com/${{ github.repository }}.git#branch=${{ github.event.pull_request.base.ref }},ref=HEAD~1,subdir=proto"
