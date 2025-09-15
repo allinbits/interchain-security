@@ -18,7 +18,7 @@ Rejected
 
 ### Spike results
 
-I explored the idea of [#801](https://github.com/cosmos/interchain-security/issues/801) with this [spike branch](https://github.com/cosmos/interchain-security/tree/shawn%2Fgo-mod-split-aug-spike). Here's my conclusions:
+I explored the idea of [#801](https://github.com/cosmos/interchain-security/issues/801). Here's my conclusions:
 
 Splitting this repo to have multiple go.mods is possible. However there are various intricacies involved in decoupling the package hierarchy to have `x/ccv/types` as the lowest level dep, with `x/ccv/consumer` and `x/ccv/provider` being one dep layer above, with high-level tests depending on all three of the mentioned packages. I'd estimate this decoupling would take 2-5 workdays to finish, and require significant review effort.
 
