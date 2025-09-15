@@ -119,4 +119,4 @@ For this, we would need to:
 
 ## References
 
-* [Security Aggregation](./adr-016-securityaggregation.md) has similar concerns where the staking validator set will differ from the consensus validator set
+* Note: Security Aggregation concepts have similar concerns where the staking validator set differs from the consensus validator set
