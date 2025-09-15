@@ -54,7 +54,6 @@
         "revision_height": 1
       },
       "DistributionChannel": "",
-      "TopN": 0,
       "ValidatorsPowerCap": 0,
       "ValidatorSetCap": 0,
       "Allowlist": null,
@@ -129,14 +128,6 @@
         "Proposals": null
       }
     }
-  },
-  {
-    "ActionType": "main.OptInAction",
-    "Action": {
-      "Chain": "consu",
-      "Validator": "alice"
-    },
-    "State": {}
   },
   {
     "ActionType": "main.VoteGovProposalAction",

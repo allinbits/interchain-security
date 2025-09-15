@@ -81,6 +81,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	"github.com/cosmos/interchain-security/v5/app/common"
 
 	// IBC v10: Capability module removed
 
@@ -95,6 +96,7 @@ import (
 	ibcconsumer "github.com/cosmos/interchain-security/v5/x/ccv/consumer"
 	ibcconsumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	ibcconsumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
+	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 )
 
 const (
@@ -257,6 +259,10 @@ func New(
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(appCodec, runtime.NewKVStoreService(keys[consensusparamtypes.StoreKey]), authtypes.NewModuleAddress(govtypes.ModuleName).String(), runtime.EventService{})
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
 
+	// ICS1 E2E FIX: Set a simple VersionModifier to fix "app.versionModifier is nil" error
+	// This is needed for ABCI queries to work properly with AtomOne SDK
+	bApp.SetVersionModifier(common.SimpleVersionModifier{})
+
 	// IBC v10: Capability keeper and scoped keepers removed
 
 	// add keepers
@@ -387,7 +393,10 @@ func New(
 	// create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, ibcmodule)
-	ibcRouter.AddRoute(ibcconsumertypes.ModuleName, consumerModule)
+	// ICS1 E2E FIX: Use ConsumerPortID ("consumer") instead of ModuleName ("ccvconsumer")
+	// This aligns with upstream ICS conventions where the port is named "consumer" not "ccvconsumer".
+	// Hermes expects to find the CCV channel on port "consumer" for proper IBC channel creation.
+	ibcRouter.AddRoute(ccvtypes.ConsumerPortID, consumerModule)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router

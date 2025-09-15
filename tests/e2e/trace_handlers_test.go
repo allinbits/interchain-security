@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -30,7 +29,7 @@ var proposalInStateSteps = []Step{
 						Deposit:  10000001,
 						Chain:    ChainID("foo"),
 						StopTime: 0,
-						Status:   strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD)),
+						Status:   gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD.String(),
 					},
 				},
 			},
@@ -116,7 +115,7 @@ func TestMarshalAndUnmarshalChainState(t *testing.T) {
 					Chain:         ChainID("test"),
 					SpawnTime:     0,
 					InitialHeight: clienttypes.Height{RevisionNumber: 5, RevisionHeight: 5},
-					Status:        strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD)),
+					Status:        gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD.String(),
 				},
 			},
 		}},
@@ -128,7 +127,7 @@ func TestMarshalAndUnmarshalChainState(t *testing.T) {
 			Proposals: &map[uint]Proposal{
 				1: IBCTransferParamsProposal{
 					Deposit: 10000001,
-					Status:  strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD)),
+					Status:  gov.ProposalStatus_PROPOSAL_STATUS_VOTING_PERIOD.String(),
 					Params:  IBCTransferParams{true, true},
 				},
 			},
@@ -139,7 +138,7 @@ func TestMarshalAndUnmarshalChainState(t *testing.T) {
 					Deposit:  10000001,
 					Chain:    ChainID("test123"),
 					StopTime: 5000000000,
-					Status:   strconv.Itoa(int(gov.ProposalStatus_PROPOSAL_STATUS_PASSED)),
+					Status:   gov.ProposalStatus_PROPOSAL_STATUS_PASSED.String(),
 				},
 			},
 			ValBalances: &map[ValidatorID]uint{
@@ -167,7 +166,7 @@ func TestMarshalAndUnmarshalChainState(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			err := MarshalAndUnmarshalChainState(tc.chainState)
 			if err != nil {
-				t.Fatalf(err.Error())
+				t.Fatalf("%s", err.Error())
 			}
 		})
 	}
@@ -188,7 +187,7 @@ func MarshalAndUnmarshalChainState(chainState ChainState) error {
 	diff := cmp.Diff(chainState, *got)
 	if diff != "" {
 		log.Print(string(jsonobj))
-		return fmt.Errorf(diff)
+		return fmt.Errorf("%s", diff)
 	}
 
 	return nil

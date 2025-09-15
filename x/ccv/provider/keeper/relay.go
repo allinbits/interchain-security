@@ -56,7 +56,6 @@ func (k Keeper) OnTimeoutPacket(ctx sdk.Context, packet channeltypes.Packet) err
 // EndBlockVSU contains the EndBlock logic needed for
 // the Validator Set Update sub-protocol
 func (k Keeper) EndBlockVSU(ctx sdk.Context) {
-
 	if ctx.BlockHeight()%k.GetBlocksPerEpoch(ctx) == 0 {
 		// only queue and send VSCPackets at the boundaries of an epoch
 
@@ -130,7 +129,6 @@ func (k Keeper) QueueVSCPackets(ctx sdk.Context) {
 	if err != nil {
 		panic(fmt.Errorf("failed to get last validators: %w", err))
 	}
-
 	for _, chainID := range k.GetAllRegisteredConsumerChainIDs(ctx) {
 		currentValidators := k.GetConsumerValSet(ctx, chainID)
 
@@ -146,11 +144,7 @@ func (k Keeper) QueueVSCPackets(ctx sdk.Context) {
 			// construct validator set change packet data
 			packet := ccv.NewValidatorSetChangePacketData(valUpdates, valUpdateID, k.ConsumeSlashAcks(ctx, chainID))
 			k.AppendPendingVSCPackets(ctx, chainID, packet)
-			k.Logger(ctx).Info("VSCPacket enqueued:",
-				"chainID", chainID,
-				"vscID", valUpdateID,
-				"len updates", len(valUpdates),
-			)
+			k.Logger(ctx).Info("VSCPacket enqueued:", "chainID", chainID, "vscID", valUpdateID, "len updates", len(valUpdates))
 		}
 	}
 

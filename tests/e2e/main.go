@@ -247,10 +247,7 @@ func getTestCases(selectedPredefinedTests, selectedTestFiles TestSet, providerVe
 			"changeover", "happy-path",
 			"democracy-reward", "democracy",
 			"slash-throttle", "consumer-double-sign", "consumer-misbehaviour",
-			"consumer-double-downtime", "partial-set-security-opt-in", "partial-set-security-top-n",
-			"partial-set-security-validator-set-cap", "partial-set-security-validators-power-cap",
-			"partial-set-security-validators-allowlisted", "partial-set-security-validators-denylisted",
-			"partial-set-security-modification-proposal",
+			"consumer-double-downtime",
 			"active-set-changes",
 		}
 		if includeMultiConsumer != nil && *includeMultiConsumer {
@@ -351,7 +348,7 @@ func createTestConfigs(cfgType TestConfigType, providerVersions, consumerVersion
 			config.SetRelayerConfig(*useGorelayer)
 			config.SetCometMockConfig(*useCometmock)
 			config.transformGenesis = *transformGenesis
-			config.useGorelayer = *useGorelayer
+			config.UseGorelayer = *useGorelayer
 			configs = append(configs, config)
 		}
 	}

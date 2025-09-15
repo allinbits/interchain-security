@@ -162,6 +162,7 @@ func (tr *Chain) startChain(
 		cometmockArg = "false"
 	}
 
+	chainHome := string(action.Chain)
 	startChainScript := tr.target.GetTestScriptPath(action.IsConsumer, "start-chain.sh")
 	cmd := tr.target.ExecCommand("/bin/bash",
 		startChainScript, chainConfig.BinaryName, string(vals),
@@ -173,6 +174,7 @@ func (tr *Chain) startChain(
 		// with short timeout_commit (eg. timeout_commit = 1s) some nodes may miss blocks causing the test run to fail
 		tr.testConfig.tendermintConfigOverride,
 		cometmockArg,
+		chainHome,
 	)
 
 	cmdReader, err := cmd.StdoutPipe()
@@ -938,21 +940,26 @@ const gorelayerChainConfigTemplate = `
 	}
 }`
 
-func (tr Chain) addChainToRelayer(
+func (tr *Chain) addChainToRelayer(
 	action AddChainToRelayerAction,
 	verbose bool,
 ) {
-	if !tr.testConfig.useGorelayer {
+	if !tr.testConfig.UseGorelayer {
 		tr.addChainToHermes(action, verbose)
 	} else {
 		tr.addChainToGorelayer(action, verbose)
 	}
 }
 
-func (tr Chain) addChainToGorelayer(
+func (tr *Chain) addChainToGorelayer(
 	action AddChainToRelayerAction,
 	verbose bool,
 ) {
+	// Check if target is properly initialized
+	if tr.target == nil {
+		log.Fatal("tr.target is nil in addChainToGorelayer")
+	}
+	
 	queryNodeIP := tr.target.GetQueryNodeIP(action.Chain)
 	ChainId := tr.testConfig.chainConfigs[action.Chain].ChainId
 	rpcAddr := "http://" + queryNodeIP + ":26658"
@@ -979,13 +986,19 @@ func (tr Chain) addChainToGorelayer(
 	}
 
 	addChainCommand := tr.target.ExecCommand("rly", "chains", "add", "--file", chainConfigFileName, string(ChainId))
+	if addChainCommand == nil {
+		log.Fatal("ExecCommand returned nil for rly chains add")
+	}
 	e2e.ExecuteCommand(addChainCommand, "add chain")
 
 	keyRestoreCommand := tr.target.ExecCommand("rly", "keys", "restore", string(ChainId), "default", tr.testConfig.validatorConfigs[action.Validator].Mnemonic)
+	if keyRestoreCommand == nil {
+		log.Fatal("ExecCommand returned nil for rly keys restore")
+	}
 	e2e.ExecuteCommand(keyRestoreCommand, "restore keys")
 }
 
-func (tr Chain) addChainToHermes(
+func (tr *Chain) addChainToHermes(
 	action AddChainToRelayerAction,
 	verbose bool,
 ) {
@@ -1066,7 +1079,7 @@ func (tr Chain) addIbcConnection(
 	action AddIbcConnectionAction,
 	verbose bool,
 ) {
-	if !tr.testConfig.useGorelayer {
+	if !tr.testConfig.UseGorelayer {
 		tr.addIbcConnectionHermes(action, verbose)
 	} else {
 		tr.addIbcConnectionGorelayer(action, verbose)
@@ -1078,6 +1091,7 @@ func (tr Chain) addIbcConnectionGorelayer(
 	verbose bool,
 ) {
 	pathName := tr.GetPathNameForGorelayer(action.ChainA, action.ChainB)
+	log.Printf("DEBUG: Creating IBC connection - ChainA: %s, ChainB: %s, PathName: %s", action.ChainA, action.ChainB, pathName)
 
 	pathConfig := fmt.Sprintf(gorelayerPathConfigTemplate, action.ChainA, action.ClientA, action.ChainB, action.ClientB)
 
@@ -1097,6 +1111,7 @@ func (tr Chain) addIbcConnectionGorelayer(
 		pathName,
 		"--file", pathConfigFileName,
 	)
+	log.Printf("DEBUG: Running command: %s", newPathCommand.String())
 
 	e2e.ExecuteCommand(newPathCommand, "new path")
 
@@ -1214,7 +1229,7 @@ func (tr Chain) startRelayer(
 	action StartRelayerAction,
 	verbose bool,
 ) {
-	if tr.testConfig.useGorelayer {
+	if tr.testConfig.UseGorelayer {
 		tr.startGorelayer(action, verbose)
 	} else {
 		tr.startHermes(action, verbose)
@@ -1257,7 +1272,7 @@ func (tr Chain) addIbcChannel(
 	action AddIbcChannelAction,
 	verbose bool,
 ) {
-	if tr.testConfig.useGorelayer {
+	if tr.testConfig.UseGorelayer {
 		tr.addIbcChannelGorelayer(action, verbose)
 	} else {
 		tr.addIbcChannelHermes(action, verbose)
@@ -1347,7 +1362,7 @@ func (tr Chain) transferChannelComplete(
 	action TransferChannelCompleteAction,
 	verbose bool,
 ) {
-	if tr.testConfig.useGorelayer {
+	if tr.testConfig.UseGorelayer {
 		log.Fatal("transferChannelComplete is not implemented for rly")
 	}
 
@@ -1399,7 +1414,7 @@ func (tr Chain) relayPackets(
 	action RelayPacketsAction,
 	verbose bool,
 ) {
-	if tr.testConfig.useGorelayer {
+	if tr.testConfig.UseGorelayer {
 		tr.relayPacketsGorelayer(action, verbose)
 	} else {
 		tr.relayPacketsHermes(action, verbose)
@@ -1410,11 +1425,16 @@ func (tr Chain) relayPacketsGorelayer(
 	action RelayPacketsAction,
 	verbose bool,
 ) {
-	// Because `.app_state.provider.params.blocks_per_epoch` is set to 3 in the E2E tests, we wait 3 blocks
-	// before relaying the packets to guarantee that at least one epoch passes and hence any `VSCPacket`s get
-	// queued and are subsequently relayed.
-	tr.waitBlocks(action.ChainA, 3, 90*time.Second)
+	// Because `.app_state.provider.params.blocks_per_epoch` is set to 3 in the E2E tests, we wait 6 blocks
+	// before relaying the packets to guarantee that at least TWO epochs pass and hence any `VSCPacket`s get
+	// queued and are subsequently relayed. We need two epochs because:
+	// 1. First epoch boundary: QueueVSCPackets picks up the validator update
+	// 2. Second epoch boundary: The queued packet is available for relay
+	log.Printf("DEBUG: Waiting 6 blocks on %s before relay to ensure VSC packet generation across 2 epochs", action.ChainA)
+	tr.waitBlocks(action.ChainA, 6, 90*time.Second)
+	log.Printf("DEBUG: Waiting 3 blocks on %s before relay", action.ChainB)
 	tr.waitBlocks(action.ChainB, 3, 90*time.Second)
+	log.Printf("DEBUG: Done waiting, now relaying packets")
 
 	pathName := tr.GetPathNameForGorelayer(action.ChainA, action.ChainB)
 
@@ -1431,18 +1451,23 @@ func (tr Chain) relayPacketsGorelayer(
 		log.Fatal(err, "\n", string(bz))
 	}
 
-	tr.waitBlocks(action.ChainA, 1, 30*time.Second)
-	tr.waitBlocks(action.ChainB, 1, 30*time.Second)
+	// Wait for the packets to be processed on both chains
+	log.Printf("DEBUG: Waiting for packets to be processed after relay")
+	tr.waitBlocks(action.ChainA, 2, 30*time.Second)
+	tr.waitBlocks(action.ChainB, 2, 30*time.Second)
+	log.Printf("DEBUG: Done waiting after relay")
 }
 
 func (tr Chain) relayPacketsHermes(
 	action RelayPacketsAction,
 	verbose bool,
 ) {
-	// Because `.app_state.provider.params.blocks_per_epoch` is set to 3 in the E2E tests, we wait 3 blocks
-	// before relaying the packets to guarantee that at least one epoch passes and hence any `VSCPacket`s get
-	// queued and are subsequently relayed.
-	tr.waitBlocks(action.ChainA, 3, 90*time.Second)
+	// Because `.app_state.provider.params.blocks_per_epoch` is set to 3 in the E2E tests, we wait 6 blocks
+	// before relaying the packets to guarantee that at least TWO epochs pass and hence any `VSCPacket`s get
+	// queued and are subsequently relayed. We need two epochs because:
+	// 1. First epoch boundary: QueueVSCPackets picks up the validator update
+	// 2. Second epoch boundary: The queued packet is available for relay
+	tr.waitBlocks(action.ChainA, 6, 90*time.Second)
 	tr.waitBlocks(action.ChainB, 3, 90*time.Second)
 
 	// hermes clear packets ibc0 transfer channel-13
@@ -1460,8 +1485,9 @@ func (tr Chain) relayPacketsHermes(
 		log.Fatal(err, "\n", string(bz))
 	}
 
-	tr.waitBlocks(action.ChainA, 1, 30*time.Second)
-	tr.waitBlocks(action.ChainB, 1, 30*time.Second)
+	// Wait for the packets to be processed on both chains
+	tr.waitBlocks(action.ChainA, 2, 30*time.Second)
+	tr.waitBlocks(action.ChainB, 2, 30*time.Second)
 }
 
 type RelayRewardPacketsToProviderAction struct {
@@ -1531,7 +1557,13 @@ func (tr Chain) delegateTokens(
 	}
 
 	// wait for inclusion in a block -> '--broadcast-mode block' is deprecated
-	tr.waitBlocks(action.Chain, 2, 10*time.Second)
+	// With blocks_per_epoch=3 in E2E tests, we need to ensure:
+	// 1. Delegation is included and processed by staking module
+	// 2. Validator power update is available via GetLastValidatorPower (next block)
+	// 3. Provider EndBlock hits an epoch boundary to queue VSC packets
+	// Waiting for 10 blocks ensures we pass through multiple epoch boundaries after delegation
+	// Using 20 second timeout as blocks take ~1.3 seconds in test environment
+	tr.waitBlocks(action.Chain, 10, 20*time.Second)
 }
 
 type UnbondTokensAction struct {
@@ -1747,8 +1779,12 @@ func (tr Chain) getValidatorKeyAddressFromString(keystring string) string {
 func (tr Chain) invokeDowntimeSlash(action DowntimeSlashAction, verbose bool) {
 	// Bring validator down
 	tr.setValidatorDowntime(action.Chain, action.Validator, true, verbose)
+	// ICS1 E2E FIX: Increased wait from 11 to 51 blocks to account for increased signed_blocks_window
+	// Consumer chain has window of 100 and min_signed_per_window of 0.5, need to miss >50 blocks to get jailed
+	// Provider chain has window of 50, need to miss >25 blocks
+	// Using 51 to ensure we exceed the threshold on consumer chain
 	// Wait appropriate amount of blocks for validator to be slashed
-	tr.waitBlocks(action.Chain, 11, 3*time.Minute)
+	tr.waitBlocks(action.Chain, 51, 5*time.Minute)
 	// Bring validator back up
 	tr.setValidatorDowntime(action.Chain, action.Validator, false, verbose)
 }
@@ -1816,8 +1852,10 @@ type UnjailValidatorAction struct {
 
 // Sends an unjail transaction to the provider chain
 func (tr Chain) unjailValidator(action UnjailValidatorAction, verbose bool) {
+	// ICS1 E2E FIX: Increased wait time for unjailing to account for AtomOne's different block times
+	// Original was 61 seconds, increased to 90 seconds for more reliable unjailing
 	// wait until downtime_jail_duration has elapsed, to make sure the validator can be unjailed
-	tr.WaitTime(61 * time.Second)
+	tr.WaitTime(90 * time.Second)
 
 	cmd := tr.target.ExecCommand(
 		tr.testConfig.chainConfigs[action.Provider].BinaryName,

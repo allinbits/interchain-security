@@ -3,6 +3,7 @@ package ibc_testing
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
@@ -138,7 +139,10 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 
 	// NOTE: we cannot use the time.Now() because the coordinator chooses a hardcoded start time
 	// using time.Now() could set the spawn time to be too far in the past or too far in the future
-	prop.SpawnTime = coordinator.CurrentTime
+	// ICS1 E2E FIX: Set spawn time in the past to ensure immediate processing
+	// Without this, CommitBlock doesn't advance time enough for BeginBlockInit to process the proposal
+	// This matches the pattern used in unit tests (see proposal_test.go)
+	prop.SpawnTime = coordinator.CurrentTime.Add(-time.Hour)
 	// NOTE: the initial height passed to CreateConsumerClient
 	// must be the height on the consumer when InitGenesis is called
 	prop.InitialHeight = clienttypes.Height{RevisionNumber: 0, RevisionHeight: 2}
@@ -146,7 +150,7 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	providerKeeper.SetPendingConsumerAdditionProp(providerChain.GetContext(), prop)
 	props := providerKeeper.GetAllPendingConsumerAdditionProps(providerChain.GetContext())
 	s.Require().Len(props, 1, "unexpected len consumer addition proposals in AddConsumer")
-
+	
 	// For Replicated Security, all validators automatically participate
 	// No opt-in needed
 

@@ -15,3 +15,6 @@ docs/versioned_sidebars
 
 # Go test binaries
 *.test
+
+# Log files
+*.log

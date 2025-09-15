@@ -109,7 +109,7 @@ type TestConfig struct {
 	// lengthening the timeout_commit increases the test runtime because blocks are produced slower but the test is more reliable
 	tendermintConfigOverride string
 	useCometmock             bool // if false, nodes run CometBFT
-	useGorelayer             bool // if false, Hermes is used as the relayer
+	UseGorelayer             bool // if false, Hermes is used as the relayer
 	// chains which are running, i.e. producing blocks, at the moment
 	runningChains map[ChainID]bool
 	// Used with CometMock. The time by which chains have been advanced. Used to keep chains in sync: when a new chain is started, advance its time by this value to keep chains in sync.
@@ -290,7 +290,8 @@ func SlashThrottleTestConfig() TestConfig {
 					".app_state.gov.params.expedited_voting_period = \"10s\" | " +
 					// Custom slashing parameters for testing validator downtime functionality
 					// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-					".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -305,7 +306,8 @@ func SlashThrottleTestConfig() TestConfig {
 				IpPrefix:       "7.7.8",
 				VotingWaitTime: 20,
 				GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
-					".app_state.slashing.params.signed_blocks_window = \"20\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 20 to 100 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"100\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -379,7 +381,8 @@ func CompatibilityTestConfig(providerVersion, consumerVersion string) TestConfig
 			GenesisChanges: ".app_state.gov.voting_params.voting_period = \"20s\" | " +
 				// Custom slashing parameters for testing validator downtime functionality
 				// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-				".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+				// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 				".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 				".app_state.slashing.params.downtime_jail_duration = \"2s\" | " +
 				".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -397,7 +400,8 @@ func CompatibilityTestConfig(providerVersion, consumerVersion string) TestConfig
 			GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
 				// Custom slashing parameters for testing validator downtime functionality
 				// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-				".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+				// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 				".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 				".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 				".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -417,7 +421,8 @@ func CompatibilityTestConfig(providerVersion, consumerVersion string) TestConfig
 				".app_state.gov.params.expedited_voting_period = \"10s\" | " +
 				// Custom slashing parameters for testing validator downtime functionality
 				// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-				".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+				// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 				".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 				".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 				".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -436,7 +441,8 @@ func CompatibilityTestConfig(providerVersion, consumerVersion string) TestConfig
 			GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
 				// Custom slashing parameters for testing validator downtime functionality
 				// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-				".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+				// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 				".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 				".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 				".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -479,7 +485,8 @@ func DefaultTestConfig() TestConfig {
 					".app_state.gov.params.expedited_voting_period = \"10s\" | " +
 					// Custom slashing parameters for testing validator downtime functionality
 					// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-					".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -494,7 +501,8 @@ func DefaultTestConfig() TestConfig {
 				IpPrefix:       "7.7.8",
 				VotingWaitTime: 20,
 				GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
-					".app_state.slashing.params.signed_blocks_window = \"20\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 20 to 100 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"100\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\"",
@@ -510,7 +518,8 @@ func DefaultTestConfig() TestConfig {
 func DemocracyTestConfig(allowReward bool) TestConfig {
 	consumerGenChanges := ".app_state.ccvconsumer.params.blocks_per_distribution_transmission = \"20\" | " +
 		".app_state.gov.params.voting_period = \"10s\" | " +
-		".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+		// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 		".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 		".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 		".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -542,7 +551,8 @@ func DemocracyTestConfig(allowReward bool) TestConfig {
 					".app_state.gov.params.expedited_voting_period = \"10s\" | " +
 					// Custom slashing parameters for testing validator downtime functionality
 					// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-					".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -602,7 +612,8 @@ func MultiConsumerTestConfig() TestConfig {
 					".app_state.gov.params.expedited_voting_period = \"10s\" | " +
 					// Custom slashing parameters for testing validator downtime functionality
 					// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-					".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -616,7 +627,8 @@ func MultiConsumerTestConfig() TestConfig {
 				IpPrefix:       "7.7.8",
 				VotingWaitTime: 20,
 				GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
-					".app_state.slashing.params.signed_blocks_window = \"20\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 20 to 100 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"100\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\"",
@@ -628,7 +640,8 @@ func MultiConsumerTestConfig() TestConfig {
 				IpPrefix:       "7.7.9",
 				VotingWaitTime: 20,
 				GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
-					".app_state.slashing.params.signed_blocks_window = \"20\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 20 to 100 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"100\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\"",
@@ -662,7 +675,8 @@ func ChangeoverTestConfig() TestConfig {
 					".app_state.gov.params.expedited_voting_period = \"10s\" | " +
 					// Custom slashing parameters for testing validator downtime functionality
 					// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-					".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -678,7 +692,8 @@ func ChangeoverTestConfig() TestConfig {
 				IpPrefix:       "7.7.8",
 				VotingWaitTime: 20,
 				GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
-					".app_state.slashing.params.signed_blocks_window = \"20\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 20 to 100 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"100\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -764,7 +779,8 @@ func ConsumerMisbehaviourTestConfig() TestConfig {
 					".app_state.gov.params.expedited_voting_period = \"10s\" | " +
 					// Custom slashing parameters for testing validator downtime functionality
 					// See https://docs.cosmos.network/main/modules/slashing/04_begin_block.html#uptime-tracking
-					".app_state.slashing.params.signed_blocks_window = \"10\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 10 to 50 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"50\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\" | " +
@@ -779,7 +795,8 @@ func ConsumerMisbehaviourTestConfig() TestConfig {
 				IpPrefix:       "7.7.8",
 				VotingWaitTime: 20,
 				GenesisChanges: ".app_state.gov.params.voting_period = \"20s\" | " +
-					".app_state.slashing.params.signed_blocks_window = \"20\" | " +
+					// ICS1 E2E FIX: Increased signed_blocks_window from 20 to 100 to prevent spurious jailing
+				".app_state.slashing.params.signed_blocks_window = \"100\" | " +
 					".app_state.slashing.params.min_signed_per_window = \"0.500000000000000000\" | " +
 					".app_state.slashing.params.downtime_jail_duration = \"60s\" | " +
 					".app_state.slashing.params.slash_fraction_downtime = \"0.010000000000000000\"",
@@ -799,7 +816,7 @@ func (s *TestConfig) SetCometMockConfig(useCometmock bool) {
 }
 
 func (s *TestConfig) SetRelayerConfig(useRly bool) {
-	s.useGorelayer = useRly
+	s.UseGorelayer = useRly
 }
 
 // validateStringLiterals enforces that configs follow the constraints

@@ -105,6 +105,7 @@ import (
 	tmos "github.com/cometbft/cometbft/libs/os"
 	dbm "github.com/cosmos/cosmos-db"
 
+	"github.com/cosmos/interchain-security/v5/app/common"
 	appencoding "github.com/cosmos/interchain-security/v5/app/encoding"
 	testutil "github.com/cosmos/interchain-security/v5/testutil/integration"
 	ibcprovider "github.com/cosmos/interchain-security/v5/x/ccv/provider"
@@ -379,6 +380,10 @@ func New(
 	)
 
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
+	
+	// ICS1 E2E FIX: Set VersionModifier to fix "app.versionModifier is nil" error
+	// Uses shared implementation from app/common package
+	bApp.SetVersionModifier(common.SimpleVersionModifier{})
 
 	// IBC v10: Capability keeper and scoped keepers removed
 
@@ -567,6 +572,9 @@ func New(
 	ibcRouter.AddRoute(providertypes.ModuleName, providerModule)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
+	// IBC v10: Create light client module for tendermint
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, app.IBCKeeper.ClientKeeper.GetStoreProvider())
+	app.IBCKeeper.ClientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -592,7 +600,7 @@ func New(
 
 		ibc.NewAppModule(app.IBCKeeper),
 		// IBC v10: ibctm requires LightClientModule parameter
-		// ibctm.NewAppModule(), // TODO: Need to pass LightClientModule
+		ibctm.NewAppModule(tmLightClientModule),
 		params.NewAppModule(app.ParamsKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
 		providerModule,

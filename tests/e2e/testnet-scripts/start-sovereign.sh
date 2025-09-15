@@ -125,9 +125,8 @@ ip netns exec $NET_NAMESPACE_NAME $BIN $ARGS start &> /$CHAIN_ID/validator$VAL_I
 
 # poll for chain start
 set +e
-until $BIN  query block --type=height 0 --node "tcp://$CHAIN_IP_PREFIX.$VAL_IP_SUFFIX:26658" | grep -q -v '{"block_id":{"hash":"","parts":{"total":0,"hash":""}},"block":null}'; do sleep 0.3 ; done
+# ICS1 E2E FIX: Query height 1 instead of 0 (blocks start at 1)
+until $BIN query block --type=height 1 --node "tcp://$CHAIN_IP_PREFIX.$VAL_IP_SUFFIX:26658" 2>/dev/null | grep -q "height"; do sleep 0.3 ; done
 set -e
 
 echo "done!!!!!!!!"
-
-read -p "Press Return to Close..."
