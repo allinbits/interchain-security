@@ -10,11 +10,9 @@ A major difference between launching a new consumer chain vs. onboarding a stand
 
 ## Timeline
 
-Upgrading standalone chains can be best visualised using a timeline, such as the one available [Excalidraw graphic by Stride](https://app.excalidraw.com/l/9UFOCMAZLAI/5EVLj0WJcwt).
+Upgrading standalone chains requires careful coordination of timing between the provider chain governance and the standalone chain upgrade.
 
 There is some flexibility with regards to how the changeover procedure is executed, so please make sure to follow the guides provided by the team doing the changeover.
-
-![Standalone to consumer transition timeline](../../figures/ics_changeover_timeline_stride.png?raw=true)
 
 ### 1. `ConsumerAdditionProposal` on provider chain
 
@@ -23,7 +21,7 @@ This step dictates the `spawn_time`. After `spawn_time` the CCV state (initial v
 
 To obtain it from the provider use:
 ```bash
-gaiad q provider consumer-genesis stride-1 -o json > ccv-state.json
+gaiad q provider consumer-genesis <consumer-chain-id> -o json > ccv-state.json
 jq -s '.[0].app_state.ccvconsumer = .[1] | .[0]' genesis.json ccv-state.json > ccv.json
 ```
 
