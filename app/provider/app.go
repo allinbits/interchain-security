@@ -380,7 +380,7 @@ func New(
 	)
 
 	bApp.SetParamStore(&app.ConsensusParamsKeeper.ParamsStore)
-	
+
 	// ICS1 E2E FIX: Set VersionModifier to fix "app.versionModifier is nil" error
 	// Uses shared implementation from app/common package
 	bApp.SetVersionModifier(common.SimpleVersionModifier{})
@@ -448,7 +448,6 @@ func New(
 		app.StakingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
 
 	// get skipUpgradeHeights from the app options
 	skipUpgradeHeights := map[int64]bool{}
@@ -766,7 +765,6 @@ func New(
 	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
 
 	anteHandler, err := NewAnteHandler(
 		HandlerOptions{
