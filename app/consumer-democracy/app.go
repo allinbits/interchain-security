@@ -19,6 +19,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+
 	// Removed - types package no longer exists in v10
 	"github.com/spf13/cast"
 
@@ -78,6 +79,7 @@ import (
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
 	// IBC v10: Capability module removed
 
 	// add mint
@@ -109,10 +111,10 @@ import (
 	consumer "github.com/cosmos/interchain-security/v5/x/ccv/consumer"
 	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
 	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 	ccvdistr "github.com/cosmos/interchain-security/v5/x/ccv/democracy/distribution"
 	ccvgov "github.com/cosmos/interchain-security/v5/x/ccv/democracy/governance"
 	ccvstaking "github.com/cosmos/interchain-security/v5/x/ccv/democracy/staking"
+	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 )
 
 const (
@@ -503,7 +505,6 @@ func New(
 
 	app.EvidenceKeeper = *evidenceKeeper
 
-
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 	app.MM = module.NewManager(
@@ -703,7 +704,6 @@ func New(
 	// initialize stores
 	app.MountKVStores(keys)
 	app.MountTransientStores(tkeys)
-	app.MountMemoryStores(memKeys)
 
 	anteHandler, err := NewAnteHandler(
 		HandlerOptions{
