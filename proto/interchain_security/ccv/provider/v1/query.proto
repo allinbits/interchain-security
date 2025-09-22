@@ -107,6 +107,15 @@ service Query {
     option (google.api.http).get =
         "/interchain_security/ccv/provider/consumer_validators/{chain_id}";
   }
+
+  // QueryConsumerChainOptedInValidators returns all opted-in validators for a
+  // given consumer chain
+  rpc QueryConsumerChainOptedInValidators(
+      QueryConsumerChainOptedInValidatorsRequest)
+      returns (QueryConsumerChainOptedInValidatorsResponse) {
+    option (google.api.http).get =
+        "/interchain_security/ccv/provider/opted_in_validators/{chain_id}";
+  }
 }
 
 message QueryConsumerGenesisRequest { string chain_id = 1; }
@@ -234,4 +243,13 @@ message QueryConsumerValidatorsValidator {
 
 message QueryConsumerValidatorsResponse {
   repeated QueryConsumerValidatorsValidator validators = 1;
+}
+
+message QueryConsumerChainOptedInValidatorsRequest {
+  string chain_id = 1;
+}
+
+message QueryConsumerChainOptedInValidatorsResponse {
+  // The consensus addresses of opted-in validators on the provider chain
+  repeated string validators_provider_addresses = 1;
 }
