@@ -718,6 +718,156 @@ func (k Keeper) GetAllRegisteredAndProposedChainIDs(ctx sdk.Context) []string {
 	return allConsumerChains
 }
 
+// SetTopN stores the N value associated to chain with `chainID`
+func (k Keeper) SetTopN(
+	ctx sdk.Context,
+	chainID string,
+	N uint32,
+) {
+	store := ctx.KVStore(k.storeKey)
+
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, N)
+
+	store.Set(types.TopNKey(chainID), buf)
+}
+
+// DeleteTopN removes the N value associated to chain with `chainID`
+func (k Keeper) DeleteTopN(
+	ctx sdk.Context,
+	chainID string,
+) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.TopNKey(chainID))
+}
+
+// GetTopN returns (N, true) if chain `chainID` has a top N associated, and (0, false) otherwise.
+func (k Keeper) GetTopN(
+	ctx sdk.Context,
+	chainID string,
+) (uint32, bool) {
+	store := ctx.KVStore(k.storeKey)
+	buf := store.Get(types.TopNKey(chainID))
+	if buf == nil {
+		return 0, false
+	}
+	return binary.BigEndian.Uint32(buf), true
+}
+
+// IsTopN returns true if chain with `chainID` is a Top-N chain (i.e., enforces at least one validator to validate chain `chainID`)
+func (k Keeper) IsTopN(ctx sdk.Context, chainID string) bool {
+	topN, found := k.GetTopN(ctx, chainID)
+	return found && topN > 0
+}
+
+// IsOptIn returns true if chain with `chainID` is an Opt-In chain (i.e., no validator is forced to validate chain `chainID`)
+func (k Keeper) IsOptIn(ctx sdk.Context, chainID string) bool {
+	topN, found := k.GetTopN(ctx, chainID)
+	return !found || topN == 0
+}
+
+func (k Keeper) SetOptedIn(
+	ctx sdk.Context,
+	chainID string,
+	providerConsAddress types.ProviderConsAddress,
+) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.OptedInKey(chainID, providerConsAddress), []byte{})
+}
+
+func (k Keeper) DeleteOptedIn(
+	ctx sdk.Context,
+	chainID string,
+	providerAddr types.ProviderConsAddress,
+) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.OptedInKey(chainID, providerAddr))
+}
+
+func (k Keeper) IsOptedIn(
+	ctx sdk.Context,
+	chainID string,
+	providerAddr types.ProviderConsAddress,
+) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Get(types.OptedInKey(chainID, providerAddr)) != nil
+}
+
+func (k Keeper) GetAllOptedIn(
+	ctx sdk.Context,
+	chainID string,
+) (providerConsAddresses []types.ProviderConsAddress) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.ChainIdWithLenKey(types.OptedInBytePrefix, chainID)
+	iterator := storetypes.KVStorePrefixIterator(store, key)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		providerConsAddresses = append(providerConsAddresses, types.NewProviderConsAddress(iterator.Key()[len(key):]))
+	}
+
+	return providerConsAddresses
+}
+
+func (k Keeper) DeleteAllOptedIn(
+	ctx sdk.Context,
+	chainID string,
+) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.ChainIdWithLenKey(types.OptedInBytePrefix, chainID)
+	iterator := storetypes.KVStorePrefixIterator(store, key)
+
+	keysToDel := [][]byte{}
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		keysToDel = append(keysToDel, iterator.Key())
+	}
+
+	for _, key := range keysToDel {
+		store.Delete(key)
+	}
+}
+
+// SetMinimumPowerInTopN sets the minimum power required for a validator to be in the top N
+// for a given consumer chain.
+func (k Keeper) SetMinimumPowerInTopN(
+	ctx sdk.Context,
+	chainID string,
+	power int64,
+) {
+	store := ctx.KVStore(k.storeKey)
+
+	powerBytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(powerBytes, uint64(power))
+
+	store.Set(types.MinimumPowerInTopNKey(chainID), powerBytes)
+}
+
+// GetMinimumPowerInTopN returns the minimum power required for a validator to be in the top N
+// for a given consumer chain.
+func (k Keeper) GetMinimumPowerInTopN(
+	ctx sdk.Context,
+	chainID string,
+) (int64, bool) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.MinimumPowerInTopNKey(chainID))
+	if bz == nil {
+		return 0, false
+	}
+
+	return int64(binary.BigEndian.Uint64(bz)), true
+}
+
+// DeleteMinimumPowerInTopN removes the minimum power required for a validator to be in the top N
+// for a given consumer chain.
+func (k Keeper) DeleteMinimumPowerInTopN(
+	ctx sdk.Context,
+	chainID string,
+) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.MinimumPowerInTopNKey(chainID))
+}
+
 func (k Keeper) UnbondingCanComplete(ctx sdk.Context, id uint64) error {
 	return k.stakingKeeper.UnbondingCanComplete(ctx, id)
 }
