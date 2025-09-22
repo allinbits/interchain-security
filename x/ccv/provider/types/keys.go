@@ -159,6 +159,13 @@ const (
 	// validators in this epoch that are validating the consumer chain
 	ConsumerValidatorBytePrefix
 
+	// OptedInBytePrefix is the byte prefix for storing whether a validator is opted in to validate on a consumer chain
+	OptedInBytePrefix
+
+	// TopNBytePrefix is the byte prefix storing the mapping from a consumer chain to the N value of this chain,
+	// that corresponds to the N% of the top validators that have to validate this consumer chain
+	TopNBytePrefix
+
 	// ConsumerRewardsAllocationBytePrefix is the byte prefix for storing for each consumer the ICS rewards
 	// allocated to the consumer rewards pool
 	ConsumerRewardsAllocationBytePrefix
@@ -166,6 +173,11 @@ const (
 	// ConsumerAddrsToPruneV2Key is the byte prefix for storing consumer validators addresses
 	// that need to be pruned.
 	ConsumerAddrsToPruneV2BytePrefix
+
+	// MinimumPowerInTopNBytePrefix is the byte prefix for storing the
+	// minimum power required to be in the top N per consumer chain.
+	MinimumPowerInTopNBytePrefix
+
 	// NOTE: DO NOT ADD NEW BYTE PREFIXES HERE WITHOUT ADDING THEM TO getAllKeyPrefixes() IN keys_test.go
 
 )

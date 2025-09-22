@@ -101,43 +101,6 @@ message MsgUpdateParams {
 
 message MsgUpdateParamsResponse {}
 
-// MsgOptIn defines the message for validators to opt in to a consumer chain
-message MsgOptIn {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
-  option (cosmos.msg.v1.signer) = "signer";
-
-  // the chain id of the consumer chain to opt in to
-  string chain_id = 1;
-  // the validator address on the provider
-  string provider_addr = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
-  // (optional) The consensus public key to use on the consumer in json string format corresponding to proto-any,
-  // for example `{"@type":"/cosmos.crypto.ed25519.PubKey","key":"Ui5Gf1+mtWUdH8u3xlmzdKID+F3PK0sfXZ73GZ6q6is="}`.
-  // This field is optional and can remain empty (i.e., `consumer_key = ""`). A validator can always change the
-  // consumer public key at a later stage by issuing a `MsgAssignConsumerKey` message.
-  string consumer_key = 3;
-  // signer address
-  string signer = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-}
-
-message MsgOptInResponse {}
-
-// MsgOptOut defines the message for validators to opt out of a consumer chain
-message MsgOptOut {
-  option (gogoproto.equal) = false;
-  option (gogoproto.goproto_getters) = false;
-  option (cosmos.msg.v1.signer) = "signer";
-
-  // the chain id of the consumer chain to opt out from
-  string chain_id = 1;
-  // the validator address on the provider
-  string provider_addr = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
-  // signer address
-  string signer = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-}
-
-message MsgOptOutResponse {}
-
 // MsgConsumerAddition defines the message used to spawn a new consumer chain
 // using a v1 governance proposal. If it passes, then all validators on the
 // provider chain are expected to validate the consumer chain at spawn time or
@@ -251,6 +214,41 @@ message MsgChangeRewardDenoms {
 // MsgChangeRewardDenomsResponse defines response type for MsgChangeRewardDenoms
 // messages
 message MsgChangeRewardDenomsResponse {}
+
+message MsgOptIn {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "signer";
+  // the chain id of the consumer chain to opt in to
+  string chain_id = 1;
+  // the validator address on the provider
+  string provider_addr = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  // (optional) The consensus public key to use on the consumer in json string format corresponding to proto-any,
+  // for example `{"@type":"/cosmos.crypto.ed25519.PubKey","key":"Ui5Gf1+mtWUdH8u3xlmzdKID+F3PK0sfXZ73GZ6q6is="}`.
+  // This field is optional and can remain empty (i.e., `consumer_key = ""`). A validator can always change the
+  // consumer public key at a later stage by issuing a `MsgAssignConsumerKey` message.
+  string consumer_key = 3;
+  // signer address
+  string signer = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+}
+
+message MsgOptInResponse {}
+
+message MsgOptOut {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "signer";
+  // the chain id of the consumer chain to opt out from
+  string chain_id = 1;
+  // the validator address on the provider
+  string provider_addr = 2 [ (gogoproto.moretags) = "yaml:\"address\"" ];
+  // signer address
+  string signer = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+}
+
+message MsgOptOutResponse {}
 
 // MsgConsumerModification message contains a governance proposal on the
 // provider chain to modify a running consumer chain. If it passes, the consumer
