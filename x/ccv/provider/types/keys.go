@@ -510,6 +510,18 @@ func ConsumerValidatorKey(chainID string, providerAddr []byte) []byte {
 	return append(prefix, providerAddr...)
 }
 
+// TopNKey returns the key used to store the Top N value per consumer chain.
+// This value corresponds to the N% of the top validators that have to validate the consumer chain.
+func TopNKey(chainID string) []byte {
+	return ChainIdWithLenKey(TopNBytePrefix, chainID)
+}
+
+// OptedInKey returns the key used to store whether a validator is opted in on a consumer chain.
+func OptedInKey(chainID string, providerAddr ProviderConsAddress) []byte {
+	prefix := ChainIdWithLenKey(OptedInBytePrefix, chainID)
+	return append(prefix, providerAddr.ToSdkConsAddr().Bytes()...)
+}
+
 // ConsumerRewardsAllocationKey returns the key used to store the ICS rewards per consumer chain
 func ConsumerRewardsAllocationKey(chainID string) []byte {
 	return append([]byte{ConsumerRewardsAllocationBytePrefix}, []byte(chainID)...)
@@ -519,6 +531,12 @@ func ConsumerRewardsAllocationKey(chainID string) []byte {
 // addresses that need to be pruned.
 func ConsumerAddrsToPruneV2Key(chainID string, pruneTs time.Time) []byte {
 	return ChainIdAndTsKey(ConsumerAddrsToPruneV2BytePrefix, chainID, pruneTs)
+}
+
+// MinimumPowerInTopNKey returns the key used to store the minimum power required
+// to be in the top N for a given consumer chain.
+func MinimumPowerInTopNKey(chainID string) []byte {
+	return ChainIdWithLenKey(MinimumPowerInTopNBytePrefix, chainID)
 }
 
 //
