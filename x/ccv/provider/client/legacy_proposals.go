@@ -35,6 +35,8 @@ type ConsumerAdditionProposalJSON struct {
 	UnbondingPeriod                   time.Duration `json:"unbonding_period"`
 
 	Deposit string `json:"deposit"`
+
+	TopN uint32 `json:"top_N"`
 }
 
 type ConsumerAdditionProposalReq struct {
