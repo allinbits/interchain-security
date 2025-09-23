@@ -594,7 +594,7 @@ func TestEndBlockVSU(t *testing.T) {
 
 	chainID := "chainID"
 
-	// ICS1 TOPN DEBUG: Set TopN=100 for replicated security (all validators participate)
+	// Set TopN=100 for replicated security (all validators participate)
 	providerKeeper.SetTopN(ctx, chainID, 100)
 
 	// 10 blocks constitute an epoch
@@ -616,7 +616,7 @@ func TestEndBlockVSU(t *testing.T) {
 
 	testkeeper.SetupMocksForLastBondedValidatorsExpectation(mocks.MockStakingKeeper, 5, lastValidators, powers, -1)
 
-	// ICS1 TOPN DEBUG: Opt in validators for TopN=100 chain
+	// Opt in validators for TopN=100 chain
 	minPower, err := providerKeeper.ComputeMinPowerInTopN(ctx, lastValidators, 100)
 	require.NoError(t, err)
 	providerKeeper.OptInTopNValidators(ctx, chainID, lastValidators, minPower)
@@ -697,28 +697,28 @@ func TestQueueVSCPacketsForReplicatedSecurity(t *testing.T) {
 	// Set TopN to 100 to indicate all validators must validate (top 100%)
 	providerKeeper.SetTopN(ctx, "chainID", 100)
 
-	// ICS1 TOPN DEBUG: Check if chain is registered
+	// Check if chain is registered
 	registeredChains := providerKeeper.GetAllRegisteredConsumerChainIDs(ctx)
-	require.Contains(t, registeredChains, "chainID", "ICS1 TOPN DEBUG: chainID should be in registered chains")
+	require.Contains(t, registeredChains, "chainID", "chainID should be in registered chains")
 
-	// ICS1 TOPN DEBUG: Check that TopN is set correctly
+	// Check that TopN is set correctly
 	topN, found := providerKeeper.GetTopN(ctx, "chainID")
-	require.True(t, found, "ICS1 TOPN DEBUG: TopN should be found")
-	require.Equal(t, uint32(100), topN, "ICS1 TOPN DEBUG: TopN should be 100")
+	require.True(t, found, "TopN should be found")
+	require.Equal(t, uint32(100), topN, "TopN should be 100")
 
-	// ICS1 TOPN DEBUG: For TopN chains, we need to opt in the validators
+	// For TopN chains, we need to opt in the validators
 	// When TopN=100, all validators should be opted in (this normally happens in MakeConsumerGenesis)
 	bondedValidators := []stakingtypes.Validator{valA, valB, valC, valD, valE}
 	minPower, err := providerKeeper.ComputeMinPowerInTopN(ctx, bondedValidators, 100)
-	require.NoError(t, err, "ICS1 TOPN DEBUG: ComputeMinPowerInTopN should not error")
+	require.NoError(t, err, "ComputeMinPowerInTopN should not error")
 	providerKeeper.OptInTopNValidators(ctx, "chainID", bondedValidators, minPower)
 	providerKeeper.SetMinimumPowerInTopN(ctx, "chainID", minPower)
 
 	providerKeeper.QueueVSCPackets(ctx)
 
-	// ICS1 TOPN DEBUG: Check if validators are opted in after QueueVSCPackets
+	// Check if validators are opted in after QueueVSCPackets
 	optedInValsAfter := providerKeeper.GetAllOptedIn(ctx, "chainID")
-	require.Len(t, optedInValsAfter, 5, "ICS1 TOPN DEBUG: Expected 5 opted in validators after QueueVSCPackets")
+	require.Len(t, optedInValsAfter, 5, "Expected 5 opted in validators after QueueVSCPackets")
 
 	actualQueuedVSCPackets := providerKeeper.GetPendingVSCPackets(ctx, "chainID")
 	expectedQueuedVSCPackets := []ccv.ValidatorSetChangePacketData{
