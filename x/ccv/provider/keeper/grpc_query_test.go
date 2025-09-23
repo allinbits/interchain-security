@@ -119,8 +119,10 @@ func TestGetConsumerChain(t *testing.T) {
 
 		expectedGetAllOrder = append(expectedGetAllOrder,
 			types.Chain{
-				ChainId:  chainID,
-				ClientId: clientID,
+				ChainId:         chainID,
+				ClientId:        clientID,
+				Top_N:           0,           // default for non-set TopN
+				MinPowerInTop_N: -1,          // default when not found
 			})
 	}
 
