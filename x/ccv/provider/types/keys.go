@@ -166,6 +166,23 @@ const (
 	// that corresponds to the N% of the top validators that have to validate this consumer chain
 	TopNBytePrefix
 
+		// ValidatorsPowerCapPrefix is the byte prefix storing the mapping from a consumer chain to the power-cap value of this chain,
+	// that corresponds to p% such that no validator can have more than p% of the voting power on the consumer chain.
+	// Operates on a best-effort basis.
+	ValidatorsPowerCapPrefix
+
+	// ValidatorSetCapPrefix is the byte prefix storing the mapping from a consumer chain to the validator-set cap value
+	// of this chain.
+	ValidatorSetCapPrefix
+
+	// AllowlistPrefix is the byte prefix storing the mapping from a consumer chain to the set of validators that are
+	// allowlisted.
+	AllowlistPrefix
+
+	// DenylistPrefix is the byte prefix storing the mapping from a consumer chain to the set of validators that are
+	// denylisted.
+	DenylistPrefix
+
 	// ConsumerRewardsAllocationBytePrefix is the byte prefix for storing for each consumer the ICS rewards
 	// allocated to the consumer rewards pool
 	ConsumerRewardsAllocationBytePrefix
@@ -537,6 +554,26 @@ func ConsumerAddrsToPruneV2Key(chainID string, pruneTs time.Time) []byte {
 // to be in the top N for a given consumer chain.
 func MinimumPowerInTopNKey(chainID string) []byte {
 	return ChainIdWithLenKey(MinimumPowerInTopNBytePrefix, chainID)
+}
+
+// ValidatorSetCapKey returns the key used to store the validator set cap for a given consumer chain.
+func ValidatorSetCapKey(chainID string) []byte {
+	return ChainIdWithLenKey(ValidatorSetCapPrefix, chainID)
+}
+
+// ValidatorsPowerCapKey returns the key used to store the power cap for validators on a given consumer chain.
+func ValidatorsPowerCapKey(chainID string) []byte {
+	return ChainIdWithLenKey(ValidatorsPowerCapPrefix, chainID)
+}
+
+// AllowlistCapKey returns the key used to store the allowlist entry for a validator on a given consumer chain.
+func AllowlistCapKey(chainID string, providerAddr ProviderConsAddress) []byte {
+	return append(ChainIdWithLenKey(AllowlistPrefix, chainID), providerAddr.ToSdkConsAddr().Bytes()...)
+}
+
+// DenylistCapKey returns the key used to store the denylist entry for a validator on a given consumer chain.
+func DenylistCapKey(chainID string, providerAddr ProviderConsAddress) []byte {
+	return append(ChainIdWithLenKey(DenylistPrefix, chainID), providerAddr.ToSdkConsAddr().Bytes()...)
 }
 
 //

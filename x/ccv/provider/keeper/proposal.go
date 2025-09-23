@@ -40,6 +40,11 @@ func (k Keeper) HandleConsumerAdditionProposal(ctx sdk.Context, proposal *types.
 		BlocksPerDistributionTransmission: proposal.BlocksPerDistributionTransmission,
 		HistoricalEntries:                 proposal.HistoricalEntries,
 		DistributionTransmissionChannel:   proposal.DistributionTransmissionChannel,
+		Top_N:                             proposal.Top_N,
+		ValidatorsPowerCap:                proposal.ValidatorsPowerCap,
+		ValidatorSetCap:                   proposal.ValidatorSetCap,
+		Allowlist:                         proposal.Allowlist,
+		Denylist:                          proposal.Denylist,
 	}
 
 	return k.HandleLegacyConsumerAdditionProposal(ctx, &p)
@@ -70,9 +75,14 @@ func (k Keeper) HandleConsumerRewardDenomProposal(ctx sdk.Context, proposal *typ
 // HandleConsumerModificationProposal modifies a running consumer chain
 func (k Keeper) HandleConsumerModificationProposal(ctx sdk.Context, proposal *types.MsgConsumerModification) error {
 	p := types.ConsumerModificationProposal{
-		Title:       proposal.Title,
-		Description: proposal.Description,
-		ChainId:     proposal.ChainId,
+		Title:              proposal.Title,
+		Description:        proposal.Description,
+		ChainId:            proposal.ChainId,
+		Top_N:              proposal.Top_N,
+		ValidatorsPowerCap: proposal.ValidatorsPowerCap,
+		ValidatorSetCap:    proposal.ValidatorSetCap,
+		Allowlist:          proposal.Allowlist,
+		Denylist:           proposal.Denylist,
 	}
 
 	return k.HandleLegacyConsumerModificationProposal(ctx, &p)
@@ -173,6 +183,7 @@ func (k Keeper) StopConsumerChain(ctx sdk.Context, chainID string, closeChan boo
 	k.DeleteConsumerGenesis(ctx, chainID)
 	// Note: this call panics if the key assignment state is invalid
 	k.DeleteKeyAssignments(ctx, chainID)
+	k.DeleteMinimumPowerInTopN(ctx, chainID)
 	k.DeleteEquivocationEvidenceMinHeight(ctx, chainID)
 
 	// close channel and delete the mappings between chain ID and channel ID
@@ -201,6 +212,13 @@ func (k Keeper) StopConsumerChain(ctx sdk.Context, chainID string, closeChan boo
 	k.DeleteSlashAcks(ctx, chainID)
 	k.DeletePendingVSCPackets(ctx, chainID)
 
+	k.DeleteTopN(ctx, chainID)
+	k.DeleteValidatorsPowerCap(ctx, chainID)
+	k.DeleteValidatorSetCap(ctx, chainID)
+	k.DeleteAllowlist(ctx, chainID)
+	k.DeleteDenylist(ctx, chainID)
+
+	k.DeleteAllOptedIn(ctx, chainID)
 	k.DeleteConsumerValSet(ctx, chainID)
 
 	k.Logger(ctx).Info("consumer chain removed from provider", "chainID", chainID)
@@ -246,7 +264,15 @@ func (k Keeper) MakeConsumerGenesis(
 		return gen, nil, errorsmod.Wrapf(stakingtypes.ErrNoValidatorFound, "error getting last bonded validators: %s", err)
 	}
 
-	// For Replicated Security, all bonded validators validate the consumer chain
+	if prop.Top_N > 0 {
+		// in a Top-N chain, we automatically opt in all validators that belong to the top N
+		minPower, err := k.ComputeMinPowerInTopN(ctx, bondedValidators, prop.Top_N)
+		if err != nil {
+			return gen, nil, err
+		}
+		k.OptInTopNValidators(ctx, chainID, bondedValidators, minPower)
+		k.SetMinimumPowerInTopN(ctx, chainID, minPower)
+	}
 	nextValidators := k.ComputeNextValidators(ctx, chainID, bondedValidators)
 
 	k.SetConsumerValSet(ctx, chainID, nextValidators)
@@ -334,6 +360,28 @@ func (k Keeper) BeginBlockInit(ctx sdk.Context) {
 	for i, prop := range propsToExecute {
 		// create consumer client in a cached context to handle errors
 		cachedCtx, writeFn := ctx.CacheContext()
+
+		k.SetTopN(cachedCtx, prop.ChainId, prop.Top_N)
+		k.SetValidatorSetCap(cachedCtx, prop.ChainId, prop.ValidatorSetCap)
+		k.SetValidatorsPowerCap(cachedCtx, prop.ChainId, prop.ValidatorsPowerCap)
+
+		for _, address := range prop.Allowlist {
+			consAddr, err := sdk.ConsAddressFromBech32(address)
+			if err != nil {
+				continue
+			}
+
+			k.SetAllowlist(cachedCtx, prop.ChainId, types.NewProviderConsAddress(consAddr))
+		}
+
+		for _, address := range prop.Denylist {
+			consAddr, err := sdk.ConsAddressFromBech32(address)
+			if err != nil {
+				continue
+			}
+
+			k.SetDenylist(cachedCtx, prop.ChainId, types.NewProviderConsAddress(consAddr))
+		}
 
 		err := k.CreateConsumerClient(cachedCtx, &propsToExecute[i])
 		if err != nil {

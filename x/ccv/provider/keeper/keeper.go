@@ -867,6 +867,194 @@ func (k Keeper) DeleteMinimumPowerInTopN(
 	store.Delete(types.MinimumPowerInTopNKey(chainID))
 }
 
+// SetValidatorSetCap stores the validator-set cap for chain `chainID`
+func (k Keeper) SetValidatorSetCap(
+	ctx sdk.Context,
+	chainID string,
+	cap uint32,
+) {
+	store := ctx.KVStore(k.storeKey)
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, cap)
+	store.Set(types.ValidatorSetCapKey(chainID), buf)
+}
+
+// DeleteValidatorSetCap deletes the validator-set cap for chain `chainID`
+func (k Keeper) DeleteValidatorSetCap(ctx sdk.Context, chainID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.ValidatorSetCapKey(chainID))
+}
+
+// GetValidatorSetCap returns `(c, true)` if chain `chainID` has validator-set cap `c` associated with it, and (0, false) otherwise
+func (k Keeper) GetValidatorSetCap(
+	ctx sdk.Context,
+	chainID string,
+) (uint32, bool) {
+	store := ctx.KVStore(k.storeKey)
+	buf := store.Get(types.ValidatorSetCapKey(chainID))
+	if buf == nil {
+		return 0, false
+	}
+	return binary.BigEndian.Uint32(buf), true
+}
+
+// SetValidatorsPowerCap stores the power cap for chain `chainID`
+func (k Keeper) SetValidatorsPowerCap(
+	ctx sdk.Context,
+	chainID string,
+	cap uint32,
+) {
+	store := ctx.KVStore(k.storeKey)
+	buf := make([]byte, 4)
+	binary.BigEndian.PutUint32(buf, cap)
+	store.Set(types.ValidatorsPowerCapKey(chainID), buf)
+}
+
+// DeleteValidatorsPowerCap deletes the power cap for chain `chainID`
+func (k Keeper) DeleteValidatorsPowerCap(ctx sdk.Context, chainID string) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.ValidatorsPowerCapKey(chainID))
+}
+
+// GetValidatorsPowerCap returns `(p, true)` if chain `chainID` has power cap `p` associated with it, and (0, false) otherwise
+func (k Keeper) GetValidatorsPowerCap(
+	ctx sdk.Context,
+	chainID string,
+) (uint32, bool) {
+	store := ctx.KVStore(k.storeKey)
+	buf := store.Get(types.ValidatorsPowerCapKey(chainID))
+	if buf == nil {
+		return 0, false
+	}
+	return binary.BigEndian.Uint32(buf), true
+}
+
+// SetAllowlist allowlists validator with `providerAddr` address on chain `chainID`
+func (k Keeper) SetAllowlist(
+	ctx sdk.Context,
+	chainID string,
+	providerAddr types.ProviderConsAddress,
+) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.AllowlistCapKey(chainID, providerAddr), []byte{})
+}
+
+// GetAllowList returns all allowlisted validators
+func (k Keeper) GetAllowList(
+	ctx sdk.Context,
+	chainID string,
+) (providerConsAddresses []types.ProviderConsAddress) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.ChainIdWithLenKey(types.AllowlistPrefix, chainID)
+	iterator := storetypes.KVStorePrefixIterator(store, key)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		providerConsAddresses = append(providerConsAddresses, types.NewProviderConsAddress(iterator.Key()[len(key):]))
+	}
+
+	return providerConsAddresses
+}
+
+// IsAllowlisted returns `true` if validator with `providerAddr` has been allowlisted on chain `chainID`
+func (k Keeper) IsAllowlisted(
+	ctx sdk.Context,
+	chainID string,
+	providerAddr types.ProviderConsAddress,
+) bool {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.AllowlistCapKey(chainID, providerAddr))
+	return bz != nil
+}
+
+// DeleteAllowlist deletes all allowlisted validators
+func (k Keeper) DeleteAllowlist(ctx sdk.Context, chainID string) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := storetypes.KVStorePrefixIterator(store, types.ChainIdWithLenKey(types.AllowlistPrefix, chainID))
+	defer iterator.Close()
+
+	keysToDel := [][]byte{}
+	for ; iterator.Valid(); iterator.Next() {
+		keysToDel = append(keysToDel, iterator.Key())
+	}
+
+	for _, key := range keysToDel {
+		store.Delete(key)
+	}
+}
+
+// IsAllowlistEmpty returns `true` if no validator is allowlisted on chain `chainID`
+func (k Keeper) IsAllowlistEmpty(ctx sdk.Context, chainID string) bool {
+	store := ctx.KVStore(k.storeKey)
+	iterator := storetypes.KVStorePrefixIterator(store, types.ChainIdWithLenKey(types.AllowlistPrefix, chainID))
+	defer iterator.Close()
+
+	return !iterator.Valid()
+}
+
+// SetDenylist denylists validator with `providerAddr` address on chain `chainID`
+func (k Keeper) SetDenylist(
+	ctx sdk.Context,
+	chainID string,
+	providerAddr types.ProviderConsAddress,
+) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.DenylistCapKey(chainID, providerAddr), []byte{})
+}
+
+// GetDenyList returns all denylisted validators
+func (k Keeper) GetDenyList(
+	ctx sdk.Context,
+	chainID string,
+) (providerConsAddresses []types.ProviderConsAddress) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.ChainIdWithLenKey(types.DenylistPrefix, chainID)
+	iterator := storetypes.KVStorePrefixIterator(store, key)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		providerConsAddresses = append(providerConsAddresses, types.NewProviderConsAddress(iterator.Key()[len(key):]))
+	}
+
+	return providerConsAddresses
+}
+
+// IsDenylisted returns `true` if validator with `providerAddr` has been denylisted on chain `chainID`
+func (k Keeper) IsDenylisted(
+	ctx sdk.Context,
+	chainID string,
+	providerAddr types.ProviderConsAddress,
+) bool {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.DenylistCapKey(chainID, providerAddr))
+	return bz != nil
+}
+
+// DeleteDenylist deletes all denylisted validators
+func (k Keeper) DeleteDenylist(ctx sdk.Context, chainID string) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := storetypes.KVStorePrefixIterator(store, types.ChainIdWithLenKey(types.DenylistPrefix, chainID))
+	defer iterator.Close()
+
+	keysToDel := [][]byte{}
+	for ; iterator.Valid(); iterator.Next() {
+		keysToDel = append(keysToDel, iterator.Key())
+	}
+
+	for _, key := range keysToDel {
+		store.Delete(key)
+	}
+}
+
+// IsDenylistEmpty returns `true` if no validator is denylisted on chain `chainID`
+func (k Keeper) IsDenylistEmpty(ctx sdk.Context, chainID string) bool {
+	store := ctx.KVStore(k.storeKey)
+	iterator := storetypes.KVStorePrefixIterator(store, types.ChainIdWithLenKey(types.DenylistPrefix, chainID))
+	defer iterator.Close()
+
+	return !iterator.Valid()
+}
+
 func (k Keeper) UnbondingCanComplete(ctx sdk.Context, id uint64) error {
 	return k.stakingKeeper.UnbondingCanComplete(ctx, id)
 }

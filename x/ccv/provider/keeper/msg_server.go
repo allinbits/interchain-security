@@ -216,3 +216,74 @@ func (k msgServer) ConsumerModification(goCtx context.Context, msg *types.MsgCon
 
 	return &types.MsgConsumerModificationResponse{}, nil
 }
+
+func (k msgServer) OptIn(goCtx context.Context, msg *types.MsgOptIn) (*types.MsgOptInResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	valAddress, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// validator must already be registered
+	validator, err := k.stakingKeeper.GetValidator(ctx, valAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	consAddrTmp, err := validator.GetConsAddr()
+	if err != nil {
+		return nil, err
+	}
+	providerConsAddr := types.NewProviderConsAddress(consAddrTmp)
+
+	err = k.Keeper.HandleOptIn(ctx, msg.ChainId, providerConsAddr, msg.ConsumerKey)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeOptIn,
+			sdk.NewAttribute(types.AttributeProviderValidatorAddress, msg.ProviderAddr),
+			sdk.NewAttribute(types.AttributeConsumerConsensusPubKey, msg.ConsumerKey),
+		),
+	})
+
+	return &types.MsgOptInResponse{}, nil
+}
+
+func (k msgServer) OptOut(goCtx context.Context, msg *types.MsgOptOut) (*types.MsgOptOutResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	valAddress, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	// validator must already be registered
+	validator, err := k.stakingKeeper.GetValidator(ctx, valAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	consAddrTmp, err := validator.GetConsAddr()
+	if err != nil {
+		return nil, err
+	}
+	providerConsAddr := types.NewProviderConsAddress(consAddrTmp)
+
+	err = k.Keeper.HandleOptOut(ctx, msg.ChainId, providerConsAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeOptOut,
+			sdk.NewAttribute(types.AttributeProviderValidatorAddress, msg.ProviderAddr),
+		),
+	})
+
+	return &types.MsgOptOutResponse{}, nil
+}

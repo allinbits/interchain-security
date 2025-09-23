@@ -346,3 +346,131 @@ func TestGetAllProposedConsumerChainIDs(t *testing.T) {
 		}
 	}
 }
+
+// TestTopNState tests the TopN state management functions
+func TestTopNState(t *testing.T) {
+	providerKeeper, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(t, testkeeper.NewInMemKeeperParams(t))
+	defer ctrl.Finish()
+
+	chainID := "testchain"
+
+	// Test GetTopN when not set
+	topN, found := providerKeeper.GetTopN(ctx, chainID)
+	require.False(t, found)
+	require.Zero(t, topN)
+
+	// Test IsTopN when not set
+	require.False(t, providerKeeper.IsTopN(ctx, chainID))
+
+	// Test IsOptIn when not set (should return true when TopN not set)
+	require.True(t, providerKeeper.IsOptIn(ctx, chainID))
+
+	// Test SetTopN
+	providerKeeper.SetTopN(ctx, chainID, 50)
+	topN, found = providerKeeper.GetTopN(ctx, chainID)
+	require.True(t, found)
+	require.Equal(t, uint32(50), topN)
+
+	// Test IsTopN with value set
+	require.True(t, providerKeeper.IsTopN(ctx, chainID))
+
+	// Test IsOptIn with 0 < TopN < 100 (should return false)
+	require.False(t, providerKeeper.IsOptIn(ctx, chainID))
+
+	// Test with TopN = 100
+	providerKeeper.SetTopN(ctx, chainID, 100)
+	require.True(t, providerKeeper.IsTopN(ctx, chainID))
+	require.False(t, providerKeeper.IsOptIn(ctx, chainID))
+
+	// Test DeleteTopN
+	providerKeeper.DeleteTopN(ctx, chainID)
+	topN, found = providerKeeper.GetTopN(ctx, chainID)
+	require.False(t, found)
+	require.Zero(t, topN)
+	require.False(t, providerKeeper.IsTopN(ctx, chainID))
+}
+
+// TestOptedInValidators tests opted-in validator state management
+func TestOptedInValidators(t *testing.T) {
+	providerKeeper, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(t, testkeeper.NewInMemKeeperParams(t))
+	defer ctrl.Finish()
+
+	chainID := "testchain"
+
+	// Create test provider addresses
+	provAddr1 := types.NewProviderConsAddress([]byte("addr1"))
+	provAddr2 := types.NewProviderConsAddress([]byte("addr2"))
+	provAddr3 := types.NewProviderConsAddress([]byte("addr3"))
+
+	// Test IsOptedIn when not set
+	require.False(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr1))
+
+	// Test SetOptedIn
+	providerKeeper.SetOptedIn(ctx, chainID, provAddr1)
+	require.True(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr1))
+	require.False(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr2))
+
+	// Set multiple validators
+	providerKeeper.SetOptedIn(ctx, chainID, provAddr2)
+	providerKeeper.SetOptedIn(ctx, chainID, provAddr3)
+	require.True(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr2))
+	require.True(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr3))
+
+	// Test GetAllOptedIn
+	allOptedIn := providerKeeper.GetAllOptedIn(ctx, chainID)
+	require.Len(t, allOptedIn, 3)
+	// Sort for consistent comparison
+	sort.Slice(allOptedIn, func(i, j int) bool {
+		return string(allOptedIn[i].ToSdkConsAddr()) < string(allOptedIn[j].ToSdkConsAddr())
+	})
+	require.Equal(t, provAddr1.ToSdkConsAddr(), allOptedIn[0].ToSdkConsAddr())
+	require.Equal(t, provAddr2.ToSdkConsAddr(), allOptedIn[1].ToSdkConsAddr())
+	require.Equal(t, provAddr3.ToSdkConsAddr(), allOptedIn[2].ToSdkConsAddr())
+
+	// Test DeleteOptedIn
+	providerKeeper.DeleteOptedIn(ctx, chainID, provAddr2)
+	require.False(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr2))
+	require.True(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr1))
+	require.True(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr3))
+
+	allOptedIn = providerKeeper.GetAllOptedIn(ctx, chainID)
+	require.Len(t, allOptedIn, 2)
+
+	// Test DeleteAllOptedIn
+	providerKeeper.DeleteAllOptedIn(ctx, chainID)
+	allOptedIn = providerKeeper.GetAllOptedIn(ctx, chainID)
+	require.Len(t, allOptedIn, 0)
+	require.False(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr1))
+	require.False(t, providerKeeper.IsOptedIn(ctx, chainID, provAddr3))
+}
+
+// TestMinimumPowerInTopN tests minimum power threshold state management
+func TestMinimumPowerInTopN(t *testing.T) {
+	providerKeeper, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(t, testkeeper.NewInMemKeeperParams(t))
+	defer ctrl.Finish()
+
+	chainID := "testchain"
+
+	// Test GetMinimumPowerInTopN when not set
+	power, found := providerKeeper.GetMinimumPowerInTopN(ctx, chainID)
+	require.False(t, found)
+	require.Zero(t, power)
+
+	// Test SetMinimumPowerInTopN
+	providerKeeper.SetMinimumPowerInTopN(ctx, chainID, 1000)
+	power, found = providerKeeper.GetMinimumPowerInTopN(ctx, chainID)
+	require.True(t, found)
+	require.Equal(t, int64(1000), power)
+
+	// Update power
+	providerKeeper.SetMinimumPowerInTopN(ctx, chainID, 5000)
+	power, found = providerKeeper.GetMinimumPowerInTopN(ctx, chainID)
+	require.True(t, found)
+	require.Equal(t, int64(5000), power)
+
+	// Test DeleteMinimumPowerInTopN
+	providerKeeper.DeleteMinimumPowerInTopN(ctx, chainID)
+	power, found = providerKeeper.GetMinimumPowerInTopN(ctx, chainID)
+	require.False(t, found)
+	require.Zero(t, power)
+}

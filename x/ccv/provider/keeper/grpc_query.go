@@ -275,3 +275,30 @@ func (k Keeper) QueryConsumerValidators(goCtx context.Context, req *types.QueryC
 		Validators: validators,
 	}, nil
 }
+
+// QueryConsumerChainOptedInValidators returns all validators that opted-in to a given consumer chain
+func (k Keeper) QueryConsumerChainOptedInValidators(goCtx context.Context, req *types.QueryConsumerChainOptedInValidatorsRequest) (*types.QueryConsumerChainOptedInValidatorsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	consumerChainID := req.ChainId
+	if consumerChainID == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty chainId")
+	}
+
+	optedInVals := []string{}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if !k.IsConsumerProposedOrRegistered(ctx, consumerChainID) {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("unknown consumer chain: %s", consumerChainID))
+	}
+
+	for _, v := range k.GetAllOptedIn(ctx, consumerChainID) {
+		optedInVals = append(optedInVals, v.ToSdkConsAddr().String())
+	}
+
+	return &types.QueryConsumerChainOptedInValidatorsResponse{
+		ValidatorsProviderAddresses: optedInVals,
+	}, nil
+}
