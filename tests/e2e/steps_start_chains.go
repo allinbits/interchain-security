@@ -39,6 +39,7 @@ func stepsStartConsumerChain(consumerName string, proposalIndex, chainIndex uint
 				ConsumerChain: ChainID(consumerName),
 				SpawnTime:     0,
 				InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 1},
+				TopN:          100, // All validators must validate (100% = Replicated Security)
 			},
 			State: State{
 				ChainID("provi"): ChainState{
