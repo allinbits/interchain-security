@@ -280,7 +280,7 @@ func GetTestConsumerAdditionProp() *providertypes.ConsumerAdditionProposal {
 		types.DefaultCCVTimeoutPeriod,
 		types.DefaultTransferTimeoutPeriod,
 		types.DefaultConsumerUnbondingPeriod,
-		100, // TopN = 100 for replicated security
+		0, // TopN = 0 for opt-in chain (doesn't require validators for testing)
 	).(*providertypes.ConsumerAdditionProposal)
 
 	return prop
