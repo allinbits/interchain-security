@@ -24,6 +24,7 @@ var (
 	ErrInvalidConsumerClient               = errorsmod.Register(ModuleName, 16, "ccv channel is not built on correct client")
 	ErrDuplicateConsumerChain              = errorsmod.Register(ModuleName, 17, "consumer chain already exists")
 	ErrConsumerChainNotFound               = errorsmod.Register(ModuleName, 18, "consumer chain not found")
+	ErrCannotOptOutFromTopN                = errorsmod.Register(ModuleName, 20, "cannot opt out from a Top N chain")
 	ErrNoUnconfirmedVSCPacket              = errorsmod.Register(ModuleName, 21, "no unconfirmed vsc packet for this chain id")
 	ErrInvalidConsumerModificationProposal = errorsmod.Register(ModuleName, 22, "invalid consumer modification proposal")
 	ErrNoUnbondingTime                     = errorsmod.Register(ModuleName, 23, "provider unbonding time not found")

@@ -83,7 +83,8 @@ Where proposal.json contains:
 				proposal.GenesisHash, proposal.BinaryHash, proposal.SpawnTime,
 				proposal.ConsumerRedistributionFraction, proposal.BlocksPerDistributionTransmission,
 				proposal.DistributionTransmissionChannel, proposal.HistoricalEntries,
-				proposal.CcvTimeoutPeriod, proposal.TransferTimeoutPeriod, proposal.UnbondingPeriod)
+				proposal.CcvTimeoutPeriod, proposal.TransferTimeoutPeriod, proposal.UnbondingPeriod,
+				proposal.TopN)
 
 			from := clientCtx.GetFromAddress()
 

@@ -62,6 +62,9 @@ message ConsumerParams {
   google.protobuf.Duration unbonding_period = 9
       [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true ];
 
+  // Reserved for previously used soft_opt_out_threshold field
+  reserved 10;
+
   // Reward denoms. These are the denominations which are allowed to be sent to
   // the provider as rewards.
   repeated string reward_denoms = 11;

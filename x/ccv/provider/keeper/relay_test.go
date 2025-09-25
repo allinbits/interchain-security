@@ -104,10 +104,21 @@ func TestQueueVSCPacketsDoesNotResetConsumerValidatorsHeights(t *testing.T) {
 	mocks.MockStakingKeeper.EXPECT().GetValidatorByConsAddr(ctx, valBConsAddr).Return(valB, nil).AnyTimes()
 	testkeeper.SetupMocksForLastBondedValidatorsExpectation(mocks.MockStakingKeeper, 2, []stakingtypes.Validator{valA, valB}, []int64{1, 2}, -1)
 
+	// Set up GetLastValidatorPower mocks for CreateConsumerValidator
+	valAAddr, _ := sdk.ValAddressFromBech32(valA.GetOperator())
+	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(ctx, valAAddr).Return(int64(1), nil).AnyTimes()
+	valBAddr, _ := sdk.ValAddressFromBech32(valB.GetOperator())
+	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(ctx, valBAddr).Return(int64(2), nil).AnyTimes()
+
 	// set a consumer client, so we have a consumer chain (i.e., `k.GetAllConsumerChains(ctx)` is non empty)
 	providerKeeper.SetConsumerClientId(ctx, "chainID", "clientID")
 
-	// For Replicated Security, all bonded validators participate
+	// For Replicated Security with TopN, validators need to be opted in
+	// We're not setting TopN here, so the chain behaves as opt-in (TopN=0)
+	// Opt in both validators since this test expects them to validate
+	providerKeeper.SetOptedIn(ctx, "chainID", types.NewProviderConsAddress(valAConsAddr))
+	providerKeeper.SetOptedIn(ctx, "chainID", types.NewProviderConsAddress(valBConsAddr))
+
 	// Set validator A as a consumer validator
 	consumerValidatorA := types.ConsumerValidator{
 		ProviderConsAddr:  valAConsAddr,
@@ -117,8 +128,7 @@ func TestQueueVSCPacketsDoesNotResetConsumerValidatorsHeights(t *testing.T) {
 	}
 	providerKeeper.SetConsumerValidator(ctx, "chainID", consumerValidatorA)
 
-	// Note: In Replicated Security, validator B will automatically be included
-	// since all bonded validators participate
+	// Note: Validator B is opted in but will be created fresh when QueueVSCPackets runs
 
 	providerKeeper.QueueVSCPackets(ctx)
 
@@ -584,7 +594,8 @@ func TestEndBlockVSU(t *testing.T) {
 
 	chainID := "chainID"
 
-	// For replicated security, all validators participate (no TopN needed)
+	// Set TopN=100 for replicated security (all validators participate)
+	providerKeeper.SetTopN(ctx, chainID, 100)
 
 	// 10 blocks constitute an epoch
 	params := providertypes.DefaultParams()
@@ -604,6 +615,12 @@ func TestEndBlockVSU(t *testing.T) {
 	}
 
 	testkeeper.SetupMocksForLastBondedValidatorsExpectation(mocks.MockStakingKeeper, 5, lastValidators, powers, -1)
+
+	// Opt in validators for TopN=100 chain
+	minPower, err := providerKeeper.ComputeMinPowerInTopN(ctx, lastValidators, 100)
+	require.NoError(t, err)
+	providerKeeper.OptInTopNValidators(ctx, chainID, lastValidators, minPower)
+	providerKeeper.SetMinimumPowerInTopN(ctx, chainID, minPower)
 
 	// set a sample client for a consumer chain so that `GetAllConsumerChains` in `QueueVSCPackets` iterates at least once
 	providerKeeper.SetConsumerClientId(ctx, chainID, "clientID")
@@ -661,13 +678,47 @@ func TestQueueVSCPacketsForReplicatedSecurity(t *testing.T) {
 
 	testkeeper.SetupMocksForLastBondedValidatorsExpectation(mocks.MockStakingKeeper, 5, []stakingtypes.Validator{valA, valB, valC, valD, valE}, []int64{1, 3, 4, 8, 16}, -1)
 
+	// Set up GetLastValidatorPower mocks for OptInTopNValidators
+	valAAddr, _ := sdk.ValAddressFromBech32(valA.GetOperator())
+	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(ctx, valAAddr).Return(int64(1), nil).AnyTimes()
+	valBAddr, _ := sdk.ValAddressFromBech32(valB.GetOperator())
+	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(ctx, valBAddr).Return(int64(3), nil).AnyTimes()
+	valCAddr, _ := sdk.ValAddressFromBech32(valC.GetOperator())
+	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(ctx, valCAddr).Return(int64(4), nil).AnyTimes()
+	valDAddr, _ := sdk.ValAddressFromBech32(valD.GetOperator())
+	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(ctx, valDAddr).Return(int64(8), nil).AnyTimes()
+	valEAddr, _ := sdk.ValAddressFromBech32(valE.GetOperator())
+	mocks.MockStakingKeeper.EXPECT().GetLastValidatorPower(ctx, valEAddr).Return(int64(16), nil).AnyTimes()
+
 	// add a consumer chain
 	providerKeeper.SetConsumerClientId(ctx, "chainID", "clientID")
 
 	// For replicated security, all validators participate
-	// No opt-in, denylist, or power capping needed
+	// Set TopN to 100 to indicate all validators must validate (top 100%)
+	providerKeeper.SetTopN(ctx, "chainID", 100)
+
+	// Check if chain is registered
+	registeredChains := providerKeeper.GetAllRegisteredConsumerChainIDs(ctx)
+	require.Contains(t, registeredChains, "chainID", "chainID should be in registered chains")
+
+	// Check that TopN is set correctly
+	topN, found := providerKeeper.GetTopN(ctx, "chainID")
+	require.True(t, found, "TopN should be found")
+	require.Equal(t, uint32(100), topN, "TopN should be 100")
+
+	// For TopN chains, we need to opt in the validators
+	// When TopN=100, all validators should be opted in (this normally happens in MakeConsumerGenesis)
+	bondedValidators := []stakingtypes.Validator{valA, valB, valC, valD, valE}
+	minPower, err := providerKeeper.ComputeMinPowerInTopN(ctx, bondedValidators, 100)
+	require.NoError(t, err, "ComputeMinPowerInTopN should not error")
+	providerKeeper.OptInTopNValidators(ctx, "chainID", bondedValidators, minPower)
+	providerKeeper.SetMinimumPowerInTopN(ctx, "chainID", minPower)
 
 	providerKeeper.QueueVSCPackets(ctx)
+
+	// Check if validators are opted in after QueueVSCPackets
+	optedInValsAfter := providerKeeper.GetAllOptedIn(ctx, "chainID")
+	require.Len(t, optedInValsAfter, 5, "Expected 5 opted in validators after QueueVSCPackets")
 
 	actualQueuedVSCPackets := providerKeeper.GetPendingVSCPackets(ctx, "chainID")
 	expectedQueuedVSCPackets := []ccv.ValidatorSetChangePacketData{

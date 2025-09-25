@@ -36,6 +36,7 @@ func NewQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdAllPairsValConAddrByConsumerChainID())
 	cmd.AddCommand(CmdProviderParameters())
 	cmd.AddCommand(CmdConsumerValidators())
+	cmd.AddCommand(CmdConsumerChainOptedInValidators())
 	return cmd
 }
 
@@ -433,6 +434,40 @@ $ %s consumer-validators foochain
 
 			res, err := queryClient.QueryConsumerValidators(cmd.Context(),
 				&types.QueryConsumerValidatorsRequest{ChainId: args[0]})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdConsumerChainOptedInValidators queries opted-in validators for a given consumer chain
+func CmdConsumerChainOptedInValidators() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "consumer-opted-in-validators [chainid]",
+		Short: "Query opted-in validators for a given consumer chain",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query opted-in validators for a given consumer chain.
+Example:
+$ %s consumer-opted-in-validators foochain
+		`, version.AppName),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.QueryConsumerChainOptedInValidators(cmd.Context(),
+				&types.QueryConsumerChainOptedInValidatorsRequest{ChainId: args[0]})
 			if err != nil {
 				return err
 			}

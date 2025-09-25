@@ -135,7 +135,8 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 
 	prop := testkeeper.GetTestConsumerAdditionProp()
 	prop.ChainId = chainID
-	// For Replicated Security, all validators participate (no TopN parameter)
+	// For Replicated Security with TopN restoration, set TopN to 100 (all validators participate)
+	prop.Top_N = 100
 
 	// NOTE: we cannot use the time.Now() because the coordinator chooses a hardcoded start time
 	// using time.Now() could set the spawn time to be too far in the past or too far in the future
@@ -150,9 +151,6 @@ func AddConsumer[Tp testutil.ProviderApp, Tc testutil.ConsumerApp](
 	providerKeeper.SetPendingConsumerAdditionProp(providerChain.GetContext(), prop)
 	props := providerKeeper.GetAllPendingConsumerAdditionProps(providerChain.GetContext())
 	s.Require().Len(props, 1, "unexpected len consumer addition proposals in AddConsumer")
-	
-	// For Replicated Security, all validators automatically participate
-	// No opt-in needed
 
 	// commit the state on the provider chain
 	// and create the client and genesis of consumer

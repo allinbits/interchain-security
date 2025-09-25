@@ -53,6 +53,7 @@ func NewConsumerAdditionProposal(title, description, chainID string,
 	ccvTimeoutPeriod time.Duration,
 	transferTimeoutPeriod time.Duration,
 	unbondingPeriod time.Duration,
+	topN uint32,
 ) govv1beta1.Content {
 	return &ConsumerAdditionProposal{
 		Title:                             title,
@@ -69,6 +70,7 @@ func NewConsumerAdditionProposal(title, description, chainID string,
 		CcvTimeoutPeriod:                  ccvTimeoutPeriod,
 		TransferTimeoutPeriod:             transferTimeoutPeriod,
 		UnbondingPeriod:                   unbondingPeriod,
+		Top_N:                             topN,
 	}
 }
 

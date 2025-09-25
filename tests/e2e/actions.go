@@ -260,6 +260,7 @@ type SubmitConsumerAdditionProposalAction struct {
 	SpawnTime           uint
 	InitialHeight       clienttypes.Height
 	DistributionChannel string
+	TopN                uint32
 }
 
 func (tr Chain) submitConsumerAdditionProposal(
@@ -284,6 +285,7 @@ func (tr Chain) submitConsumerAdditionProposal(
 		UnbondingPeriod:                   params.UnbondingPeriod,
 		Deposit:                           fmt.Sprint(action.Deposit) + `stake`,
 		DistributionTransmissionChannel:   action.DistributionChannel,
+		TopN:                              action.TopN,
 	}
 
 	bz, err := json.Marshal(prop)

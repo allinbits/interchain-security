@@ -65,9 +65,24 @@ func (k Keeper) GetConsumerChain(ctx sdk.Context, chainID string) (types.Chain, 
 		return types.Chain{}, fmt.Errorf("cannot find clientID for consumer (%s)", chainID)
 	}
 
+	topN, found := k.GetTopN(ctx, chainID)
+	if !found {
+		k.Logger(ctx).Error("failed to get top N, treating as 0", "chain", chainID)
+		topN = 0
+	}
+
+	// Get the minimal power in the top N for the consumer chain
+	minPowerInTopN, found := k.GetMinimumPowerInTopN(ctx, chainID)
+	if !found {
+		k.Logger(ctx).Error("failed to get minimum power in top N, treating as -1", "chain", chainID)
+		minPowerInTopN = -1
+	}
+
 	return types.Chain{
-		ChainId:  chainID,
-		ClientId: clientID,
+		ChainId:         chainID,
+		ClientId:        clientID,
+		Top_N:           topN,
+		MinPowerInTop_N: minPowerInTopN,
 	}, nil
 }
 
@@ -273,5 +288,32 @@ func (k Keeper) QueryConsumerValidators(goCtx context.Context, req *types.QueryC
 
 	return &types.QueryConsumerValidatorsResponse{
 		Validators: validators,
+	}, nil
+}
+
+// QueryConsumerChainOptedInValidators returns all validators that opted-in to a given consumer chain
+func (k Keeper) QueryConsumerChainOptedInValidators(goCtx context.Context, req *types.QueryConsumerChainOptedInValidatorsRequest) (*types.QueryConsumerChainOptedInValidatorsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	consumerChainID := req.ChainId
+	if consumerChainID == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty chainId")
+	}
+
+	optedInVals := []string{}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	if !k.IsConsumerProposedOrRegistered(ctx, consumerChainID) {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("unknown consumer chain: %s", consumerChainID))
+	}
+
+	for _, v := range k.GetAllOptedIn(ctx, consumerChainID) {
+		optedInVals = append(optedInVals, v.ToSdkConsAddr().String())
+	}
+
+	return &types.QueryConsumerChainOptedInValidatorsResponse{
+		ValidatorsProviderAddresses: optedInVals,
 	}, nil
 }
