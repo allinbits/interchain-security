@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -72,20 +73,137 @@ func (k Keeper) HandleConsumerRewardDenomProposal(ctx sdk.Context, proposal *typ
 	return k.HandleLegacyConsumerRewardDenomProposal(ctx, &p)
 }
 
-// HandleConsumerModificationProposal modifies a running consumer chain
+// HandleConsumerModificationProposal modifies a consumer chain.
+// If proposal.NewChainId is present and different, we validate it and (only if pre-launch)
+// rename the chain-id by migrating all chain-scoped keys. Then we hand off to the legacy path.
 func (k Keeper) HandleConsumerModificationProposal(ctx sdk.Context, proposal *types.MsgConsumerModification) error {
-	p := types.ConsumerModificationProposal{
+	chainID := proposal.ChainId
+
+	// Optional pre-launch rename
+	if s := strings.TrimSpace(proposal.NewChainId); s != "" && s != chainID {
+		if err := types.ValidateChainId("NewChainId", s); err != nil {
+			return errorsmod.Wrapf(types.ErrInvalidConsumerModificationProposal,
+				"invalid new chain id: %s", err.Error())
+		}
+
+		// launched == has client-id
+		if _, launched := k.GetConsumerClientId(ctx, chainID); launched {
+			return errorsmod.Wrapf(types.ErrInvalidConsumerModificationProposal,
+				"cannot update chain id of a launched chain: %s", chainID)
+		}
+
+		// ensure target not taken (taken == has client-id)
+		if _, taken := k.GetConsumerClientId(ctx, s); taken {
+			return errorsmod.Wrapf(types.ErrInvalidConsumerModificationProposal,
+				"target chain id already exists: %s", s)
+		}
+
+		// Move any chain-scoped state you’re tracking prelaunch
+		if err := k.renameConsumerChain(ctx, chainID, s); err != nil {
+			return err
+		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent("consumer_chain_renamed",
+				sdk.NewAttribute("old_chain_id", chainID),
+				sdk.NewAttribute("new_chain_id", s),
+			),
+		)
+
+		chainID = s
+	}
+
+	// Only call legacy path if the chain is actually running (has client-id).
+	if _, running := k.GetConsumerClientId(ctx, chainID); !running {
+		return nil
+	}
+
+	legacy := types.ConsumerModificationProposal{
 		Title:              proposal.Title,
 		Description:        proposal.Description,
-		ChainId:            proposal.ChainId,
+		ChainId:            chainID,
 		Top_N:              proposal.Top_N,
 		ValidatorsPowerCap: proposal.ValidatorsPowerCap,
 		ValidatorSetCap:    proposal.ValidatorSetCap,
 		Allowlist:          proposal.Allowlist,
 		Denylist:           proposal.Denylist,
 	}
+	return k.HandleLegacyConsumerModificationProposal(ctx, &legacy)
+}
 
-	return k.HandleLegacyConsumerModificationProposal(ctx, &p)
+// renameConsumerChain moves all chain-scoped state from oldID -> newID.
+// It handles exact keys (singletons) and prefixed collections that include the chain-id in the key.
+func (k Keeper) renameConsumerChain(ctx sdk.Context, oldID, newID string) error {
+	kv := ctx.KVStore(k.storeKey)
+
+	// --- basic helpers ---
+
+	// copy+delete for a single exact key
+	moveIf := func(oldKey, newKey []byte) {
+		if bz := kv.Get(oldKey); bz != nil {
+			kv.Set(newKey, bz)
+			kv.Delete(oldKey)
+		}
+	}
+
+	// copy+delete for all entries under prefix(oldID)+suffix -> prefix(newID)+suffix
+	migratePrefix := func(prefixFor func(string) []byte) {
+		oldPref := prefixFor(oldID)
+		it := storetypes.KVStorePrefixIterator(kv, oldPref)
+		defer it.Close()
+		for ; it.Valid(); it.Next() {
+			key := it.Key()
+			val := it.Value()
+			suffix := key[len(oldPref):]
+			newKey := append(prefixFor(newID), suffix...)
+			kv.Set(newKey, val)
+			kv.Delete(key)
+		}
+	}
+
+	// convenience for prefixes created via ChainIdWithLenKey(prefixByte, chainID)
+	migrateByPrefixByte := func(b byte) {
+		migratePrefix(func(id string) []byte { return types.ChainIdWithLenKey(b, id) })
+	}
+
+	// --- singletons keyed by chain-id ---
+	moveIf(types.ChainToClientKey(oldID), types.ChainToClientKey(newID))
+	if ch := kv.Get(types.ChainToChannelKey(oldID)); ch != nil {
+		// forward map: chainID -> channelID
+		moveIf(types.ChainToChannelKey(oldID), types.ChainToChannelKey(newID))
+		// reverse map: channelID -> chainID (rewrite the VALUE to newID)
+		kv.Set(types.ChannelToChainKey(string(ch)), []byte(newID))
+	}
+	moveIf(types.ConsumerGenesisKey(oldID), types.ConsumerGenesisKey(newID))
+	moveIf(types.SlashAcksKey(oldID), types.SlashAcksKey(newID))
+	moveIf(types.InitChainHeightKey(oldID), types.InitChainHeightKey(newID))
+	moveIf(types.PendingVSCsKey(oldID), types.PendingVSCsKey(newID))
+	moveIf(types.ConsumerRewardsAllocationKey(oldID), types.ConsumerRewardsAllocationKey(newID))
+	moveIf(types.TopNKey(oldID), types.TopNKey(newID))
+	moveIf(types.MinimumPowerInTopNKey(oldID), types.MinimumPowerInTopNKey(newID))
+	moveIf(types.ValidatorSetCapKey(oldID), types.ValidatorSetCapKey(newID))
+	moveIf(types.ValidatorsPowerCapKey(oldID), types.ValidatorsPowerCapKey(newID))
+
+	// --- collections prefixed by (prefixByte + chain-id + suffix) ---
+	migrateByPrefixByte(types.ConsumerValidatorBytePrefix)
+	migrateByPrefixByte(types.ConsumerValidatorsBytePrefix)
+	migrateByPrefixByte(types.ValidatorsByConsumerAddrBytePrefix)
+	migrateByPrefixByte(types.OptedInBytePrefix)
+	migrateByPrefixByte(types.AllowlistPrefix)
+	migrateByPrefixByte(types.DenylistPrefix)
+	migrateByPrefixByte(types.ConsumerAddrsToPruneV2BytePrefix)
+	migrateByPrefixByte(types.ThrottledPacketDataBytePrefix)
+
+	// --- proposal side-table where VALUE == chain-id (rewrite values) ---
+	it := storetypes.KVStorePrefixIterator(kv, []byte{types.ProposedConsumerChainByteKey})
+	defer it.Close()
+	for ; it.Valid(); it.Next() {
+		if string(it.Value()) == oldID {
+			kv.Set(it.Key(), []byte(newID))
+		}
+	}
+
+	return nil
 }
 
 // CreateConsumerClient will create the CCV client for the given consumer chain. The CCV channel must be built

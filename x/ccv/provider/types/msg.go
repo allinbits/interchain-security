@@ -43,6 +43,30 @@ var (
 	_ sdk.HasValidateBasic = (*MsgSubmitConsumerDoubleVoting)(nil)
 )
 
+// IsReservedChainId returns true if the chain id is reserved and cannot be reused.
+// This mirrors upstream’s temporary block on reusing known Top-N chain ids.
+func IsReservedChainId(chainId string) bool {
+	return chainId == "neutron-1" || chainId == "stride-1"
+}
+
+// ValidateChainId validates a chain id and enforces the reserved list.
+// `field` is used only to make error messages clearer at call sites.
+func ValidateChainId(field, chainId string) error {
+	trimmed := strings.TrimSpace(chainId)
+	if trimmed == "" {
+		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "%s cannot be blank", field)
+	}
+	// NOTE: Upstream v6 aligns to CometBFT’s MaxChainIDLen=50.
+	// This v5 fork historically used 128; keep that to avoid extra imports.
+	if len(trimmed) > 128 {
+		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "%s exceeds max length 128", field)
+	}
+	if IsReservedChainId(trimmed) {
+		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "cannot use a reserved chain id")
+	}
+	return nil
+}
+
 // NewMsgAssignConsumerKey creates a new MsgAssignConsumerKey instance.
 // Delegator address and validator address are the same.
 func NewMsgAssignConsumerKey(chainID string, providerValidatorAddress sdk.ValAddress,
@@ -85,14 +109,10 @@ func (msg MsgAssignConsumerKey) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgAssignConsumerKey) ValidateBasic() error {
-	if strings.TrimSpace(msg.ChainId) == "" {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot be blank")
-	}
-	// It is possible to assign keys for consumer chains that are not yet approved.
-	// This can only be done by a signing validator, but it is still sensible
-	// to limit the chainID size to prevent abuse.
-	if 128 < len(msg.ChainId) {
-		return errorsmod.Wrapf(ErrInvalidConsumerChainID, "chainId cannot exceed 128 length")
+	// Use shared chain-id validation (length + reserved ids)
+	if err := ValidateChainId("ChainId", msg.ChainId); err != nil {
+		// keep error type consistent with this module
+		return err
 	}
 	valAddr, err := sdk.ValAddressFromBech32(msg.ProviderAddr)
 	if err != nil {
@@ -237,8 +257,8 @@ func (msg *MsgConsumerAddition) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg *MsgConsumerAddition) ValidateBasic() error {
-	if strings.TrimSpace(msg.ChainId) == "" {
-		return ErrBlankConsumerChainID
+	if err := ValidateChainId("ChainId", msg.ChainId); err != nil {
+		return err
 	}
 
 	if msg.InitialHeight.IsZero() {
@@ -288,8 +308,9 @@ func (msg *MsgConsumerAddition) ValidateBasic() error {
 }
 
 func (msg *MsgConsumerRemoval) ValidateBasic() error {
-	if strings.TrimSpace(msg.ChainId) == "" {
-		return errorsmod.Wrap(ErrInvalidConsumerRemovalProp, "consumer chain id must not be blank")
+	// Consistent chain-id validation here as well
+	if err := ValidateChainId("ChainId", msg.ChainId); err != nil {
+		return err
 	}
 
 	if msg.StopTime.IsZero() {
@@ -300,8 +321,8 @@ func (msg *MsgConsumerRemoval) ValidateBasic() error {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg *MsgConsumerModification) ValidateBasic() error {
-	if strings.TrimSpace(msg.ChainId) == "" {
-		return ErrBlankConsumerChainID
+	if err := ValidateChainId("ChainId", msg.ChainId); err != nil {
+		return err
 	}
 
 	return nil

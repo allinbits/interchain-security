@@ -34,6 +34,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(NewAssignConsumerKeyCmd())
 	cmd.AddCommand(NewSubmitConsumerMisbehaviourCmd())
 	cmd.AddCommand(NewSubmitConsumerDoubleVotingCmd())
+	cmd.AddCommand(NewConsumerModificationCmd())
 
 	return cmd
 }
@@ -201,5 +202,98 @@ Example:
 
 	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 
+	return cmd
+}
+
+func NewConsumerModificationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "consumer-modification [path/to/modification.json]",
+		Short: "submit a governance consumer-modification (supports pre-launch rename via new_chain_id)",
+		Long: strings.TrimSpace(fmt.Sprintf(`
+Submit a governance proposal-like message to modify a consumer chain (TopN, caps, allow/deny lists),
+and optionally rename its chain-id *before launch* using "new_chain_id".
+
+Example:
+  %s tx provider consumer-modification ./mod.json --from <key> --chain-id <CID>
+
+mod.json schema (all fields optional except authority, chain_id):
+{
+  "title": "Update consumer params",
+  "description": "Adjust caps; optionally rename pre-launch",
+  "chain_id": "consumer-1",
+  "top_N": 53,
+  "validators_power_cap": 32,
+  "validator_set_cap": 0,
+  "allowlist": ["cosmosvalcons1..."],
+  "denylist":  ["cosmosvalcons1..."],
+  "authority": "cosmos1govacct...",   // governance authority address (required)
+  "new_chain_id": "consumer-mainnet"  // optional; ignored after launch
+}
+`, version.AppName)),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+			txf = txf.WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+
+			// Read user JSON
+			raw, err := os.ReadFile(args[0])
+			if err != nil {
+				return err
+			}
+
+			var in struct {
+				Title              string   `json:"title"`
+				Description        string   `json:"description"`
+				ChainID            string   `json:"chain_id"`
+				Top_N              uint32   `json:"top_N"`
+				ValidatorsPowerCap uint32   `json:"validators_power_cap"`
+				ValidatorSetCap    uint32   `json:"validator_set_cap"`
+				Allowlist          []string `json:"allowlist"`
+				Denylist           []string `json:"denylist"`
+				Authority          string   `json:"authority"`
+				NewChainID         string   `json:"new_chain_id"`
+			}
+			if err := json.Unmarshal(raw, &in); err != nil {
+				return fmt.Errorf("modification data unmarshalling failed: %w", err)
+			}
+
+			// Basic checks that mirror your proto expectations
+			if strings.TrimSpace(in.ChainID) == "" {
+				return fmt.Errorf("chain_id cannot be empty")
+			}
+			if strings.TrimSpace(in.Authority) == "" {
+				return fmt.Errorf("authority cannot be empty")
+			}
+
+			msg := &types.MsgConsumerModification{
+				Title:              in.Title,
+				Description:        in.Description,
+				ChainId:            in.ChainID,
+				Top_N:              in.Top_N,
+				ValidatorsPowerCap: in.ValidatorsPowerCap,
+				ValidatorSetCap:    in.ValidatorSetCap,
+				Allowlist:          in.Allowlist,
+				Denylist:           in.Denylist,
+				Authority:          in.Authority,
+				NewChainId:         in.NewChainID, // <-- your new field
+			}
+
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	_ = cmd.MarkFlagRequired(flags.FlagFrom)
 	return cmd
 }
