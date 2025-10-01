@@ -1099,3 +1099,224 @@ func TestBeginBlockCCR(t *testing.T) {
 		ctx, invalidProp.ChainId, invalidProp.StopTime)
 	require.False(t, found)
 }
+func TestHandleConsumerModificationProposal_Flow(t *testing.T) {
+	newKeeper := func(t *testing.T) (providerkeeper.Keeper, sdk.Context, *gomock.Controller) {
+		t.Helper()
+		kp := testkeeper.NewInMemKeeperParams(t)
+		k, ctx, ctrl, _ := testkeeper.GetProviderKeeperAndCtx(t, kp)
+		k.SetParams(ctx, providertypes.DefaultParams())
+		return k, ctx, ctrl
+	}
+
+	t.Run("Step 1: prelaunch rename succeeds", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		oldID := "prelaunch-1"
+		newID := "prelaunch-1-new"
+
+		// Preconditions: NO client-id for oldID (prelaunch)
+		if _, launched := pk.GetConsumerClientId(ctx, oldID); launched {
+			t.Fatal("unexpected client-id")
+		}
+
+		// Act
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:       "rename",
+			Description: "prelaunch rename",
+			ChainId:     oldID,
+			NewChainId:  newID,
+		})
+
+		// Assert
+		require.NoError(t, err)
+		// both old/new remain "not launched" (we didn't start a chain, just renamed prelaunch state)
+		_, foundOld := pk.GetConsumerClientId(ctx, oldID)
+		_, foundNew := pk.GetConsumerClientId(ctx, newID)
+		require.False(t, foundOld)
+		require.False(t, foundNew)
+	})
+
+	t.Run("Step 2: rename fails if target is taken", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		oldID := "source-1"
+		newID := "target-1"
+
+		// Make target look taken (running chain == has client-id)
+		pk.SetConsumerClientId(ctx, newID, "07-tendermint-123")
+
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:      "rename",
+			ChainId:    oldID,
+			NewChainId: newID,
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "target chain id already exists")
+	})
+
+	t.Run("Step 3: rename fails if new id is reserved/invalid", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		oldID := "any-1"
+		// reserved per ValidateChainId -> IsReservedChainId
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:      "rename",
+			ChainId:    oldID,
+			NewChainId: "stride-1",
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "reserved") // or "invalid new chain id"
+	})
+
+	t.Run("Step 4: rename fails once launched", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		oldID := "launched-1"
+		newID := "launched-1-new"
+
+		// Mark chain as launched
+		pk.SetConsumerClientId(ctx, oldID, "07-tendermint-999")
+
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:      "rename",
+			ChainId:    oldID,
+			NewChainId: newID,
+		})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot update chain id of a launched chain")
+	})
+
+	t.Run("Step 5: migration actually moves chain-scoped state", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		oldID := "prelaunch-2"
+		newID := "prelaunch-2-new"
+
+		// Seed prelaunch chain-scoped state
+		pk.SetTopN(ctx, oldID, 53)
+		pk.SetValidatorsPowerCap(ctx, oldID, 32)
+		pk.SetValidatorSetCap(ctx, oldID, 100)
+		// Opt-in one validator
+		val := cryptotestutil.NewCryptoIdentityFromIntSeed(7).SDKStakingValidator()
+		cons, _ := val.GetConsAddr()
+		provCons := providertypes.NewProviderConsAddress(cons)
+		pk.SetOptedIn(ctx, oldID, provCons)
+
+		// Act
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:              "rename",
+			Description:        "move state",
+			ChainId:            oldID,
+			NewChainId:         newID,
+			Top_N:              53,
+			ValidatorsPowerCap: 32,
+			ValidatorSetCap:    100,
+		})
+		require.NoError(t, err)
+
+		// Assert new keys
+		topN, ok := pk.GetTopN(ctx, newID)
+		require.True(t, ok)
+		require.Equal(t, uint32(53), topN)
+		vpc, ok := pk.GetValidatorsPowerCap(ctx, newID)
+		require.True(t, ok)
+		require.Equal(t, uint32(32), vpc)
+		vsc, ok := pk.GetValidatorSetCap(ctx, newID)
+		require.True(t, ok)
+		require.Equal(t, uint32(100), vsc)
+		require.True(t, pk.IsOptedIn(ctx, newID, provCons))
+
+		// Assert old keys gone
+		_, ok = pk.GetTopN(ctx, oldID)
+		require.False(t, ok)
+		_, ok = pk.GetValidatorsPowerCap(ctx, oldID)
+		require.False(t, ok)
+		_, ok = pk.GetValidatorSetCap(ctx, oldID)
+		require.False(t, ok)
+		require.False(t, pk.IsOptedIn(ctx, oldID, provCons))
+	})
+
+	t.Run("Edge: no-op when NewChainId is empty (prelaunch)", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		cid := "prelaunch-noop"
+		// prelaunch => no client id
+
+		// Seed a bit of state
+		pk.SetTopN(ctx, cid, 60)
+
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:   "noop",
+			ChainId: cid,
+			// NewChainId empty -> noop
+		})
+		require.NoError(t, err)
+
+		// State untouched
+		got, ok := pk.GetTopN(ctx, cid)
+		require.True(t, ok)
+		require.Equal(t, uint32(60), got)
+	})
+
+	t.Run("Edge: no-op when NewChainId equals ChainId (works even if launched)", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		cid := "same-1"
+		// mark as launched
+		pk.SetConsumerClientId(ctx, cid, "07-tendermint-777")
+
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:      "noop-same",
+			ChainId:    cid,
+			NewChainId: cid, // same
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Edge: running chain + no rename => legacy path returns nil", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		cid := "running-legacy"
+		pk.SetConsumerClientId(ctx, cid, "07-tendermint-42")
+
+		err := pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:   "update-no-rename",
+			ChainId: cid,
+			// no NewChainId => not renaming, legacy should run and succeed
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Event: emits consumer_chain_renamed", func(t *testing.T) {
+		pk, ctx, ctrl := newKeeper(t)
+		defer ctrl.Finish()
+
+		oldID, newID := "pre-e1", "pre-e1-new"
+		// prelaunch
+
+		_ = pk.HandleConsumerModificationProposal(ctx, &providertypes.MsgConsumerModification{
+			Title:      "rename",
+			ChainId:    oldID,
+			NewChainId: newID,
+		})
+
+		events := ctx.EventManager().Events()
+		found := false
+		for _, ev := range events {
+			if ev.Type == "consumer_chain_renamed" {
+				found = true
+				// you can also assert attributes if you like
+				break
+			}
+		}
+		require.True(t, found, "expected consumer_chain_renamed event")
+	})
+}
