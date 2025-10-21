@@ -5,6 +5,7 @@ import (
 	"time"
 
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
@@ -202,6 +203,47 @@ func TestInitGenesis(t *testing.T) {
 				assertHeightValsetUpdateIDs(t, ctx, &ck, updatedHeightValsetUpdateIDs)
 				assertProviderClientID(t, ctx, &ck, provClientID)
 
+				require.Equal(t, gs.Params, ck.GetConsumerParams(ctx))
+			},
+		},
+		{
+			"start a new chain with connection reuse",
+			func(ctx sdk.Context, mocks testkeeper.MockedKeepers) {
+				// ICS1_DEVIATION: Test connection reuse path
+				// Mock the connection keeper to return an existing connection
+				connectionID := "connection-0"
+				clientID := "07-tendermint-existing"
+				gomock.InOrder(
+					mocks.MockConnectionKeeper.EXPECT().GetConnection(ctx, connectionID).Return(
+						conntypes.ConnectionEnd{
+							ClientId: clientID,
+						},
+						true, // connection found
+					).Times(1),
+				)
+			},
+			func() *consumertypes.GenesisState {
+				// Create genesis with connection_id set for reuse
+				gs := consumertypes.NewInitialGenesisState(
+					provClientState,
+					provConsState,
+					valset,
+					params,
+				)
+				gs.ConnectionId = "connection-0" // Set connection_id for reuse
+				return gs
+			}(),
+			func(ctx sdk.Context, ck consumerkeeper.Keeper, gs *consumertypes.GenesisState) {
+				assertConsumerPortIsBound(t, ctx, &ck)
+
+				// Verify the provider client ID was set from the existing connection
+				providerClientID, ok := ck.GetProviderClientID(ctx)
+				require.True(t, ok, "provider client ID should be set")
+				require.Equal(t, "07-tendermint-existing", providerClientID, "should use existing client from connection")
+
+				assertHeightValsetUpdateIDs(t, ctx, &ck, defaultHeightValsetUpdateIDs)
+
+				require.Equal(t, validator.Address.Bytes(), ck.GetAllCCValidator(ctx)[0].Address)
 				require.Equal(t, gs.Params, ck.GetConsumerParams(ctx))
 			},
 		},

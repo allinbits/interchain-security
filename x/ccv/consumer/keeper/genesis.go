@@ -45,14 +45,29 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state *types.GenesisState) []abci.V
 	// initialValSet is checked in NewChain case by ValidateGenesis
 	// start a new chain
 	if state.NewChain {
-		// create the provider client in InitGenesis for new consumer chain. CCV Handshake must be established with this client id.
-		// IBC v10: CreateClient now requires clientType string and marshaled states
-		clientStateBz := k.cdc.MustMarshal(state.Provider.ClientState)
-		consensusStateBz := k.cdc.MustMarshal(state.Provider.ConsensusState)
-		clientID, err := k.clientKeeper.CreateClient(ctx, ibcexported.Tendermint, clientStateBz, consensusStateBz)
-		if err != nil {
-			// If the client creation fails, the chain MUST NOT start
-			panic(err)
+		// ICS1_DEVIATION: Connection reuse logic
+		// Upstream v6.4.0 has this logic but in a different code structure.
+		// When connection_id is set, we reuse the existing client instead of creating a new one.
+
+		var clientID string
+		if state.ConnectionId != "" {
+			// Reuse existing client from the connection
+			connection, found := k.connectionKeeper.GetConnection(ctx, state.ConnectionId)
+			if !found {
+				panic("connection " + state.ConnectionId + " not found during consumer genesis initialization")
+			}
+			clientID = connection.ClientId
+		} else {
+			// create the provider client in InitGenesis for new consumer chain. CCV Handshake must be established with this client id.
+			// IBC v10: CreateClient now requires clientType string and marshaled states
+			clientStateBz := k.cdc.MustMarshal(state.Provider.ClientState)
+			consensusStateBz := k.cdc.MustMarshal(state.Provider.ConsensusState)
+			var err error
+			clientID, err = k.clientKeeper.CreateClient(ctx, ibcexported.Tendermint, clientStateBz, consensusStateBz)
+			if err != nil {
+				// If the client creation fails, the chain MUST NOT start
+				panic(err)
+			}
 		}
 
 		// set provider client id.

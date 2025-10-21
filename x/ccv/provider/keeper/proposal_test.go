@@ -11,6 +11,7 @@ import (
 
 	"cosmossdk.io/math"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	_go "github.com/cosmos/ics23/go"
 	"github.com/golang/mock/gomock"
@@ -592,6 +593,21 @@ func TestGetAllConsumerRemovalProps(t *testing.T) {
 // An expected genesis state is hardcoded in json, unmarshaled, and compared
 // against an actual consumer genesis state constructed by a provider keeper.
 func TestMakeConsumerGenesis(t *testing.T) {
+	t.Run("new chain without connection reuse", func(t *testing.T) {
+		testMakeConsumerGenesisNewChain(t)
+	})
+
+	t.Run("new chain with connection reuse", func(t *testing.T) {
+		testMakeConsumerGenesisWithConnectionReuse(t)
+	})
+
+	t.Run("invalid connection returns error", func(t *testing.T) {
+		testMakeConsumerGenesisInvalidConnection(t)
+	})
+}
+
+// testMakeConsumerGenesisNewChain tests the traditional flow (no connection reuse)
+func testMakeConsumerGenesisNewChain(t *testing.T) {
 	keeperParams := testkeeper.NewInMemKeeperParams(t)
 	providerKeeper, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(t, keeperParams)
 	moduleParams := providertypes.Params{
@@ -774,6 +790,120 @@ func TestMakeConsumerGenesis(t *testing.T) {
 	expectedGenesis.Provider.ConsensusState = &ibctmtypes.ConsensusState{}
 
 	require.Equal(t, expectedGenesis, actualGenesis, "consumer chain genesis created incorrectly")
+}
+
+// testMakeConsumerGenesisWithConnectionReuse tests MakeConsumerGenesis when connection_id
+// is provided for connection reuse (standalone-to-consumer changeover).
+func testMakeConsumerGenesisWithConnectionReuse(t *testing.T) {
+	keeperParams := testkeeper.NewInMemKeeperParams(t)
+	providerKeeper, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(t, keeperParams)
+	providerKeeper.SetParams(ctx, providertypes.DefaultParams())
+	defer ctrl.Finish()
+
+	ctx = ctx.WithChainID("testchain1")
+	ctx = ctx.WithBlockHeight(5)
+
+	testkeeper.SetupMocksForLastBondedValidatorsExpectation(mocks.MockStakingKeeper, 0, []stakingtypes.Validator{}, []int64{}, 1)
+	// NOTE: When connection_id is provided, MakeConsumerGenesis skips getSelfConsensusState/GetHistoricalInfo
+	// (no need to create new client), but still needs UnbondingTime for trust period calculation.
+	// This matches upstream v6.4.0 behavior for connection reuse.
+	mocks.MockStakingKeeper.EXPECT().UnbondingTime(gomock.Any()).Return(1814400000000000*time.Nanosecond, nil).Times(1)
+
+	// Mock the connection keeper to return a connection with counterparty
+	providerConnectionID := "connection-0"
+	consumerConnectionID := "connection-1"
+
+	mocks.MockConnectionKeeper.EXPECT().GetConnection(
+		ctx,
+		providerConnectionID,
+	).Return(
+		// Return a connection with counterparty connection ID
+		conntypes.ConnectionEnd{
+			ClientId: "07-tendermint-0",
+			Counterparty: conntypes.Counterparty{
+				ClientId:     "07-tendermint-1",
+				ConnectionId: consumerConnectionID,
+			},
+		},
+		true, // found
+	).Times(1)
+
+	// Proposal with connection_id set for reuse
+	prop := providertypes.ConsumerAdditionProposal{
+		Title:                             "title",
+		Description:                       "desc",
+		ChainId:                           "testchain1",
+		BlocksPerDistributionTransmission: 1000,
+		CcvTimeoutPeriod:                  2419200000000000,
+		TransferTimeoutPeriod:             3600000000000,
+		ConsumerRedistributionFraction:    "0.75",
+		HistoricalEntries:                 10000,
+		UnbondingPeriod:                   1728000000000000,
+		ConnectionId:                      providerConnectionID, // Connection reuse
+	}
+
+	actualGenesis, _, err := providerKeeper.MakeConsumerGenesis(ctx, &prop)
+	require.NoError(t, err)
+
+	// Verify connection reuse fields are set correctly
+	require.Equal(t, consumerConnectionID, actualGenesis.ConnectionId, "consumer connection_id should be set to counterparty connection")
+	require.True(t, actualGenesis.PreCCV, "preCCV should be true for connection reuse")
+
+	// Verify client state and consensus state are nil (reusing existing client)
+	require.Nil(t, actualGenesis.Provider.ClientState, "client_state should be nil when reusing connection")
+	require.Nil(t, actualGenesis.Provider.ConsensusState, "consensus_state should be nil when reusing connection")
+
+	// Verify params are set correctly
+	require.True(t, actualGenesis.Params.Enabled)
+	require.Equal(t, prop.BlocksPerDistributionTransmission, actualGenesis.Params.BlocksPerDistributionTransmission)
+
+	// Verify the new_chain flag is still set (this is a new consumer chain, just reusing connection)
+	require.True(t, actualGenesis.NewChain, "new_chain should be true")
+}
+
+// testMakeConsumerGenesisInvalidConnection tests error handling when
+// connection_id is provided but connection doesn't exist.
+func testMakeConsumerGenesisInvalidConnection(t *testing.T) {
+	keeperParams := testkeeper.NewInMemKeeperParams(t)
+	providerKeeper, ctx, ctrl, mocks := testkeeper.GetProviderKeeperAndCtx(t, keeperParams)
+	providerKeeper.SetParams(ctx, providertypes.DefaultParams())
+	defer ctrl.Finish()
+
+	ctx = ctx.WithChainID("testchain1")
+	ctx = ctx.WithBlockHeight(5)
+
+	testkeeper.SetupMocksForLastBondedValidatorsExpectation(mocks.MockStakingKeeper, 0, []stakingtypes.Validator{}, []int64{}, 1)
+	// NOTE: When connection_id is provided, MakeConsumerGenesis still calls UnbondingTime early in the function,
+	// then checks the connection. If connection is invalid, it returns before calling GetHistoricalInfo.
+	// This matches upstream v6.4.0 behavior for connection reuse.
+	mocks.MockStakingKeeper.EXPECT().UnbondingTime(gomock.Any()).Return(1814400000000000*time.Nanosecond, nil).Times(1)
+
+	// Mock connection keeper to return connection not found
+	invalidConnectionID := "connection-999"
+	mocks.MockConnectionKeeper.EXPECT().GetConnection(
+		ctx,
+		invalidConnectionID,
+	).Return(
+		conntypes.ConnectionEnd{},
+		false, // not found
+	).Times(1)
+
+	prop := providertypes.ConsumerAdditionProposal{
+		Title:                             "title",
+		Description:                       "desc",
+		ChainId:                           "testchain1",
+		BlocksPerDistributionTransmission: 1000,
+		CcvTimeoutPeriod:                  2419200000000000,
+		TransferTimeoutPeriod:             3600000000000,
+		ConsumerRedistributionFraction:    "0.75",
+		HistoricalEntries:                 10000,
+		UnbondingPeriod:                   1728000000000000,
+		ConnectionId:                      invalidConnectionID, // Invalid connection
+	}
+
+	_, _, err := providerKeeper.MakeConsumerGenesis(ctx, &prop)
+	require.Error(t, err, "should error when connection not found")
+	require.Contains(t, err.Error(), "connection", "error message should mention connection")
 }
 
 // TestBeginBlockInit directly tests BeginBlockInit against the spec using helpers defined above.
