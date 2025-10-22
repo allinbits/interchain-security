@@ -49,8 +49,10 @@ func stepsChangeoverToConsumer(consumerName string) []Step {
 				// the consumer chain will use this channel to send rewards to the provider chain
 				// there is no need to create a new channel for rewards distribution
 				DistributionChannel: "channel-0",
-				SpawnTime:           0,
-				InitialHeight:       clienttypes.Height{RevisionNumber: 0, RevisionHeight: 111}, // 1 block after upgrade !important
+				// ICS1: connection-0 is created in stepsSovereignTransferChan and will be reused for CCV
+				ConnectionId: "connection-0",
+				SpawnTime:    0,
+				InitialHeight: clienttypes.Height{RevisionNumber: 0, RevisionHeight: 111}, // 1 block after upgrade !important
 			},
 			State: State{
 				ChainID("provi"): ChainState{

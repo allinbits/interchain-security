@@ -84,7 +84,7 @@ Where proposal.json contains:
 				proposal.ConsumerRedistributionFraction, proposal.BlocksPerDistributionTransmission,
 				proposal.DistributionTransmissionChannel, proposal.HistoricalEntries,
 				proposal.CcvTimeoutPeriod, proposal.TransferTimeoutPeriod, proposal.UnbondingPeriod,
-				proposal.TopN)
+				proposal.TopN, proposal.ConnectionId)
 
 			from := clientCtx.GetFromAddress()
 

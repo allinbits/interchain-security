@@ -34,10 +34,12 @@ var happyPathSteps = concatSteps(
 	stepsCancelUnbond("consu"),
 	stepsRedelegate("consu"),
 	stepsDowntime("consu"),
-	stepsDoubleSignOnProvider("consu"), // carol double signs on provider
+	stepsDoubleSignOnProvider("consu"),             // carol double signs on provider
 	stepsStartRelayer(),
 	stepsConsumerRemovalPropNotPassing("consu", 2), // submit removal prop but vote no on it - chain should stay
-	stepsStopChain("consu", 3),                     // stop chain
+	stepsStopChain("consu", 3),                     // stop chain - consumer becomes sovereign
+	stepsReAddConsumerWithConnectionReuse("consu", 4), // ICS1: re-add consumer with connection reuse
+	// Connection reuse test complete - consumer successfully re-added using existing connection-0
 )
 
 var shortHappyPathSteps = concatSteps(
@@ -46,10 +48,12 @@ var shortHappyPathSteps = concatSteps(
 	stepsUnbond("consu"),
 	stepsRedelegate("consu"),
 	stepsDowntime("consu"),
-	stepsDoubleSignOnProvider("consu"), // carol double signs on provider
+	stepsDoubleSignOnProvider("consu"),             // carol double signs on provider
 	stepsStartRelayer(),
 	stepsConsumerRemovalPropNotPassing("consu", 2), // submit removal prop but vote no on it - chain should stay
-	stepsStopChain("consu", 3),                     // stop chain
+	stepsStopChain("consu", 3),                     // stop chain - consumer becomes sovereign
+	stepsReAddConsumerWithConnectionReuse("consu", 4), // ICS1: re-add consumer with connection reuse
+	// Connection reuse test complete - consumer successfully re-added using existing connection-0
 )
 
 var lightClientAttackSteps = concatSteps(

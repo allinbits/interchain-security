@@ -37,6 +37,9 @@ type ConsumerAdditionProposalJSON struct {
 	Deposit string `json:"deposit"`
 
 	TopN uint32 `json:"top_N"`
+
+	// ICS1: Connection ID for connection reuse during standalone-to-consumer changeover
+	ConnectionId string `json:"connection_id"`
 }
 
 type ConsumerAdditionProposalReq struct {

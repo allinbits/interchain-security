@@ -57,7 +57,8 @@ func TestHandleLegacyConsumerAdditionProposal(t *testing.T) {
 				100000000000,
 				100000000000,
 				100000000000,
-				0, // Opt-in chain - doesn't require validators at startup
+				0,  // Opt-in chain - doesn't require validators at startup
+				"", // ConnectionId
 			).(*providertypes.ConsumerAdditionProposal),
 			blockTime:     now,
 			expAppendProp: true,
@@ -83,7 +84,8 @@ func TestHandleLegacyConsumerAdditionProposal(t *testing.T) {
 				100000000000,
 				100000000000,
 				100000000000,
-				0, // Opt-in chain - doesn't require validators at startup
+				0,  // Opt-in chain - doesn't require validators at startup
+				"", // ConnectionId
 			).(*providertypes.ConsumerAdditionProposal),
 			blockTime:     now,
 			expAppendProp: false,
