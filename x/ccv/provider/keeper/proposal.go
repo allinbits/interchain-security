@@ -423,6 +423,7 @@ func (k Keeper) MakeConsumerGenesis(
 		[]string{},
 		[]string{},
 		ccv.DefaultRetryDelayPeriod,
+		"",
 	)
 
 	// Check if we're reusing an existing connection
