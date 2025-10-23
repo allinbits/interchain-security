@@ -46,6 +46,7 @@ func (k Keeper) HandleConsumerAdditionProposal(ctx sdk.Context, proposal *types.
 		ValidatorSetCap:                   proposal.ValidatorSetCap,
 		Allowlist:                         proposal.Allowlist,
 		Denylist:                          proposal.Denylist,
+		ConnectionId:                      proposal.ConnectionId,
 	}
 
 	return k.HandleLegacyConsumerAdditionProposal(ctx, &p)
@@ -371,9 +372,13 @@ func (k Keeper) MakeConsumerGenesis(
 
 	// IBC v10: GetSelfConsensusState removed, using custom implementation
 	// Evidence: ICS v7 consumer_lifecycle.go implements this function
-	consState, err := k.getSelfConsensusState(ctx, height)
-	if err != nil {
-		return gen, nil, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "error %s getting self consensus state for: %s", err, height)
+	// ICS1_DEVIATION: Only get consensus state if we're not reusing an existing connection
+	var consState *ibctmtypes.ConsensusState
+	if prop.ConnectionId == "" {
+		consState, err = k.getSelfConsensusState(ctx, height)
+		if err != nil {
+			return gen, nil, errorsmod.Wrapf(clienttypes.ErrConsensusStateNotFound, "error %s getting self consensus state for: %s", err, height)
+		}
 	}
 
 	// get the bonded validators from the staking module
@@ -420,12 +425,43 @@ func (k Keeper) MakeConsumerGenesis(
 		ccv.DefaultRetryDelayPeriod,
 	)
 
+	// Check if we're reusing an existing connection
+	var consumerConnectionId string
+	var preCCV bool
+	if prop.ConnectionId != "" {
+		// ICS1_DEVIATION: Connection reuse logic
+		// Upstream v6.4.0 has this logic but in a different code structure.
+		// We're adapting it to work with v5.2.0's MakeConsumerGenesis function.
+
+		// Get the connection to find the counterparty connection ID
+		connection, found := k.connectionKeeper.GetConnection(ctx, prop.ConnectionId)
+		if !found {
+			return gen, nil, errorsmod.Wrapf(
+				types.ErrInvalidConsumerAdditionProposal,
+				"connection %s not found", prop.ConnectionId,
+			)
+		}
+
+		// The consumer-side connection ID is the counterparty connection ID
+		consumerConnectionId = connection.Counterparty.ConnectionId
+		preCCV = true
+
+		// When reusing a connection, we set client state to nil
+		// (consensus state is already nil since we skipped getting it above)
+		clientState = nil
+	}
+
 	gen = *ccv.NewInitialConsumerGenesisState(
 		clientState,
 		consState,
 		initialUpdatesWithConsumerKeys,
 		consumerGenesisParams,
 	)
+
+	// Set connection_id and preCCV fields if we're reusing an existing connection
+	gen.ConnectionId = consumerConnectionId
+	gen.PreCCV = preCCV
+
 	return gen, hash, nil
 }
 

@@ -261,6 +261,7 @@ type SubmitConsumerAdditionProposalAction struct {
 	InitialHeight       clienttypes.Height
 	DistributionChannel string
 	TopN                uint32
+	ConnectionId        string // ICS1: Connection ID for connection reuse during changeover
 }
 
 func (tr Chain) submitConsumerAdditionProposal(
@@ -286,6 +287,7 @@ func (tr Chain) submitConsumerAdditionProposal(
 		Deposit:                           fmt.Sprint(action.Deposit) + `stake`,
 		DistributionTransmissionChannel:   action.DistributionChannel,
 		TopN:                              action.TopN,
+		ConnectionId:                      action.ConnectionId, // ICS1: Connection ID for connection reuse
 	}
 
 	bz, err := json.Marshal(prop)

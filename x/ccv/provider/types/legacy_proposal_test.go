@@ -37,6 +37,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			true,
 		},
@@ -51,6 +52,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			true,
 		},
@@ -65,6 +67,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -79,6 +82,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -113,6 +117,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -126,7 +131,9 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100000000000,
-				100),
+				100,
+				"", // ConnectionId
+			),
 			false,
 		},
 		{
@@ -140,6 +147,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -154,6 +162,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -168,6 +177,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -182,6 +192,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -196,6 +207,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -210,6 +222,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -224,6 +237,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				0,
 				100000000000,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -238,6 +252,7 @@ func TestConsumerAdditionProposalValidateBasic(t *testing.T) {
 				100000000000,
 				0,
 				100,
+				"", // ConnectionId
 			),
 			false,
 		},
@@ -263,7 +278,9 @@ func TestMarshalConsumerAdditionProposal(t *testing.T) {
 		100000000000,
 		100000000000,
 		100000000000,
-		100)
+		100,
+		"", // ConnectionId
+	)
 
 	cccp, ok := content.(*types.ConsumerAdditionProposal)
 	require.True(t, ok)
@@ -306,7 +323,9 @@ func TestConsumerAdditionProposalString(t *testing.T) {
 		100000000000,
 		10000000000,
 		100000000000,
-		100)
+		100,
+		"", // ConnectionId
+	)
 
 	expect := fmt.Sprintf(`CreateConsumerChain Proposal
 	Title: title

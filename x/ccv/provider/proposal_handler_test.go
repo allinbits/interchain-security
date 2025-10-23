@@ -46,7 +46,8 @@ func TestProviderProposalHandler(t *testing.T) {
 				100000000000,
 				100000000000,
 				100000000000,
-				0, // TopN = 0 for opt-in chain
+				0,  // TopN = 0 for opt-in chain
+				"", // ConnectionId
 			),
 			blockTime:                hourFromNow, // ctx blocktime is after proposal's spawn time
 			expValidConsumerAddition: true,

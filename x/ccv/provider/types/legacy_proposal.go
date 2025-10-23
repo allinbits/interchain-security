@@ -54,6 +54,7 @@ func NewConsumerAdditionProposal(title, description, chainID string,
 	transferTimeoutPeriod time.Duration,
 	unbondingPeriod time.Duration,
 	topN uint32,
+	connectionId string, // ICS1: Connection ID for connection reuse
 ) govv1beta1.Content {
 	return &ConsumerAdditionProposal{
 		Title:                             title,
@@ -71,6 +72,7 @@ func NewConsumerAdditionProposal(title, description, chainID string,
 		TransferTimeoutPeriod:             transferTimeoutPeriod,
 		UnbondingPeriod:                   unbondingPeriod,
 		Top_N:                             topN,
+		ConnectionId:                      connectionId, // ICS1: Connection ID for connection reuse
 	}
 }
 

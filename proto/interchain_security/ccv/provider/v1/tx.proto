@@ -191,6 +191,15 @@ message MsgConsumerAddition {
   repeated string denylist = 17;
   // signer address
   string authority = 18 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // ICS1_DEVIATION: v6.4.0 structure adaptation
+  // Upstream v6.4.0 moved connection_id to ConsumerInitializationParameters message.
+  // Since we're based on v5.2.0 which uses MsgConsumerAddition for all init params,
+  // we add connection_id here to maintain the same functionality.
+  //
+  // The ID of the connection end on the provider chain on top of which the CCV channel will be established.
+  // If connection_id is empty, a new client will be created and a new connection on top of this client will be
+  // established for the consumer chain.
+  string connection_id = 19;
 }
 
 // MsgConsumerAdditionResponse defines response type for MsgConsumerAddition
