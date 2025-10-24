@@ -95,12 +95,6 @@ To ensure a smooth workflow for all contributors, a general workflow for contrib
 For complex problems or features, please make sure to open an issue and provide context and problem description. 
 PRs opened before adequate design discussion has taken place in a GitHub issue have a high likelihood of being rejected without review.
 
-## Project Board
-
-We use self-organizing principles to coordinate and collaborate across organizations in structured "EPIC" that focuses on specific problem domains or architectural components of ICS. For details, see the [GitHub Project board](https://github.com/orgs/cosmos/projects/28/views/11). 
-
-The developers work in sprints, which are available in a [GitHub Project](https://github.com/orgs/cosmos/projects/28/views/2). 
-
 ## Architecture Decision Records (ADR)
 
 When proposing an architecture decision for ICS, please start by opening an [issue](https://github.com/cosmos/interchain-security/issues/new/choose) or a [discussion](https://github.com/cosmos/interchain-security/discussions/new) with a summary of the proposal. Once the proposal has been discussed and there is rough alignment on a high-level approach to the design, you may either start development, or write an ADR.
