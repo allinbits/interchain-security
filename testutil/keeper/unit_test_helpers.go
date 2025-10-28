@@ -29,12 +29,12 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	providerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
-	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
+	consumerkeeper "github.com/allinbits/interchain-security/x/ccv/consumer/keeper"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	providerkeeper "github.com/allinbits/interchain-security/x/ccv/provider/keeper"
+	providertypes "github.com/allinbits/interchain-security/x/ccv/provider/types"
 
-	"github.com/cosmos/interchain-security/v5/x/ccv/types"
+	"github.com/allinbits/interchain-security/x/ccv/types"
 
 	dbm "github.com/cosmos/cosmos-db"
 )

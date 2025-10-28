@@ -23,10 +23,10 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmtypes "github.com/cometbft/cometbft/types"
 
-	"github.com/cosmos/interchain-security/v5/testutil/integration"
-	keepertestutil "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	"github.com/allinbits/interchain-security/testutil/integration"
+	keepertestutil "github.com/allinbits/interchain-security/testutil/keeper"
+	providertypes "github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // TestRelayAndApplyDowntimePacket tests that downtime slash packets can be properly relayed

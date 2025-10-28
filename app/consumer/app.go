@@ -44,6 +44,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
+	"github.com/allinbits/interchain-security/app/common"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -81,7 +82,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/interchain-security/v5/app/common"
 
 	// IBC v10: Capability module removed
 
@@ -91,12 +91,12 @@ import (
 	tmos "github.com/cometbft/cometbft/libs/os"
 	dbm "github.com/cosmos/cosmos-db"
 
-	appencoding "github.com/cosmos/interchain-security/v5/app/encoding"
-	testutil "github.com/cosmos/interchain-security/v5/testutil/integration"
-	ibcconsumer "github.com/cosmos/interchain-security/v5/x/ccv/consumer"
-	ibcconsumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
-	ibcconsumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	appencoding "github.com/allinbits/interchain-security/app/encoding"
+	testutil "github.com/allinbits/interchain-security/testutil/integration"
+	ibcconsumer "github.com/allinbits/interchain-security/x/ccv/consumer"
+	ibcconsumerkeeper "github.com/allinbits/interchain-security/x/ccv/consumer/keeper"
+	ibcconsumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 const (

@@ -8,6 +8,7 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+
 	// host removed - no longer used in IBC v10
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
@@ -15,11 +16,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	// IBC v10: capability types removed
 
-	"github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	"github.com/cosmos/interchain-security/v5/x/ccv/types"
+	"github.com/allinbits/interchain-security/x/ccv/consumer/keeper"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	"github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // OnChanOpenInit implements the IBCModule interface

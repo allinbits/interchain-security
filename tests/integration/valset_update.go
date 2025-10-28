@@ -3,7 +3,7 @@ package integration
 import (
 	"cosmossdk.io/math"
 
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // TestPacketRoundtrip tests a CCV packet roundtrip when tokens are bonded on provider

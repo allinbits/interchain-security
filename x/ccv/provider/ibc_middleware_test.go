@@ -7,7 +7,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider"
+	"github.com/allinbits/interchain-security/x/ccv/provider"
 )
 
 func TestGetProviderDenom(t *testing.T) {

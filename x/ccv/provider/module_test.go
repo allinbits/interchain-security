@@ -10,9 +10,9 @@ import (
 
 	// IBC v10: capability types removed
 
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
+	"github.com/allinbits/interchain-security/x/ccv/provider"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
 )
 
 // Tests the provider's InitGenesis implementation against the spec.

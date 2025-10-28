@@ -17,11 +17,11 @@ import (
 
 	// IBC v10: capability types removed
 
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider"
-	providerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
-	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
+	"github.com/allinbits/interchain-security/x/ccv/provider"
+	providerkeeper "github.com/allinbits/interchain-security/x/ccv/provider/keeper"
+	providertypes "github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // TestOnChanOpenInit tests the provider's OnChanOpenInit method against spec.

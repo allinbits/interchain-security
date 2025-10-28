@@ -11,8 +11,8 @@ import (
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	providerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	providerkeeper "github.com/allinbits/interchain-security/x/ccv/provider/keeper"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 func (s *CCVTestSuite) TestKeyAssignment() {

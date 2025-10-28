@@ -5,12 +5,13 @@ package types
 
 import (
 	fmt "fmt"
-	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/cosmos/gogoproto/proto"
-	types "github.com/cosmos/interchain-security/v5/x/ccv/types"
 	io "io"
 	math "math"
 	math_bits "math/bits"
+
+	types "github.com/allinbits/interchain-security/x/ccv/types"
+	_ "github.com/cosmos/gogoproto/gogoproto"
+	proto "github.com/cosmos/gogoproto/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

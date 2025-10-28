@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
+	providertypes "github.com/allinbits/interchain-security/x/ccv/provider/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/math"
@@ -31,11 +31,11 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 
-	icstestingutils "github.com/cosmos/interchain-security/v5/testutil/ibc_testing"
-	"github.com/cosmos/interchain-security/v5/testutil/integration"
-	simibc "github.com/cosmos/interchain-security/v5/testutil/simibc"
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	icstestingutils "github.com/allinbits/interchain-security/testutil/ibc_testing"
+	"github.com/allinbits/interchain-security/testutil/integration"
+	simibc "github.com/allinbits/interchain-security/testutil/simibc"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 const (

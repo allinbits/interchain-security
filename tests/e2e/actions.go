@@ -19,10 +19,10 @@ import (
 	"github.com/tidwall/gjson"
 	"golang.org/x/mod/semver"
 
-	e2e "github.com/cosmos/interchain-security/v5/tests/e2e/testlib"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/client"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	e2e "github.com/allinbits/interchain-security/tests/e2e/testlib"
+	"github.com/allinbits/interchain-security/x/ccv/provider/client"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 const (
@@ -963,7 +963,7 @@ func (tr *Chain) addChainToGorelayer(
 	if tr.target == nil {
 		log.Fatal("tr.target is nil in addChainToGorelayer")
 	}
-	
+
 	queryNodeIP := tr.target.GetQueryNodeIP(action.Chain)
 	ChainId := tr.testConfig.chainConfigs[action.Chain].ChainId
 	rpcAddr := "http://" + queryNodeIP + ":26658"

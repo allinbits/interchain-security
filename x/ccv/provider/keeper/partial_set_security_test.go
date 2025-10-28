@@ -18,10 +18,10 @@ import (
 
 	"github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
+	"github.com/allinbits/interchain-security/x/ccv/provider/keeper"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 func TestHandleOptIn(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
+
 	// IBC v10.2: mock.NewPV moved from ibc-go/testing/mock to cosmos-sdk/testutil/mock
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	"github.com/stretchr/testify/suite"
@@ -19,11 +20,11 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 
-	icstestingutils "github.com/cosmos/interchain-security/v5/testutil/ibc_testing"
-	testutil "github.com/cosmos/interchain-security/v5/testutil/integration"
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	icstestingutils "github.com/allinbits/interchain-security/testutil/ibc_testing"
+	testutil "github.com/allinbits/interchain-security/testutil/integration"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // Callback for instantiating a new coordinator with a provider test chains

@@ -7,19 +7,22 @@ import (
 	conntypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+
 	// IBC v10: host package removed
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
+
 	// IBC v10: removed extra matcher import as it's no longer needed
 
 	math "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	// IBC v10: capability types removed
 
-	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	"github.com/cosmos/interchain-security/v5/x/ccv/types"
+	providertypes "github.com/allinbits/interchain-security/x/ccv/provider/types"
+	"github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 //

@@ -11,12 +11,12 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/exp/maps"
 
+	consumerTypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	"github.com/allinbits/interchain-security/x/ccv/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-	consumerTypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	"github.com/cosmos/interchain-security/v5/x/ccv/types"
 )
 
 // The genesis state of the blockchain is represented here as a map of raw json

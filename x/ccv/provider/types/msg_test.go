@@ -3,9 +3,9 @@ package types_test
 import (
 	"testing"
 
+	cryptoutil "github.com/allinbits/interchain-security/testutil/crypto"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cryptoutil "github.com/cosmos/interchain-security/v5/testutil/crypto"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
 	"github.com/stretchr/testify/require"
 )
 

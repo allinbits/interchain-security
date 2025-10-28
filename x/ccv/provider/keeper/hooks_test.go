@@ -3,10 +3,10 @@ package keeper_test
 import (
 	"testing"
 
+	cryptotestutil "github.com/allinbits/interchain-security/testutil/crypto"
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
+	providerkeeper "github.com/allinbits/interchain-security/x/ccv/provider/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	cryptotestutil "github.com/cosmos/interchain-security/v5/testutil/crypto"
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	providerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/provider/keeper"
 	"github.com/golang/mock/gomock"
 )
 

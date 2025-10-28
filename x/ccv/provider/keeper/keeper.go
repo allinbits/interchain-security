@@ -24,9 +24,9 @@ import (
 
 	"cosmossdk.io/log"
 
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // Keeper defines the Cross-Chain Validation Provider Keeper

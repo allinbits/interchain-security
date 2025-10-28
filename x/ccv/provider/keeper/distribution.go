@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
 )
 
 // BeginBlockRD executes BeginBlock logic for the Reward Distribution sub-protocol.

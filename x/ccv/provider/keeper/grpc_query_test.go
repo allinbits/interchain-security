@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	cryptotestutil "github.com/allinbits/interchain-security/testutil/crypto"
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	cryptotestutil "github.com/cosmos/interchain-security/v5/testutil/crypto"
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -121,8 +121,8 @@ func TestGetConsumerChain(t *testing.T) {
 			types.Chain{
 				ChainId:         chainID,
 				ClientId:        clientID,
-				Top_N:           0,           // default for non-set TopN
-				MinPowerInTop_N: -1,          // default when not found
+				Top_N:           0,  // default for non-set TopN
+				MinPowerInTop_N: -1, // default when not found
 			})
 	}
 

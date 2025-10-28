@@ -5,15 +5,16 @@ package types
 
 import (
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+
+	types "github.com/allinbits/interchain-security/x/ccv/types"
 	_ "github.com/cometbft/cometbft/abci/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	_ "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	types "github.com/cosmos/interchain-security/v5/x/ccv/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
-	io "io"
-	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.

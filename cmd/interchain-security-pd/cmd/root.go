@@ -19,6 +19,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
+
 	// IBC v10: keyring import removed as Keyring field removed from autocli.AppOptions
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -36,8 +37,8 @@ import (
 	cmtcfg "github.com/cometbft/cometbft/config"
 	dbm "github.com/cosmos/cosmos-db"
 
-	appEncoding "github.com/cosmos/interchain-security/v5/app/encoding"
-	providerApp "github.com/cosmos/interchain-security/v5/app/provider"
+	appEncoding "github.com/allinbits/interchain-security/app/encoding"
+	providerApp "github.com/allinbits/interchain-security/app/provider"
 )
 
 // NewRootCmd creates a new root command for simd. It is called once in the
@@ -233,7 +234,6 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig appEncoding.EncodingConf
 		keys.Commands(),
 	)
 }
-
 
 func queryCommand() *cobra.Command {
 	cmd := &cobra.Command{
