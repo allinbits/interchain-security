@@ -19,11 +19,11 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 
-	"github.com/cosmos/interchain-security/v5/testutil/crypto"
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	"github.com/allinbits/interchain-security/testutil/crypto"
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
+	consumerkeeper "github.com/allinbits/interchain-security/x/ccv/consumer/keeper"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // TestInitGenesis tests that a consumer chain is correctly initialised from genesis.

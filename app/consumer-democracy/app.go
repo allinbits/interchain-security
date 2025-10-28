@@ -106,15 +106,15 @@ import (
 	tmos "github.com/cometbft/cometbft/libs/os"
 	dbm "github.com/cosmos/cosmos-db"
 
-	appencoding "github.com/cosmos/interchain-security/v5/app/encoding"
-	testutil "github.com/cosmos/interchain-security/v5/testutil/integration"
-	consumer "github.com/cosmos/interchain-security/v5/x/ccv/consumer"
-	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	ccvdistr "github.com/cosmos/interchain-security/v5/x/ccv/democracy/distribution"
-	ccvgov "github.com/cosmos/interchain-security/v5/x/ccv/democracy/governance"
-	ccvstaking "github.com/cosmos/interchain-security/v5/x/ccv/democracy/staking"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	appencoding "github.com/allinbits/interchain-security/app/encoding"
+	testutil "github.com/allinbits/interchain-security/testutil/integration"
+	consumer "github.com/allinbits/interchain-security/x/ccv/consumer"
+	consumerkeeper "github.com/allinbits/interchain-security/x/ccv/consumer/keeper"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	ccvdistr "github.com/allinbits/interchain-security/x/ccv/democracy/distribution"
+	ccvgov "github.com/allinbits/interchain-security/x/ccv/democracy/governance"
+	ccvstaking "github.com/allinbits/interchain-security/x/ccv/democracy/staking"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 const (

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	e2e "github.com/allinbits/interchain-security/tests/e2e/testlib"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	e2e "github.com/cosmos/interchain-security/v5/tests/e2e/testlib"
 	"github.com/davecgh/go-spew/spew"
 )
 

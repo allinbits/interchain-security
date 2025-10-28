@@ -15,9 +15,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	app "github.com/cosmos/interchain-security/v5/app/consumer"
-	consumerTypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	app "github.com/allinbits/interchain-security/app/consumer"
+	consumerTypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 const (

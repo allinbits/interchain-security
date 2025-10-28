@@ -8,7 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 type Status int
@@ -166,7 +166,7 @@ const (
 	// that corresponds to the N% of the top validators that have to validate this consumer chain
 	TopNBytePrefix
 
-		// ValidatorsPowerCapPrefix is the byte prefix storing the mapping from a consumer chain to the power-cap value of this chain,
+	// ValidatorsPowerCapPrefix is the byte prefix storing the mapping from a consumer chain to the power-cap value of this chain,
 	// that corresponds to p% such that no validator can have more than p% of the voting power on the consumer chain.
 	// Operates on a best-effort basis.
 	ValidatorsPowerCapPrefix

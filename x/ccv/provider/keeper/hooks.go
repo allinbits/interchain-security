@@ -9,8 +9,8 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	providertypes "github.com/allinbits/interchain-security/x/ccv/provider/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // Wrapper struct

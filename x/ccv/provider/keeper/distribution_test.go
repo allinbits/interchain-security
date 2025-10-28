@@ -15,9 +15,9 @@ import (
 
 	tmtypes "github.com/cometbft/cometbft/types"
 
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
-	"github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
-	providertypes "github.com/cosmos/interchain-security/v5/x/ccv/provider/types"
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
+	"github.com/allinbits/interchain-security/x/ccv/provider/types"
+	providertypes "github.com/allinbits/interchain-security/x/ccv/provider/types"
 )
 
 func TestComputeConsumerTotalVotingPower(t *testing.T) {

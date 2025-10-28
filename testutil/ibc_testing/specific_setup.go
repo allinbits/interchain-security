@@ -17,11 +17,11 @@ import (
 	"cosmossdk.io/log"
 	"github.com/cometbft/cometbft/abci/types"
 
-	appConsumer "github.com/cosmos/interchain-security/v5/app/consumer"
-	appConsumerDemocracy "github.com/cosmos/interchain-security/v5/app/consumer-democracy"
-	appProvider "github.com/cosmos/interchain-security/v5/app/provider"
-	consumertypes "github.com/cosmos/interchain-security/v5/x/ccv/consumer/types"
-	ccvtypes "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	appConsumer "github.com/allinbits/interchain-security/app/consumer"
+	appConsumerDemocracy "github.com/allinbits/interchain-security/app/consumer-democracy"
+	appProvider "github.com/allinbits/interchain-security/app/provider"
+	consumertypes "github.com/allinbits/interchain-security/x/ccv/consumer/types"
+	ccvtypes "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // IBC v10: AppIniter replaced by ibctesting.AppCreator

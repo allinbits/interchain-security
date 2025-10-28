@@ -6,9 +6,9 @@ import (
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	app "github.com/cosmos/interchain-security/v5/app/consumer-democracy"
-	appparams "github.com/cosmos/interchain-security/v5/app/params"
-	"github.com/cosmos/interchain-security/v5/cmd/interchain-security-cdd/cmd"
+	app "github.com/allinbits/interchain-security/app/consumer-democracy"
+	appparams "github.com/allinbits/interchain-security/app/params"
+	"github.com/allinbits/interchain-security/cmd/interchain-security-cdd/cmd"
 )
 
 func main() {

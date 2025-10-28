@@ -14,7 +14,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	ccv "github.com/cosmos/interchain-security/v5/x/ccv/types"
+	ccv "github.com/allinbits/interchain-security/x/ccv/types"
 )
 
 // TestVSCPacketSendWithExpiredClient tests queueing of VSCPackets when the consumer client is expired.
@@ -123,7 +123,7 @@ func (s *CCVTestSuite) TestConsumerPacketSendExpiredClient() {
 	// ICS1 INTEGRATION FIX: VSCMatured packets removed in ICS1
 	// In ICS1, VSCMatured packets are no longer sent from consumer to provider.
 	// We skip checking for VSCMatured packets and proceed directly to slash packet testing.
-	
+
 	// try to send slash packet for downtime infraction
 	addr := ed25519.GenPrivKey().PubKey().Address()
 	val := abci.Validator{Address: addr, Power: 1}

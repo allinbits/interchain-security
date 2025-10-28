@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	e2e "github.com/allinbits/interchain-security/tests/e2e/testlib"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	e2e "github.com/cosmos/interchain-security/v5/tests/e2e/testlib"
 	"gopkg.in/yaml.v2"
 
 	"github.com/kylelemons/godebug/pretty"

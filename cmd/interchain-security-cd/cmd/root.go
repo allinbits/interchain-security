@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
+
 	// IBC v10: keyring import removed as Keyring field removed from autocli.AppOptions
 	"github.com/cosmos/cosmos-sdk/server"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
@@ -32,8 +33,8 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 	dbm "github.com/cosmos/cosmos-db"
 
-	consumer "github.com/cosmos/interchain-security/v5/app/consumer"
-	appencoding "github.com/cosmos/interchain-security/v5/app/encoding"
+	consumer "github.com/allinbits/interchain-security/app/consumer"
+	appencoding "github.com/allinbits/interchain-security/app/encoding"
 )
 
 // NewRootCmd creates a new root command for simd. It is called once in the
@@ -288,7 +289,6 @@ func appExport(
 
 	return simApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
 }
-
 
 // genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
 func genesisCommand(encodingConfig appencoding.EncodingConfig, cmds ...*cobra.Command) *cobra.Command {

@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	testkeeper "github.com/allinbits/interchain-security/testutil/keeper"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	ibctesting "github.com/cosmos/ibc-go/v10/testing"
-	testkeeper "github.com/cosmos/interchain-security/v5/testutil/keeper"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -17,8 +17,8 @@ import (
 	tmencoding "github.com/cometbft/cometbft/crypto/encoding"
 	tmtypes "github.com/cometbft/cometbft/types"
 
-	testutil "github.com/cosmos/interchain-security/v5/testutil/integration"
-	consumerkeeper "github.com/cosmos/interchain-security/v5/x/ccv/consumer/keeper"
+	testutil "github.com/allinbits/interchain-security/testutil/integration"
+	consumerkeeper "github.com/allinbits/interchain-security/x/ccv/consumer/keeper"
 )
 
 // IBC v10: AppCreator replaces AppIniter with same signature
