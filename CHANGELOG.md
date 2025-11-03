@@ -18,13 +18,10 @@ Forked from Cosmos Interchain Security v5.2.0 and reimagined for the AtomOne eco
 
 ### Features
 
-**Lightweight Partial Set Security (PSS)**
+**Lightweight TopN**
 
-- TopN parameter for governance-controlled validator set management
-- Validator opt-in/opt-out capabilities
-- Allowlist/denylist support per consumer chain
-- Power capping for consumer chains
-- Removes complex power shaping and consumer commission rates
+- Minimal TopN parameter for governance-controlled validator set management
+- Removed advanced PSS features: opt-in/out, allowlist/denylist, power capping, power shaping, and consumer commission rates
 
 **Consumer Chain Management**
 
@@ -54,7 +51,7 @@ ICS1 aligns with the AtomOne Constitution's principles:
 
 ### Implementation Details
 
-This release implements lightweight PSS (TopN, opt-in/out, allowlist/denylist, power capping) for governance flexibility while removing advanced PSS features that add unnecessary complexity.
+This release retains only the minimal TopN parameter for governance control, removing all other PSS complexity.
 
 The VSCMatured packet removal is an optimization that reduces IBC traffic. The provider and consumer no longer need to acknowledge validator set changes, simplifying the state machine without compromising security guarantees.
 

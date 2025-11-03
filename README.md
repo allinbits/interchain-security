@@ -12,7 +12,7 @@ This fork includes the following changes from the upstream Cosmos Interchain Sec
 2. **IBC v10 Upgrade** - Migrated from IBC v8 to v10 for improved interchain communication
 3. **VSCMatured Packet Removal** - Optimization that removes VSCMatured packets from provider and consumer chains
 4. **Module Namespace Change** - Updated from `cosmos` to `allinbits` namespace
-5. **Lightweight PSS** - Retains TopN, opt-in/out, allowlist/denylist, and power capping for governance control
+5. **Lightweight TopN** - Retains minimal TopN parameter for governance control
 6. **Removed Advanced PSS** - Power shaping and consumer-specific commission rates removed
 7. **IBC Connection Reuse** - Support for reusing IBC connections during standalone→consumer chain transitions
 8. **IBC Transfer Memos** - Added memo support to IBC transfers for reward attribution
