@@ -1,16 +1,19 @@
 name: Buf-Push
-# Protobuf runs buf (https://buf.build/) push updated proto files to https://buf.build/cosmos/interchain-security
+# TODO: Re-enable buf publishing to buf.build/allinbits/interchain-security when ready
+# Currently disabled for AtomOne fork - upstream publishes to buf.build/cosmos/interchain-security
 # This workflow is only run when a .proto file has been changed
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "proto/**"
+  workflow_dispatch: # Disabled - only manual trigger
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - "proto/**"
 
 jobs:
   push:
     runs-on: ubuntu-latest
+    if: false # Disabled for AtomOne fork - TODO: Update to publish to buf.build/allinbits/interchain-security
     steps:
       - uses: actions/checkout@v4
       - uses: bufbuild/buf-setup-action@v1.34.0

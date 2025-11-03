@@ -3,6 +3,8 @@
 #
 # This module represents the "proto" root found in
 # the previous configuration.
+#
+# TODO: Update to buf.build/allinbits/interchain-security when publishing is enabled
 version: v1
 name: buf.build/cosmos/interchain-security
 deps:

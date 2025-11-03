@@ -1,59 +1,81 @@
-# Interchain Security
+# Interchain Security - AtomOne Fork
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/cosmos/interchain-security)](https://goreportcard.com/report/github.com/cosmos/interchain-security)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=cosmos_interchain-security&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=cosmos_interchain-security)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=cosmos_interchain-security&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=cosmos_interchain-security)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=cosmos_interchain-security&metric=bugs)](https://sonarcloud.io/summary/new_code?id=cosmos_interchain-security)
-[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=cosmos_interchain-security&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=cosmos_interchain-security)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=cosmos_interchain-security&metric=coverage)](https://sonarcloud.io/summary/new_code?id=cosmos_interchain-security)
+**ICS1 - A fresh implementation of Interchain Security for AtomOne**
 
-**interchain-security** contains a working and in-production implementation of the Replicated Security protocol (aka Interchain Security V1). Replicated security is an open sourced IBC application which allows cosmos blockchains to lease their proof-of-stake security to one another.
+Forked from Cosmos Interchain Security v5.2.0 and reimagined for the AtomOne ecosystem. This is ICS1 - a new baseline, not an incremental update.
 
-For more details on the **Replicated Security protocol**, take a look at the [docs](https://cosmos.github.io/interchain-security/) or [technical specification](https://github.com/cosmos/ibc/blob/main/spec/app/ics-028-cross-chain-validation/README.md).
+## Modifications from Upstream v5.2.0
 
-For a list of **currently active releases**, see [RELEASES.md](./RELEASES.md#version-matrix).
+This fork includes the following changes from the upstream Cosmos Interchain Security v5.2.0:
 
-For a list of **major ICS features** available in the currently active releases, see [FEATURES.md](./FEATURES.md).
+1. **AtomOne SDK Integration** - Uses AtomOne's fork of Cosmos SDK v0.50.14-atomone.1 with custom governance
+2. **IBC v10 Upgrade** - Migrated from IBC v8 to v10 for improved interchain communication
+3. **VSCMatured Packet Removal** - Optimization that removes VSCMatured packets from provider and consumer chains
+4. **Module Namespace Change** - Updated from `cosmos` to `allinbits` namespace
+5. **Lightweight PSS** - Retains TopN, opt-in/out, allowlist/denylist, and power capping for governance control
+6. **Removed Advanced PSS** - Power shaping and consumer-specific commission rates removed
+7. **IBC Connection Reuse** - Support for reusing IBC connections during standalone→consumer chain transitions
+8. **IBC Transfer Memos** - Added memo support to IBC transfers for reward attribution
+9. **Consumer Chain-ID Updates** - Support for updating consumer chain identifiers
+10. **Removed Legacy Code** - Removed v4→v5 and v5→v6 migration code and x/crisis module
 
-## Instructions
+See [CHANGELOG.md](./CHANGELOG.md) for detailed technical changes.
 
-**Prerequisites**
+## AtomOne Constitution
+
+This implementation aligns with the AtomOne Constitution's goals for Interchain Security:
+
+- Every validator is compensated for running ICS consumer chains
+- Hub remains minimal with clear separation between core shards and consumer chains
+- All ICS zones must be profitable to validators
+- Governance-controlled validator set management
+
+For more details, see the [AtomOne Constitution](https://github.com/atomone-hub/genesis).
+
+## Prerequisites
+
+- Go 1.24 or later
+- jq (optional, for testnet)
+- Docker (optional, for integration tests)
+
+## Installation
 
 ```bash
-## For OSX or Linux
-
-# go 1.21 (https://formulae.brew.sh/formula/go)
-brew install go@1.21
-# jq (optional, for testnet) (https://formulae.brew.sh/formula/jq)
-brew install jq
-# docker (optional, for integration tests, testnet) (https://docs.docker.com/get-docker/)
-
-```
-
-**Installing and running binaries**
-
-```bash
-# install interchain-security-pd and interchain-security-cd binaries
+# Install interchain-security-pd and interchain-security-cd binaries
 make install
-# run provider
+
+# Run provider
 interchain-security-pd
-# run consumer
+
+# Run consumer
 interchain-security-cd
-# (if the above fail, ensure ~/go/bin on $PATH)
+
+# If the above fail, ensure ~/go/bin is on $PATH
 export PATH=$PATH:$(go env GOPATH)/bin
 ```
 
-Inspect the [Makefile](./Makefile) if curious.
-
 ## Testing
 
-See [testing docs](./TESTING.md).
+See [TESTING.md](./TESTING.md) for detailed testing instructions.
 
-## Learn more
+```bash
+# Run unit tests
+make test-unit
 
-- [IBC Docs](https://ibc.cosmos.network/)
-- [IBC Protocol](https://ibcprotocol.org/)
-- [IBC Specs](https://github.com/cosmos/ibc)
-- [Cosmos SDK documentation](https://docs.cosmos.network)
-- [Cosmos SDK Tutorials](https://tutorials.cosmos.network)
-- [Discord](https://discord.gg/cosmosnetwork)
+# Run integration tests
+make test-integration
+
+# Build everything
+go build ./...
+```
+
+## Attribution
+
+This software is based on [Cosmos Interchain Security](https://github.com/cosmos/interchain-security) v5.2.0.
+
+## Learn More
+
+- [IBC Specifications](https://github.com/cosmos/ibc)
+- [AtomOne Genesis](https://github.com/atomone-hub/genesis)
+- [AtomOne SDK](https://github.com/atomone-hub/cosmos-sdk)
+- [Upstream ICS Documentation](https://cosmos.github.io/interchain-security/)

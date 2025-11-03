@@ -1,88 +1,83 @@
 # CHANGELOG
 
-## v5.2.0
+## Unreleased
 
-*September 4, 2024*
+## v5.2.0-atomone-1
 
-### BUG FIXES
+*In Development*
 
-- [Provider](x/ccv/provider)
-  - Improve provider message validation.
-    ([1dd3885](https://github.com/cosmos/interchain-security/commit/1dd38851dbb9e0d98c61bd11375ee7e140527833))
+**ICS1 - A fresh implementation of Interchain Security for AtomOne**
 
-### STATE BREAKING
+Forked from Cosmos Interchain Security v5.2.0 and reimagined for the AtomOne ecosystem. This is ICS1 - a new baseline, not an incremental update.
 
-- [Provider](x/ccv/provider)
-  - Improve provider message validation.
-    ([1dd3885](https://github.com/cosmos/interchain-security/commit/1dd38851dbb9e0d98c61bd11375ee7e140527833))
+### Base Configuration
 
-## v5.1.1
+- **AtomOne SDK v0.50.14-atomone.1** - Custom governance and minimal hub philosophy
+- **IBC v10** - Modern IBC protocol for interchain communication
+- **Go 1.24.5** - Latest Go toolchain with improved type safety
 
-*July 26, 2024*
+### Features
 
-### API BREAKING
+**Lightweight Partial Set Security (PSS)**
 
-- [Provider](x/ccv/provider)
-  - Fix incorrect message defitions in the proto files of the provider module
-    ([\#2095](https://github.com/cosmos/interchain-security/pull/2095))
+- TopN parameter for governance-controlled validator set management
+- Validator opt-in/opt-out capabilities
+- Allowlist/denylist support per consumer chain
+- Power capping for consumer chains
+- Removes complex power shaping and consumer commission rates
 
-### STATE BREAKING
+**Consumer Chain Management**
 
-- [Provider](x/ccv/provider)
-  - Fix incorrect message defitions in the proto files of the provider module
-    ([\#2095](https://github.com/cosmos/interchain-security/pull/2095))
+- Consumer chain-id updates ([#10](https://github.com/allinbits/interchain-security/pull/10))
+- IBC connection reuse for standalone→consumer transitions ([#11](https://github.com/allinbits/interchain-security/pull/11))
+- IBC transfer memos for reward attribution ([#13](https://github.com/allinbits/interchain-security/pull/13))
 
-## v5.1.0
+**Optimizations**
 
-*July 19, 2024*
+- VSCMatured packet removal - reduces IBC traffic without affecting security ([#6](https://github.com/allinbits/interchain-security/pull/6), [#7](https://github.com/allinbits/interchain-security/pull/7))
+- Removed legacy migration code (v4→v5, v5→v6)
+- Removed x/crisis module dependency
 
-### API BREAKING
+**AtomOne Integration**
 
-- General
-  - Remove soft opt-out feature. ([\#1995](https://github.com/cosmos/interchain-security/pull/1995))
-    Backporting of ([\#1964](https://github.com/cosmos/interchain-security/pull/1964)).
-- [Provider](x/ccv/provider)
-  - Change the UX in key assignment by returning an error if a validator tries to
-    reuse the same consumer key.
-    ([\#1998](https://github.com/cosmos/interchain-security/pull/1998))
+- Custom governance adapter for AtomOne's governance model ([#4](https://github.com/allinbits/interchain-security/pull/4))
+- Module namespace: `allinbits` ([#14](https://github.com/allinbits/interchain-security/pull/14))
 
-### DEPENDENCIES
+### Design Philosophy
 
-- Bump [CometBFT](https://github.com/cometbft/cometbft) to
-  [v0.38.9](https://github.com/cometbft/cometbft/releases/tag/v0.38.9).
-  ([\#2013](https://github.com/cosmos/interchain-security/pull/2013))
-- Bump [ibc-go](https://github.com/cosmos/ibc-go) to
-  [v8.3.2](https://github.com/cosmos/ibc-go/releases/tag/v8.3.2).
-  ([\#2053](https://github.com/cosmos/interchain-security/pull/2053))
-- Bump [cosmos-sdk](https://github.com/cosmos/cosmos-sdk) to
-[v0.50.8](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.8)
-([\#2053](https://github.com/cosmos/interchain-security/pull/2053))
+ICS1 aligns with the AtomOne Constitution's principles:
 
-### FEATURES
+- Every validator is compensated for running consumer chains
+- Hub remains minimal with clear separation between core shards and consumer chains
+- All ICS zones must be profitable to validators
+- Governance-controlled validator set management
 
-- Remove soft opt-out feature. ([\#1995](https://github.com/cosmos/interchain-security/pull/1995))
-  Backporting of ([\#1964](https://github.com/cosmos/interchain-security/pull/1964)).
+### Implementation Details
 
-### STATE BREAKING
+This release implements lightweight PSS (TopN, opt-in/out, allowlist/denylist, power capping) for governance flexibility while removing advanced PSS features that add unnecessary complexity.
 
-- General
-  - Remove soft opt-out feature. ([\#1995](https://github.com/cosmos/interchain-security/pull/1995))
-    Backporting of ([\#1964](https://github.com/cosmos/interchain-security/pull/1964)).
-  - Bump [CometBFT](https://github.com/cometbft/cometbft) to
-    [v0.38.9](https://github.com/cometbft/cometbft/releases/tag/v0.38.9).
-    ([\#2013](https://github.com/cosmos/interchain-security/pull/2013))
-  - Bump [ibc-go](https://github.com/cosmos/ibc-go) to
-    [v8.3.2](https://github.com/cosmos/ibc-go/releases/tag/v8.3.2).
-    ([\#2053](https://github.com/cosmos/interchain-security/pull/2053))
-  - Bump [cosmos-sdk](https://github.com/cosmos/cosmos-sdk) to
-    [v0.50.8](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.50.8)
-    ([\#2053](https://github.com/cosmos/interchain-security/pull/2053))
-- [Provider](x/ccv/provider)
-  - Change the UX in key assignment by returning an error if a validator tries to
-    reuse the same consumer key.
-    ([\#1998](https://github.com/cosmos/interchain-security/pull/1998))
+The VSCMatured packet removal is an optimization that reduces IBC traffic. The provider and consumer no longer need to acknowledge validator set changes, simplifying the state machine without compromising security guarantees.
 
-## Previous Versions
+#### Stacked Sub-PRs
 
-[CHANGELOG of previous versions](https://github.com/cosmos/interchain-security/blob/main/CHANGELOG.md)
+This release consists of the following pull requests:
 
+- [#3](https://github.com/allinbits/interchain-security/pull/3) - IBC v10 upgrade
+- [#4](https://github.com/allinbits/interchain-security/pull/4) - AtomOne governance compatibility adapter
+- [#5](https://github.com/allinbits/interchain-security/pull/5) - Dependency alignment with AtomOne SDK
+- [#6](https://github.com/allinbits/interchain-security/pull/6) - VSCMatured removal (provider)
+- [#7](https://github.com/allinbits/interchain-security/pull/7) - VSCMatured removal (consumer) & legacy cleanup
+- [#8](https://github.com/allinbits/interchain-security/pull/8) - E2E/integration test fixes
+- [#9](https://github.com/allinbits/interchain-security/pull/9) - TopN for governance parameters
+- [#10](https://github.com/allinbits/interchain-security/pull/10) - Consumer chain-id updates
+- [#11](https://github.com/allinbits/interchain-security/pull/11) - Connection reuse for transitions
+- [#13](https://github.com/allinbits/interchain-security/pull/13) - IBC transfer memos
+- [#14](https://github.com/allinbits/interchain-security/pull/14) - Module naming (cosmos→allinbits)
+
+---
+
+## Fork Point: Cosmos ICS v5.2.0
+
+ICS1 is based on [Cosmos Interchain Security v5.2.0](https://github.com/cosmos/interchain-security/releases/tag/v5.2.0) (September 4, 2024).
+
+For upstream changelog history, see the [Cosmos ICS CHANGELOG](https://github.com/cosmos/interchain-security/blob/v5.2.0/CHANGELOG.md).
